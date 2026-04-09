@@ -1,6 +1,8 @@
+using Application.Features.Authentication;
+
 namespace Application.Contracts.Authentication;
 
 public interface IJwtBearerHelper
 {
-    string GenerateToken(int userId, string username, IList<string> permissions);
+    AuthenticatedResponse GenerateToken(int userId, string username, IList<string> permissions);
 }

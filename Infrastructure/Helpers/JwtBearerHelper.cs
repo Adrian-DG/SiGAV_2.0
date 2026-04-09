@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Application.Contracts.Authentication;
+using Application.Features.Authentication;
 using Infrastructure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -11,7 +12,7 @@ public class JwtBearerHelper(IConfiguration configuration) : IJwtBearerHelper
 {
     private const int ExpirationHours = 12;
 
-    public string GenerateToken(int userId, string username, IList<string> permissions)
+    public AuthenticatedResponse GenerateToken(int userId, string username, IList<string> permissions)
     {
         string? secretKey = configuration["Jwt:SecretKey"] ?? throw new Exception("Secret key not found in configuration.");
         
@@ -35,6 +36,6 @@ public class JwtBearerHelper(IConfiguration configuration) : IJwtBearerHelper
         };
         
         var token = tokenHanler.CreateToken(tokenDescriptor);
-        return tokenHanler.WriteToken(token);
+        return new AuthenticatedResponse(tokenHanler.WriteToken(token), expiration);
     }
 }
