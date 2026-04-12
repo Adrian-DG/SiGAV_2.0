@@ -1,15 +1,35 @@
+using Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Application.Contracts.Authentication;
+using Infrastructure.Data;
+using Infrastructure.Data.Context;
+using Infrastructure.Helpers;
 using Infrastructure.Repositories.Authentication;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 namespace Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
-        services.AddSingleton<IJwtBearerHelper, JwtBearerHelper>();
+        services.AddDbContext<SiGAVContext>(opt =>
+        {
+            var connectionString = environment.IsProduction()
+                ? configuration.GetConnectionString("ProductionConnection")
+                : configuration.GetConnectionString("DevelopmentConnection");
+            
+            opt.UseSqlite(connectionString,  b => b.MigrationsAssembly("Infrastructure"));
+            opt.EnableDetailedErrors();
+        });
+        
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAuthRepository, AuthRepository>();
+        services.AddSingleton<IJwtBearerHelper, JwtBearerHelper>();
+        
+        return services;
     }
 }

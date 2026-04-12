@@ -7,7 +7,7 @@ using Domain.Entities.Misc;
 using Domain.Entities.Historico;
 using Domain.Entities.Operaciones;
 
-namespace Infrastructure.Data;
+namespace Infrastructure.Data.Context;
 
 public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbContext<AppUser, AppPermission, int>(options)
 {

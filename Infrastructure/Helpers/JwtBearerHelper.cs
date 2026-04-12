@@ -6,7 +6,7 @@ using Infrastructure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Infrastructure.Repositories.Authentication;
+namespace Infrastructure.Helpers;
 
 public class JwtBearerHelper(IConfiguration configuration) : IJwtBearerHelper
 {

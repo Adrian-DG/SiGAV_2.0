@@ -4,5 +4,6 @@ namespace Application.Contracts.Authentication;
 
 public interface IAuthRepository
 {
-    Task<AuthenticatedResponse> LoginAsync(string username, string password, CancellationToken cancellationToken);
+    Task<AuthenticatedResponse> LoginAsync(string username, string password);
+    Task RegisterAsync(RegisterUserCommand command);
 }

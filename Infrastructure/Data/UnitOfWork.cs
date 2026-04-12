@@ -1,5 +1,6 @@
 using Application.Contracts;
 using Application.Contracts.Authentication;
+using Infrastructure.Data.Context;
 using Infrastructure.Identity;
 using Infrastructure.Repositories.Authentication;
 using Microsoft.AspNetCore.Identity;

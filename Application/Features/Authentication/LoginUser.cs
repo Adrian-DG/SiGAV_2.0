@@ -21,8 +21,8 @@ public class LoginUserCommandValidator : AbstractValidator<LoginUserCommand>
 public class LoginUserCommandHandler(IUnitOfWork uow) : IRequestHandler<LoginUserCommand, AuthenticatedResponse>
 {
     public async Task<AuthenticatedResponse> Handle(LoginUserCommand request, CancellationToken cancellationToken)
-    {
-        return await uow.AuthRepository.LoginAsync(request.username, request.password, cancellationToken);
+    {   
+        return await uow.AuthRepository.LoginAsync(request.username, request.password);
     }
 }
 
