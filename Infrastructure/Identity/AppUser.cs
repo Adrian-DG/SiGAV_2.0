@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Entities.Misc;
@@ -22,7 +23,10 @@ public class AppUser : IdentityUser<int>
     [ForeignKey(nameof(Departamento))]
     public int DepartamentoId { get; set; }
     public virtual Departamento? Departamento { get; set; }
-    
-    private string? RangoOficial => Institucion == InstitucionEnum.ARD ? Rango?.NombreArmada : Rango?.Nombre ?? string.Empty;
+
+    [DefaultValue(false)]
+	public bool IsAdmin { get; set; }
+
+	private string? RangoOficial => Institucion == InstitucionEnum.ARD ? Rango?.NombreArmada : Rango?.Nombre ?? string.Empty;
     public string UsuarioInfo => $"{RangoOficial}, {Apellido} {Nombre}".Trim();
 }

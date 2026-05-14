@@ -12,7 +12,7 @@ public class JwtBearerHelper(IConfiguration configuration) : IJwtBearerHelper
 {
     private const int ExpirationHours = 12;
 
-    public AuthenticatedResponse GenerateToken(int userId, string username, IList<string> permissions)
+    public AuthenticatedResponse GenerateToken(int userId, string username, IList<string> permissions, bool isAdmin)
     {
         string? secretKey = configuration["Jwt:SecretKey"] ?? throw new Exception("Secret key not found in configuration.");
         
@@ -27,7 +27,8 @@ public class JwtBearerHelper(IConfiguration configuration) : IJwtBearerHelper
             {   
                 new System.Security.Claims.Claim("id", userId.ToString()),
                 new System.Security.Claims.Claim("username", username),
-                new System.Security.Claims.Claim("permissions", string.Join(",", permissions))
+                new System.Security.Claims.Claim("isAdmin", isAdmin.ToString()),
+				new System.Security.Claims.Claim("permissions", string.Join(",", permissions))
             }),
             Issuer = configuration["Jwt:Issuer"],
             Audience = configuration["Jwt:Audience"],
