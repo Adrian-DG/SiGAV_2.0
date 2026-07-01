@@ -23,7 +23,6 @@ public class RegisterUserCommandValidator : AbstractValidator<RegisterUserComman
     {
         RuleFor(x => x.identificacion)
             .NotEmpty().WithMessage("Identificacion is required.")
-            .NotNull().WithMessage("Identificacion is required.")
             .Length(11).WithMessage("Identificacion must be exactly 11 characters.");
         RuleFor(x => x.nombre).NotEmpty().WithMessage("Nombre is required.");
         RuleFor(x => x.apellido).NotEmpty().WithMessage("Apellido is required.");
@@ -34,11 +33,12 @@ public class RegisterUserCommandValidator : AbstractValidator<RegisterUserComman
 }
 
 // Handler
-public class RegisterCommandHandler(IUnitOfWork uow):  IRequestHandler<RegisterUserCommand>
+public class RegisterUserCommandHandler(IUnitOfWork uow): IRequestHandler<RegisterUserCommand, Unit>
 {
-    public async Task Handle(RegisterUserCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         await uow.AuthRepository.RegisterAsync(request);
+        return Unit.Value;
     }
 }
     
