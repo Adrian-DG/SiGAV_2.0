@@ -4,7 +4,7 @@ using Infrastructure.Data;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 
-namespace Infrastructure.Repositories.Authentication;
+namespace Infrastructure.Persistance.Authentication;
 
 public class AuthRepository(UserManager<AppUser> userManager, IJwtBearerHelper jwtBearerHelper) : IAuthRepository
 {

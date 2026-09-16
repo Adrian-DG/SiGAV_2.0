@@ -6,7 +6,7 @@ namespace Domain.Abstraction;
 public class BaseEntityMetadata
 {
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     
     [DefaultValue(true)]
     public bool IsActive { get; set; }

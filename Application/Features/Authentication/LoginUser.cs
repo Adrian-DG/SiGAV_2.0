@@ -1,4 +1,4 @@
-using Application.Contracts;
+using Application.Contracts.Authentication;
 using FluentValidation;
 using MediatR;
 
@@ -18,11 +18,11 @@ public class LoginUserCommandValidator : AbstractValidator<LoginUserCommand>
 }
 
 // Handler
-public class LoginUserCommandHandler(IUnitOfWork uow) : IRequestHandler<LoginUserCommand, AuthenticatedResponse>
+public class LoginUserCommandHandler(IAuthRepository repository) : IRequestHandler<LoginUserCommand, AuthenticatedResponse>
 {
     public async Task<AuthenticatedResponse> Handle(LoginUserCommand request, CancellationToken cancellationToken)
     {   
-        return await uow.AuthRepository.LoginAsync(request.username, request.password);
+        return await repository.LoginAsync(request.username, request.password);
     }
 }
 
