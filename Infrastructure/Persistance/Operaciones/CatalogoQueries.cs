@@ -11,6 +11,9 @@ public class CatalogoQueries(SiGAVContext context) : ICatalogoQueries
     public Task<bool> ExisteNivelDenominacionAsync(int nivelDenominacionId, CancellationToken cancellationToken = default)
         => context.NivelesDenominacion.AnyAsync(n => n.Id == nivelDenominacionId && n.IsActive, cancellationToken);
 
+    public Task<bool> ExisteRangoAsync(int rangoId, CancellationToken cancellationToken = default)
+        => context.Rangos.AnyAsync(r => r.Id == rangoId && r.IsActive, cancellationToken);
+
     public async Task<IReadOnlyList<int>> TramosInexistentesAsync(IReadOnlyCollection<int> tramoIds, CancellationToken cancellationToken = default)
     {
         if (tramoIds.Count == 0) return [];

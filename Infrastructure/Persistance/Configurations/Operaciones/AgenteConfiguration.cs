@@ -11,6 +11,10 @@ internal sealed class AgenteConfiguration : IEntityTypeConfiguration<Agente>
         builder.ToTable("agentes", Schemas.Operaciones);
         builder.ConfigurePerson();
 
+        builder.HasIndex(a => a.Identificacion).IsUnique();
+        builder.Property(a => a.Especialidad).HasMaxLength(Agente.EspecialidadMaxLength);
+        builder.HasIndex(a => new { a.AreaOperativa, a.IsActive });
+
         builder.HasOne(a => a.Rango)
             .WithMany()
             .HasForeignKey(a => a.RangoId);
