@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers.Authentication;
 
+[ApiController]
 [Route("api/authentication")]
 public class AuthenticationController(IMediator mediator) : ControllerBase
 {
