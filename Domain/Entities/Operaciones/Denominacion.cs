@@ -24,8 +24,8 @@ public class Denominacion : NamedMetadata, IAuditableMetadata
     /// <summary>Tramos adicionales a <see cref="TramoId"/> (solo jerarquía Tramo).</summary>
     public IReadOnlyCollection<DenominacionTramo> Tramos => _tramos.AsReadOnly();
 
-    public DateOnly CreatedAt { get; set; }
-    public DateOnly? UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
     public int CreatedBy { get; set; }
     public int? UpdatedBy { get; set; }
 

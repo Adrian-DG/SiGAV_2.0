@@ -5,9 +5,14 @@ namespace Domain.Entities.Operaciones;
 /// </summary>
 public class EventoTipoEvento
 {
-    public int EventoId { get; set; }
-    public virtual Evento? Evento { get; set; }
+    public int EventoId { get; private set; }
+    public virtual Evento? Evento { get; private set; }
 
-    public int TipoEventoId { get; set; }
-    public virtual TipoEvento? TipoEvento { get; set; }
+    public int TipoEventoId { get; private set; }
+    public virtual TipoEvento? TipoEvento { get; private set; }
+
+    // Requerido por EF Core
+    private EventoTipoEvento() { }
+
+    internal EventoTipoEvento(int tipoEventoId) => TipoEventoId = tipoEventoId;
 }

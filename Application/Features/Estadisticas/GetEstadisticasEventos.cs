@@ -1,3 +1,4 @@
+using Application.Common;
 using Application.Contracts;
 using Application.Contracts.Authentication;
 using Application.Contracts.Operaciones;
@@ -40,7 +41,8 @@ public class GetEstadisticasEventosQueryHandler(
 {
     public async Task<EstadisticasEventosViewModel> Handle(GetEstadisticasEventosQuery request, CancellationToken cancellationToken)
     {
-        var hoy = DateOnly.FromDateTime(timeProvider.GetLocalNow().DateTime);
+        // "Hoy" en hora operativa (RD), no en la zona del servidor
+        var hoy = ZonaHorariaOperativa.Hoy(timeProvider);
         var hasta = request.Hasta ?? hoy;
         // Por defecto: desde el inicio del mes de la fecha final
         var desde = request.Desde ?? new DateOnly(hasta.Year, hasta.Month, 1);

@@ -28,8 +28,8 @@ public class Unidad : BaseEntityMetadata, IAuditableMetadata
     private readonly List<HistorialDenominacionUnidad> _historialDenominaciones = [];
     public IReadOnlyCollection<HistorialDenominacionUnidad> HistorialDenominaciones => _historialDenominaciones.AsReadOnly();
 
-    public DateOnly CreatedAt { get; set; }
-    public DateOnly? UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
     public int CreatedBy { get; set; }
     public int? UpdatedBy { get; set; }
 

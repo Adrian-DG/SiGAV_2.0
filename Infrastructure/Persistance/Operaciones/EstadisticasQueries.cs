@@ -1,3 +1,4 @@
+using Application.Common;
 using Application.Contracts.Operaciones;
 using Application.Features.Estadisticas;
 using Application.Features.Operaciones.Denominaciones;
@@ -31,9 +32,11 @@ public class EstadisticasQueries(SiGAVContext context) : IEstadisticasQueries
         if (alcance.EstaVacio || tramosAlcance is { Count: 0 })
             return new EstadisticasEventosViewModel(alcanceViewModel, desde, hasta, ResumenVacio, []);
 
+        // Por fecha del reporte (no la de guardado: la app sincroniza eventos offline tarde)
+        var (desdeUtc, hastaExclusivoUtc) = ZonaHorariaOperativa.RangoUtc(desde, hasta);
         var participaciones = context.EventoUnidades
             .AsNoTracking()
-            .Where(eu => eu.Evento!.IsActive && eu.Evento.CreatedAt >= desde && eu.Evento.CreatedAt <= hasta);
+            .Where(eu => eu.Evento!.IsActive && eu.Evento.FechaHoraReporteUtc >= desdeUtc && eu.Evento.FechaHoraReporteUtc < hastaExclusivoUtc);
 
         if (alcance.Jerarquia == JerarquiaEnum.Unidad)
             participaciones = participaciones.Where(eu => eu.UnidadId == alcance.UnidadId);

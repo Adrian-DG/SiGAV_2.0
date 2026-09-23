@@ -17,7 +17,7 @@ public record AgenteViewModel(
     string? Especialidad,
     bool Autorizado,
     bool IsActive,
-    DateOnly CreatedAt);
+    DateTime CreatedAt);
 
 /// <summary>
 /// Se conservan los nombres de SiGAV 1.0 (miembros/confirm) para facilitar la migración de la app.

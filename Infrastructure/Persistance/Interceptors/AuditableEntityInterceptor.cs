@@ -9,7 +9,7 @@ namespace Infrastructure.Persistance.Interceptors;
 /// Completa los campos de auditoría de toda entidad <see cref="IAuditableMetadata"/>
 /// (en SiGAV 1.0 se asignaban a mano en cada repositorio, con UsuarioId = 1).
 /// </summary>
-public class AuditableEntityInterceptor(ICurrentUserService currentUser) : SaveChangesInterceptor
+public class AuditableEntityInterceptor(ICurrentUserService currentUser, TimeProvider timeProvider) : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -37,7 +37,7 @@ public class AuditableEntityInterceptor(ICurrentUserService currentUser) : SaveC
             throw new InvalidOperationException(
                 $"'{alterado.Metadata.ClrType.Name}' es un registro de auditoría inmutable: no puede modificarse ni eliminarse.");
 
-        var today = DateOnly.FromDateTime(DateTime.Now);
+        var ahoraUtc = timeProvider.GetUtcNow().UtcDateTime;
         var userId = currentUser.UserId ?? 0;
 
         foreach (var entry in context.ChangeTracker.Entries<IAuditableMetadata>())
@@ -45,11 +45,11 @@ public class AuditableEntityInterceptor(ICurrentUserService currentUser) : SaveC
             switch (entry.State)
             {
                 case EntityState.Added:
-                    entry.Entity.CreatedAt = today;
+                    entry.Entity.CreatedAt = ahoraUtc;
                     entry.Entity.CreatedBy = userId;
                     break;
                 case EntityState.Modified:
-                    entry.Entity.UpdatedAt = today;
+                    entry.Entity.UpdatedAt = ahoraUtc;
                     entry.Entity.UpdatedBy = userId;
                     break;
             }

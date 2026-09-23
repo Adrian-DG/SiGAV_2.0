@@ -11,7 +11,8 @@ public class Vehiculo : BaseEntityMetadata
     public int ColorId { get; set; }
     public virtual Color? Color { get; set; }
     
-    public int ModeloId { get; set; }
+    // Opcional: el modelo puede no estar en el catálogo (el texto libre queda en el evento)
+    public int? ModeloId { get; set; }
     public virtual Modelo? Modelo { get; set; }
 
     public int? Fabricacion { get; set; }

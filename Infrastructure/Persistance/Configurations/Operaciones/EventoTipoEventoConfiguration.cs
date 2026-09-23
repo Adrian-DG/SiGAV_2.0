@@ -11,9 +11,11 @@ internal sealed class EventoTipoEventoConfiguration : IEntityTypeConfiguration<E
         builder.ToTable("evento_tipo_evento", Schemas.Operaciones);
         builder.HasKey(et => new { et.EventoId, et.TipoEventoId });
 
+        // Parte del agregado Evento
         builder.HasOne(et => et.Evento)
             .WithMany(e => e.Tipos)
-            .HasForeignKey(et => et.EventoId);
+            .HasForeignKey(et => et.EventoId)
+            .OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(et => et.TipoEvento)
             .WithMany()
             .HasForeignKey(et => et.TipoEventoId)
