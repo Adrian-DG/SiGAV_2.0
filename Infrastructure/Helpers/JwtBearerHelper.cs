@@ -1,41 +1,72 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
+using System.Globalization;
+using System.Security.Claims;
 using Application.Contracts.Authentication;
 using Application.Features.Authentication;
-using Infrastructure.Identity;
-using Microsoft.Extensions.Configuration;
+using Infrastructure.Authentication;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Infrastructure.Helpers;
 
-public class JwtBearerHelper(IConfiguration configuration) : IJwtBearerHelper
+public class JwtBearerHelper(IOptions<JwtOptions> options, TimeProvider timeProvider) : IJwtBearerHelper
 {
-    private const int ExpirationHours = 12;
+    private readonly JwtOptions _options = options.Value;
+    private readonly JsonWebTokenHandler _handler = new();
 
-    public AuthenticatedResponse GenerateToken(int userId, string username, IList<string> permissions)
+    public AuthenticatedResponse GenerateWebToken(WebUserIdentity identity)
     {
-        string? secretKey = configuration["Jwt:SecretKey"] ?? throw new Exception("Secret key not found in configuration.");
-        
-        var key = Encoding.ASCII.GetBytes(secretKey!);
-
-        var tokenHanler = new JwtSecurityTokenHandler();
-        var expiration = DateTime.UtcNow.AddHours(ExpirationHours);
-
-        var tokenDescriptor = new SecurityTokenDescriptor
+        var claims = new List<Claim>
         {
-            Subject = new System.Security.Claims.ClaimsIdentity(new[]
-            {   
-                new System.Security.Claims.Claim("id", userId.ToString()),
-                new System.Security.Claims.Claim("username", username),
-                new System.Security.Claims.Claim("permissions", string.Join(",", permissions))
-            }),
-            Issuer = configuration["Jwt:Issuer"],
-            Audience = configuration["Jwt:Audience"],
-            Expires = expiration,
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            new(SesionClaims.Subject, identity.UserId.ToString(CultureInfo.InvariantCulture)),
+            new(SesionClaims.TipoSesion, TiposSesion.Web),
+            new(SesionClaims.Name, identity.UserName),
+            new(SesionClaims.NombreCompleto, identity.NombreCompleto),
+            new(SesionClaims.DepartamentoId, identity.DepartamentoId.ToString(CultureInfo.InvariantCulture)),
+            new(SesionClaims.Institucion, identity.Institucion.ToString()),
         };
-        
-        var token = tokenHanler.CreateToken(tokenDescriptor);
-        return new AuthenticatedResponse(tokenHanler.WriteToken(token), expiration);
+
+        // Un claim por permiso: se serializa como arreglo y habilita [Authorize(Roles = "...")]
+        claims.AddRange(identity.Permisos.Distinct().Select(p => new Claim(SesionClaims.Permiso, p)));
+
+        return BuildToken(claims, _options.Web);
+    }
+
+    public AuthenticatedResponse GenerateMovilToken(MovilUserIdentity identity)
+    {
+        var claims = new List<Claim>
+        {
+            new(SesionClaims.Subject, identity.AgenteId.ToString(CultureInfo.InvariantCulture)),
+            new(SesionClaims.TipoSesion, TiposSesion.Movil),
+            new(SesionClaims.Name, identity.Identificacion),
+            new(SesionClaims.NombreCompleto, identity.NombreCompleto),
+            new(SesionClaims.UnidadId, identity.UnidadId.ToString(CultureInfo.InvariantCulture)),
+            new(SesionClaims.Ficha, identity.Ficha),
+        };
+
+        return BuildToken(claims, _options.Movil);
+    }
+
+    private AuthenticatedResponse BuildToken(List<Claim> claims, JwtAudienceOptions audiencia)
+    {
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        var expiration = now.AddHours(audiencia.ExpirationHours);
+
+        claims.Add(new Claim(SesionClaims.TokenId, Guid.NewGuid().ToString()));
+
+        var descriptor = new SecurityTokenDescriptor
+        {
+            Issuer = _options.Issuer,
+            Audience = audiencia.Audience,
+            Subject = new ClaimsIdentity(claims),
+            IssuedAt = now,
+            NotBefore = now,
+            Expires = expiration,
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(_options.GetSigningKeyBytes()),
+                SecurityAlgorithms.HmacSha256)
+        };
+
+        return new AuthenticatedResponse(_handler.CreateToken(descriptor), expiration);
     }
 }

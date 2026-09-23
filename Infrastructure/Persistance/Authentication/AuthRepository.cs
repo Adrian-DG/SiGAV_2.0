@@ -1,6 +1,6 @@
 using Application.Contracts.Authentication;
+using Application.Exceptions;
 using Application.Features.Authentication;
-using Infrastructure.Helpers;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 
@@ -11,14 +11,20 @@ public class AuthRepository(UserManager<AppUser> userManager, IJwtBearerHelper j
     public async Task<AuthenticatedResponse> LoginAsync(string username, string password)
     {
         var user = await userManager.FindByNameAsync(username);
-        
-        if (user is null) throw new Exception("User not found.");
 
-        if (!await userManager.CheckPasswordAsync(user, password)) throw new Exception("Invalid password.");
-        
+        // Mismo error para usuario inexistente y contraseña incorrecta: no se revela cuál falló
+        if (user is null || await userManager.IsLockedOutAsync(user) || !await userManager.CheckPasswordAsync(user, password))
+            throw new UnauthorizedException("Usuario o contraseña incorrectos.");
+
         var permissions = await userManager.GetRolesAsync(user);
-        
-        return jwtBearerHelper.GenerateToken(user.Id, user.UsuarioInfo, permissions);
+
+        return jwtBearerHelper.GenerateWebToken(new WebUserIdentity(
+            user.Id,
+            user.UserName!,
+            $"{user.Nombre} {user.Apellido}".Trim(),
+            user.DepartamentoId,
+            user.Institucion,
+            permissions));
     }
 
     public async Task RegisterAsync(RegisterUserCommand command)

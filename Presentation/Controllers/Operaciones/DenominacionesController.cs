@@ -1,9 +1,12 @@
 using Application.Features.Operaciones.Denominaciones;
+using Application.Contracts.Authentication;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers.Operaciones;
 
+[Authorize(Policy = SesionPolicies.Web)]
 [Route("api/denominaciones")]
 public class DenominacionesController(IMediator mediator) : GenericController(mediator)
 {

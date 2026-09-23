@@ -2,8 +2,10 @@ using Application.Contracts;
 using Application.Contracts.Operaciones;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Application.Contracts.Authentication;
 using Domain.Repositories;
+using Infrastructure.Authentication;
 using Infrastructure.Helpers;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Hosting;
@@ -42,6 +44,8 @@ public static class DependencyInjection
             .AddRoles<AppPermission>()
             .AddEntityFrameworkStores<SiGAVContext>();
 
+        services.AddJwtAuthentication(configuration);
+        services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IJwtBearerHelper, JwtBearerHelper>();
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IMiscRepository, MiscQueryService>();
@@ -49,6 +53,7 @@ public static class DependencyInjection
         // Operaciones: escritura (repositorios del dominio) y lectura (query services)
         services.AddScoped<IUnidadRepository, UnidadRepository>();
         services.AddScoped<IDenominacionRepository, DenominacionRepository>();
+        services.AddScoped<IAgenteRepository, AgenteRepository>();
         services.AddScoped<IUnidadQueries, UnidadQueries>();
         services.AddScoped<IDenominacionQueries, DenominacionQueries>();
         services.AddScoped<ICatalogoQueries, CatalogoQueries>();

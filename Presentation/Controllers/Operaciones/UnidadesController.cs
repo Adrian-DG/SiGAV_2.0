@@ -1,9 +1,12 @@
 using Application.Features.Operaciones.Unidades;
+using Application.Contracts.Authentication;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Presentation.Controllers.Operaciones;
 
+[Authorize(Policy = SesionPolicies.Operativa)]
 [Route("api/unidades")]
 public class UnidadesController(IMediator mediator) : GenericController(mediator)
 {
@@ -23,6 +26,8 @@ public class UnidadesController(IMediator mediator) : GenericController(mediator
     public async Task<IActionResult> GetDenominacionActual([FromRoute] int id, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new GetDenominacionActualQuery(id), cancellationToken));
 
+    // Validación previa al login de la app: no hay token todavía.
+    [AllowAnonymous]
     [HttpGet("confirm")]
     public async Task<IActionResult> ConfirmExiste([FromQuery] string? ficha, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new ConfirmUnidadExisteQuery(ficha ?? string.Empty), cancellationToken));
@@ -31,6 +36,7 @@ public class UnidadesController(IMediator mediator) : GenericController(mediator
     public async Task<IActionResult> ConfirmDisponibilidad([FromQuery] string? ficha, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new ConfirmUnidadDisponibleQuery(ficha ?? string.Empty), cancellationToken));
 
+    [Authorize(Policy = SesionPolicies.Web)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUnidadCommand command, CancellationToken cancellationToken)
     {
@@ -38,6 +44,7 @@ public class UnidadesController(IMediator mediator) : GenericController(mediator
         return StatusCode(StatusCodes.Status201Created, new { id });
     }
 
+    [Authorize(Policy = SesionPolicies.Web)]
     [HttpPost("nueva-denominacion")]
     public async Task<IActionResult> CreateConNuevaDenominacion([FromBody] CreateUnidadConNuevaDenominacionCommand command, CancellationToken cancellationToken)
     {
@@ -45,6 +52,7 @@ public class UnidadesController(IMediator mediator) : GenericController(mediator
         return StatusCode(StatusCodes.Status201Created, new { id });
     }
 
+    [Authorize(Policy = SesionPolicies.Web)]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdateUnidadCommand command, CancellationToken cancellationToken)
     {
@@ -56,6 +64,7 @@ public class UnidadesController(IMediator mediator) : GenericController(mediator
     public async Task<IActionResult> ToggleDisponibilidad([FromRoute] string ficha, CancellationToken cancellationToken)
         => Ok(new { estaDisponible = await Mediator.Send(new ToggleDisponibilidadUnidadCommand(ficha), cancellationToken) });
 
+    [Authorize(Policy = SesionPolicies.Web)]
     [HttpPatch("{id:int}/desactivar")]
     public async Task<IActionResult> Desactivar([FromRoute] int id, CancellationToken cancellationToken)
     {
