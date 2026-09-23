@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Abstraction;
 using Domain.Enums;
 using Domain.Exceptions;
@@ -6,7 +5,6 @@ using Domain.ValueObjects;
 
 namespace Domain.Entities.Operaciones;
 
-[Table("unidades", Schema = "operaciones")]
 public class Unidad : BaseEntityMetadata, IAuditableMetadata
 {
     public const int FichaMaxLength = 20;
@@ -23,7 +21,6 @@ public class Unidad : BaseEntityMetadata, IAuditableMetadata
     /// <summary>
     /// Una unidad puede quedar sin denominación cuando otra unidad toma la suya.
     /// </summary>
-    [ForeignKey(nameof(Denominacion))]
     public int? DenominacionId { get; private set; }
     public virtual Denominacion? Denominacion { get; private set; }
 

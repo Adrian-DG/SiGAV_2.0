@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Enums;
 
 namespace Domain.Entities.Operaciones;
@@ -8,7 +7,6 @@ namespace Domain.Entities.Operaciones;
 /// (cubre todas sus regiones de asistencia, incluso las que se creen después) o una región
 /// de asistencia puntual; nunca ambas.
 /// </summary>
-[Table("denominacion_regiones", Schema = "operaciones")]
 public class DenominacionRegion
 {
     public int Id { get; private set; }
@@ -17,7 +15,6 @@ public class DenominacionRegion
 
     public RegionMacroEnum? RegionMacro { get; private set; }
 
-    [ForeignKey(nameof(RegionAsistencia))]
     public int? RegionAsistenciaId { get; private set; }
     public virtual RegionAsistencia? RegionAsistencia { get; private set; }
 
@@ -31,12 +28,10 @@ public class DenominacionRegion
 /// <summary>
 /// Tramo adicional supervisado por una denominación de jerarquía Tramo.
 /// </summary>
-[Table("denominacion_tramos", Schema = "operaciones")]
 public class DenominacionTramo
 {
     public int DenominacionId { get; private set; }
 
-    [ForeignKey(nameof(Tramo))]
     public int TramoId { get; private set; }
     public virtual Tramo? Tramo { get; private set; }
 

@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Abstraction;
 using Domain.Enums;
 using Domain.ValueObjects;
@@ -9,7 +8,6 @@ namespace Domain.Entities.Operaciones;
 /// Registro de auditoría de un cambio de denominación de una unidad. Lo crea únicamente el
 /// agregado <see cref="Unidad"/> al asignar o liberar una denominación; es inmutable.
 /// </summary>
-[Table("historial_denominacion_unidad", Schema = "operaciones")]
 public class HistorialDenominacionUnidad : IRegistroInmutable
 {
     public long Id { get; private set; }

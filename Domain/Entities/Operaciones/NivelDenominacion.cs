@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Abstraction;
 using Domain.Enums;
 
@@ -8,7 +7,6 @@ namespace Domain.Entities.Operaciones;
 /// Catálogo de niveles de denominación (antes TipoUnidad): Encargado Regional, Encargado de
 /// Tramo, Móvil, Motorizada, Ambulancia... Pertenece a la denominación, no a la ficha.
 /// </summary>
-[Table("niveles_denominacion", Schema = "operaciones")]
 public class NivelDenominacion : NamedMetadata
 {
     public JerarquiaEnum Jerarquia { get; set; } = JerarquiaEnum.Unidad;

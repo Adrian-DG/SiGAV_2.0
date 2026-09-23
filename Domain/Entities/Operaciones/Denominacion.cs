@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Abstraction;
 using Domain.Enums;
 using Domain.Exceptions;
@@ -6,16 +5,13 @@ using Domain.ValueObjects;
 
 namespace Domain.Entities.Operaciones;
 
-[Table("denominaciones", Schema = "operaciones")]
 public class Denominacion : NamedMetadata, IAuditableMetadata
 {
     public const int NombreMaxLength = 100;
 
-    [ForeignKey(nameof(Tramo))]
     public int TramoId { get; private set; }
     public virtual Tramo? Tramo { get; private set; }
 
-    [ForeignKey(nameof(Nivel))]
     public int NivelDenominacionId { get; private set; }
     public virtual NivelDenominacion? Nivel { get; private set; }
 

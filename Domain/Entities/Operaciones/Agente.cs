@@ -1,16 +1,13 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Abstraction;
 using Domain.Entities.Misc;
 using Domain.Enums;
 
 namespace Domain.Entities.Operaciones;
 
-[Table("agentes", Schema = "operaciones")]
 public class Agente : PersonMetadata, IAuditableMetadata
 {
     public InstitucionEnum Institucion { get; set; }
     
-    [ForeignKey(nameof(Rango))] 
     public int RangoId { get; set; }
     public virtual Rango? Rango { get; set; }
     
