@@ -40,6 +40,7 @@ public class JwtBearerHelper(IOptions<JwtOptions> options, TimeProvider timeProv
             new(SesionClaims.TipoSesion, TiposSesion.Movil),
             new(SesionClaims.Name, identity.Identificacion),
             new(SesionClaims.NombreCompleto, identity.NombreCompleto),
+            new(SesionClaims.Rango, identity.Rango),
             new(SesionClaims.UnidadId, identity.UnidadId.ToString(CultureInfo.InvariantCulture)),
             new(SesionClaims.Ficha, identity.Ficha),
         };

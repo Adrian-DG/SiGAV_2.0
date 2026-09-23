@@ -14,7 +14,7 @@ public record CreateUnidadConNuevaDenominacionCommand(
     string? Placa,
     string Denominacion,
     int TramoId,
-    int TipoUnidadId) : IRequest<int>;
+    int NivelDenominacionId) : IRequest<int>;
 
 // Validator
 public class CreateUnidadConNuevaDenominacionCommandValidator : AbstractValidator<CreateUnidadConNuevaDenominacionCommand>
@@ -33,9 +33,9 @@ public class CreateUnidadConNuevaDenominacionCommandValidator : AbstractValidato
         RuleFor(x => x.TramoId)
             .GreaterThan(0).WithMessage("El tramo es requerido.")
             .MustAsync(catalogos.ExisteTramoAsync).WithMessage("El tramo especificado no existe.");
-        RuleFor(x => x.TipoUnidadId)
-            .GreaterThan(0).WithMessage("El tipo de unidad es requerido.")
-            .MustAsync(catalogos.ExisteTipoUnidadAsync).WithMessage("El tipo de unidad especificado no existe.");
+        RuleFor(x => x.NivelDenominacionId)
+            .GreaterThan(0).WithMessage("El nivel de la denominación es requerido.")
+            .MustAsync(catalogos.ExisteNivelDenominacionAsync).WithMessage("El nivel de denominación especificado no existe.");
     }
 }
 
@@ -48,7 +48,7 @@ public class CreateUnidadConNuevaDenominacionCommandHandler(
     public async Task<int> Handle(CreateUnidadConNuevaDenominacionCommand request, CancellationToken cancellationToken)
     {
         var unidad = Unidad.Crear(request.Ficha, request.Placa);
-        var denominacion = Denominacion.Crear(request.Denominacion, request.TramoId, request.TipoUnidadId);
+        var denominacion = Denominacion.Crear(request.Denominacion, request.TramoId, request.NivelDenominacionId);
 
         if (await unidades.ExisteFichaAsync(unidad.Ficha, cancellationToken: cancellationToken))
             throw new ConflictException($"La ficha '{unidad.Ficha}' ya está registrada en el sistema.");

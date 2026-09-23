@@ -11,9 +11,9 @@ public class EventoUnidad : IAuditableMetadata
     public int EventoId { get; set; }
     public virtual Evento? Evento { get; set; }
     
-    [ForeignKey(nameof(TipoUnidad))] 
-    public int TipoUnidadId { get; set; }
-    public virtual TipoUnidad? TipoUnidad { get; set; }
+    [ForeignKey(nameof(NivelDenominacion))]
+    public int NivelDenominacionId { get; set; }
+    public virtual NivelDenominacion? NivelDenominacion { get; set; }
     
     [ForeignKey(nameof(Unidad))]
     public int UnidadId { get; set; }

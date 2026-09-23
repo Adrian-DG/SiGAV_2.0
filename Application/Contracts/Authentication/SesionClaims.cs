@@ -15,6 +15,7 @@ public static class SesionClaims
     /// <summary>Tipo de sesión: <see cref="TiposSesion.Web"/> o <see cref="TiposSesion.Movil"/>.</summary>
     public const string TipoSesion = "sesion";
     public const string NombreCompleto = "nombre";
+    public const string Rango = "rango";
 
     // Sesión web (front desk)
     public const string Permiso = "permission";

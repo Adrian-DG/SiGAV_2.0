@@ -16,6 +16,7 @@ public class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) : IExcepti
             ValidationException ex => (StatusCodes.Status400BadRequest, ex.Errors),
             DomainException => (StatusCodes.Status400BadRequest, null),
             UnauthorizedException => (StatusCodes.Status401Unauthorized, null),
+            ForbiddenException => (StatusCodes.Status403Forbidden, null),
             NotFoundException => (StatusCodes.Status404NotFound, null),
             ConflictException => (StatusCodes.Status409Conflict, null),
             _ => (StatusCodes.Status500InternalServerError, (IDictionary<string, string[]>?)null)

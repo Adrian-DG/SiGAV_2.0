@@ -66,13 +66,30 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
             entity.HasOne(eu => eu.Agente)
                 .WithMany()
                 .HasForeignKey(eu => eu.AgenteId);
-            entity.HasOne(eu => eu.TipoUnidad)
+            // Nivel y denominación quedan como foto del momento del evento (las estadísticas
+            // no cambian si luego se reasigna la denominación o se cambia su nivel)
+            entity.HasOne(eu => eu.NivelDenominacion)
                 .WithMany()
-                .HasForeignKey(eu => eu.TipoUnidadId);
+                .HasForeignKey(eu => eu.NivelDenominacionId);
             entity.HasOne(eu => eu.Denominacion)
                 .WithMany()
                 .HasForeignKey(eu => eu.DenominacionId);
+            entity.HasIndex(eu => new { eu.DenominacionId, eu.EventoId });
         });
+
+        builder.Entity<EventoTipoEvento>(entity =>
+        {
+            entity.HasKey(et => new { et.EventoId, et.TipoEventoId });
+            entity.HasOne(et => et.Evento)
+                .WithMany(e => e.Tipos)
+                .HasForeignKey(et => et.EventoId);
+            entity.HasOne(et => et.TipoEvento)
+                .WithMany()
+                .HasForeignKey(et => et.TipoEventoId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Evento>(entity => entity.HasIndex(e => e.CreatedAt));
         
         builder.Entity<Unidad>(entity =>
         {
@@ -94,9 +111,45 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
             entity.HasOne(d => d.Tramo)
                 .WithMany()
                 .HasForeignKey(d => d.TramoId);
-            entity.HasOne(d => d.TipoUnidad)
+            entity.HasOne(d => d.Nivel)
                 .WithMany()
-                .HasForeignKey(d => d.TipoUnidadId);
+                .HasForeignKey(d => d.NivelDenominacionId);
+
+            // Asignaciones: forman parte del agregado; al quitarlas de la colección se eliminan
+            entity.HasMany(d => d.Regiones)
+                .WithOne()
+                .HasForeignKey(r => r.DenominacionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasMany(d => d.Tramos)
+                .WithOne()
+                .HasForeignKey(t => t.DenominacionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<DenominacionRegion>(entity =>
+        {
+            entity.HasIndex(r => new { r.DenominacionId, r.RegionMacro })
+                .IsUnique()
+                .HasFilter("[RegionMacro] IS NOT NULL");
+            entity.HasIndex(r => new { r.DenominacionId, r.RegionAsistenciaId })
+                .IsUnique()
+                .HasFilter("[RegionAsistenciaId] IS NOT NULL");
+            entity.HasOne(r => r.RegionAsistencia)
+                .WithMany()
+                .HasForeignKey(r => r.RegionAsistenciaId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.ToTable(t => t.HasCheckConstraint(
+                "CK_denominacion_regiones_macro_o_asistencia",
+                "([RegionMacro] IS NOT NULL AND [RegionAsistenciaId] IS NULL) OR ([RegionMacro] IS NULL AND [RegionAsistenciaId] IS NOT NULL)"));
+        });
+
+        builder.Entity<DenominacionTramo>(entity =>
+        {
+            entity.HasKey(t => new { t.DenominacionId, t.TramoId });
+            entity.HasOne(t => t.Tramo)
+                .WithMany()
+                .HasForeignKey(t => t.TramoId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
         
         builder.Entity<Flota>(entity =>
@@ -133,9 +186,12 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     public DbSet<EventoCiudadano> EventoCiudadanos { get; set; }
     public DbSet<EventoUnidad> EventoUnidades { get; set; }
     public DbSet<Agente> Agentes { get; set; }
-    public DbSet<TipoUnidad> TipoUnidades { get; set; }
+    public DbSet<NivelDenominacion> NivelesDenominacion { get; set; }
     public DbSet<Unidad> Unidades { get; set; }
     public DbSet<Denominacion> Denominaciones { get; set; }
+    public DbSet<DenominacionRegion> DenominacionRegiones { get; set; }
+    public DbSet<DenominacionTramo> DenominacionTramos { get; set; }
+    public DbSet<EventoTipoEvento> EventoTiposEvento { get; set; }
     public DbSet<Flota> Flotas { get; set; }
     public DbSet<Tramo> Tramos { get; set; }
     public DbSet<RegionAsistencia> Regiones { get; set; }

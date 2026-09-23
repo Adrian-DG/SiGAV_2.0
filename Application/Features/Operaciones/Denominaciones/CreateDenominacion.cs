@@ -8,7 +8,7 @@ using MediatR;
 namespace Application.Features.Operaciones.Denominaciones;
 
 // Command
-public record CreateDenominacionCommand(string Nombre, int TramoId, int TipoUnidadId) : IRequest<int>;
+public record CreateDenominacionCommand(string Nombre, int TramoId, int NivelDenominacionId) : IRequest<int>;
 
 // Validator
 public class CreateDenominacionCommandValidator : AbstractValidator<CreateDenominacionCommand>
@@ -21,9 +21,9 @@ public class CreateDenominacionCommandValidator : AbstractValidator<CreateDenomi
         RuleFor(x => x.TramoId)
             .GreaterThan(0).WithMessage("El tramo es requerido.")
             .MustAsync(catalogos.ExisteTramoAsync).WithMessage("El tramo especificado no existe.");
-        RuleFor(x => x.TipoUnidadId)
-            .GreaterThan(0).WithMessage("El tipo de unidad es requerido.")
-            .MustAsync(catalogos.ExisteTipoUnidadAsync).WithMessage("El tipo de unidad especificado no existe.");
+        RuleFor(x => x.NivelDenominacionId)
+            .GreaterThan(0).WithMessage("El nivel de la denominación es requerido.")
+            .MustAsync(catalogos.ExisteNivelDenominacionAsync).WithMessage("El nivel de denominación especificado no existe.");
     }
 }
 
@@ -33,7 +33,7 @@ public class CreateDenominacionCommandHandler(IDenominacionRepository denominaci
 {
     public async Task<int> Handle(CreateDenominacionCommand request, CancellationToken cancellationToken)
     {
-        var denominacion = Denominacion.Crear(request.Nombre, request.TramoId, request.TipoUnidadId);
+        var denominacion = Denominacion.Crear(request.Nombre, request.TramoId, request.NivelDenominacionId);
 
         if (await denominaciones.ExisteNombreAsync(denominacion.Nombre, cancellationToken))
             throw new ConflictException($"La denominación '{denominacion.Nombre}' ya existe.");

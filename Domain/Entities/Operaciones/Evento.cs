@@ -12,6 +12,8 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     public virtual ICollection<EventoCiudadano>? Ciudadanos { get; set; }
     
     public virtual ICollection<EventoUnidad>? Unidades { get; set; }
+
+    public virtual ICollection<EventoTipoEvento>? Tipos { get; set; }
     
     public required string Coordenadas { get; set; }
 

@@ -9,7 +9,7 @@ using MediatR;
 namespace Application.Features.Operaciones.Unidades;
 
 // Command
-public record UpdateUnidadCommand(int UnidadId, string Ficha, string? Placa, int DenominacionId, int TipoUnidadId) : IRequest;
+public record UpdateUnidadCommand(int UnidadId, string Ficha, string? Placa, int DenominacionId, int NivelDenominacionId) : IRequest;
 
 // Validator
 public class UpdateUnidadCommandValidator : AbstractValidator<UpdateUnidadCommand>
@@ -23,9 +23,9 @@ public class UpdateUnidadCommandValidator : AbstractValidator<UpdateUnidadComman
         RuleFor(x => x.Placa)
             .MaximumLength(Unidad.PlacaMaxLength).WithMessage($"La placa no puede exceder {Unidad.PlacaMaxLength} caracteres.");
         RuleFor(x => x.DenominacionId).GreaterThan(0).WithMessage("La denominación es requerida.");
-        RuleFor(x => x.TipoUnidadId)
-            .GreaterThan(0).WithMessage("El tipo de unidad es requerido.")
-            .MustAsync(catalogos.ExisteTipoUnidadAsync).WithMessage("El tipo de unidad especificado no existe.");
+        RuleFor(x => x.NivelDenominacionId)
+            .GreaterThan(0).WithMessage("El nivel de la denominación es requerido.")
+            .MustAsync(catalogos.ExisteNivelDenominacionAsync).WithMessage("El nivel de denominación especificado no existe.");
     }
 }
 
@@ -49,9 +49,13 @@ public class UpdateUnidadCommandHandler(
 
         unidad.ActualizarDatos(ficha, request.Placa);
 
-        // El tipo de unidad vive en la denominación (en SiGAV 1.0 se duplicaba en la unidad)
-        if (denominacion.TipoUnidadId != request.TipoUnidadId)
-            denominacion.CambiarTipoUnidad(request.TipoUnidadId);
+        // El nivel vive en la denominación (en SiGAV 1.0 el tipo se duplicaba en la unidad)
+        if (denominacion.NivelDenominacionId != request.NivelDenominacionId)
+        {
+            var nivel = await denominaciones.GetNivelAsync(request.NivelDenominacionId, cancellationToken)
+                ?? throw new NotFoundException("El nivel de denominación", request.NivelDenominacionId);
+            denominacion.CambiarNivel(nivel);
+        }
 
         // Si cambia de denominación se libera de cualquier otra unidad que la tenga;
         // si es la misma, solo se vuelve a marcar disponible (comportamiento de SiGAV 1.0).

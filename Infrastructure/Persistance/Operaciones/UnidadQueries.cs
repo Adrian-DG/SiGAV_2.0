@@ -16,8 +16,8 @@ public class UnidadQueries(SiGAVContext context) : IUnidadQueries
         u.Placa,
         u.DenominacionId,
         u.Denominacion != null ? u.Denominacion.Nombre : string.Empty,
-        u.Denominacion != null ? u.Denominacion.TipoUnidadId : null,
-        u.Denominacion != null ? u.Denominacion.TipoUnidad!.Nombre : string.Empty,
+        u.Denominacion != null ? u.Denominacion.NivelDenominacionId : null,
+        u.Denominacion != null ? u.Denominacion.Nivel!.Nombre : string.Empty,
         u.Denominacion != null ? u.Denominacion.TramoId : null,
         u.Denominacion != null ? u.Denominacion.Tramo!.Nombre : string.Empty,
         u.EstaDisponible,
@@ -38,7 +38,7 @@ public class UnidadQueries(SiGAVContext context) : IUnidadQueries
         var total = await query.CountAsync(cancellationToken);
 
         var items = await query
-            .OrderBy(u => u.Denominacion != null ? u.Denominacion.TipoUnidadId : int.MaxValue)
+            .OrderBy(u => u.Denominacion != null ? (int)u.Denominacion.Nivel!.Jerarquia : int.MaxValue)
             .ThenBy(u => u.Ficha)
             .Skip((page - 1) * size)
             .Take(size)
@@ -51,7 +51,6 @@ public class UnidadQueries(SiGAVContext context) : IUnidadQueries
     public async Task<IReadOnlyList<UnidadAutoCompleteViewModel>> AutoCompleteAsync(string term, bool esAmbulancia, int take, CancellationToken cancellationToken = default)
     {
         var pattern = $"%{term}%";
-        var tiposAmbulancia = TipoUnidad.TiposAmbulancia.ToList();
 
         var query = context.Unidades
             .AsNoTracking()
@@ -60,8 +59,8 @@ public class UnidadQueries(SiGAVContext context) : IUnidadQueries
                 || (u.Denominacion != null && EF.Functions.Like(u.Denominacion.Nombre, pattern)));
 
         query = esAmbulancia
-            ? query.Where(u => u.Denominacion != null && tiposAmbulancia.Contains(u.Denominacion.TipoUnidadId))
-            : query.Where(u => u.Denominacion == null || !tiposAmbulancia.Contains(u.Denominacion.TipoUnidadId));
+            ? query.Where(u => u.Denominacion != null && u.Denominacion.Nivel!.EsAmbulancia)
+            : query.Where(u => u.Denominacion == null || !u.Denominacion.Nivel!.EsAmbulancia);
 
         return await query
             .OrderBy(u => u.Ficha)

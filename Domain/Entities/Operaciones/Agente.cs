@@ -19,7 +19,8 @@ public class Agente : PersonMetadata, IAuditableMetadata
     public int CreatedBy { get; set; }
     public int? UpdatedBy { get; set; }
 
-    public string GetRango => Institucion == InstitucionEnum.ARD ? Rango.NombreArmada : Rango.NombreArmada;
+    // La Armada (ARD) usa su propia nomenclatura de rangos. Requiere que Rango esté cargado.
+    public string GetRango => (Institucion == InstitucionEnum.ARD ? Rango?.NombreArmada : Rango?.Nombre) ?? string.Empty;
     
     public string GetInfo => $"{GetRango}, {Apellido} {Nombre}, {Institucion.ToString()}";
 }
