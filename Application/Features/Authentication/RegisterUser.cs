@@ -1,4 +1,4 @@
-using Application.Contracts;
+using Application.Contracts.Authentication;
 using Domain.Enums;
 using FluentValidation;
 using MediatR;
@@ -33,11 +33,11 @@ public class RegisterUserCommandValidator : AbstractValidator<RegisterUserComman
 }
 
 // Handler
-public class RegisterUserCommandHandler(IUnitOfWork uow): IRequestHandler<RegisterUserCommand, Unit>
+public class RegisterUserCommandHandler(IAuthRepository repository): IRequestHandler<RegisterUserCommand, Unit>
 {
     public async Task<Unit> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        await uow.AuthRepository.RegisterAsync(request);
+        await repository.RegisterAsync(request);
         return Unit.Value;
     }
 }

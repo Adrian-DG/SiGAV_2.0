@@ -6,5 +6,8 @@ namespace Domain.Entities.Operaciones;
 [Table("tipo_unidades", Schema = "operaciones")]
 public class TipoUnidad : NamedMetadata
 {
-    
+    /// <summary>
+    /// Tipos de unidad considerados ambulancias (heredado del catálogo de SiGAV 1.0).
+    /// </summary>
+    public static readonly IReadOnlyCollection<int> TiposAmbulancia = [6, 14, 15];
 }

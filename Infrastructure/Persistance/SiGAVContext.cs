@@ -6,10 +6,11 @@ using Domain.Entities;
 using Domain.Entities.Misc;
 using Domain.Entities.Historico;
 using Domain.Entities.Operaciones;
+using Domain.Repositories;
 
 namespace Infrastructure.Persistance;
 
-public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbContext<AppUser, AppPermission, int>(options)
+public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbContext<AppUser, AppPermission, int>(options), IUnitOfWork
 {
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -75,14 +76,21 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
         
         builder.Entity<Unidad>(entity =>
         {
-            entity.HasIndex(u => new { u.Ficha, u.Placa }).IsUnique();
+            entity.Property(u => u.Ficha).HasMaxLength(Unidad.FichaMaxLength);
+            entity.Property(u => u.Placa).HasMaxLength(Unidad.PlacaMaxLength);
+            entity.HasIndex(u => u.Ficha).IsUnique();
+            entity.HasIndex(u => u.DenominacionId);
             entity.HasOne(u => u.Denominacion)
                 .WithMany()
-                .HasForeignKey(u => u.DenominacionId);
+                .HasForeignKey(u => u.DenominacionId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
         });
-        
+
         builder.Entity<Denominacion>(entity =>
         {
+            entity.Property(d => d.Nombre).HasMaxLength(Denominacion.NombreMaxLength);
+            entity.HasIndex(d => d.Nombre).IsUnique();
             entity.HasOne(d => d.Tramo)
                 .WithMany()
                 .HasForeignKey(d => d.TramoId);

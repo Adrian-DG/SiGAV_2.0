@@ -1,4 +1,4 @@
-using Application.Contracts;
+using Application.Contracts.Authentication;
 using Application.Features.Authentication;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

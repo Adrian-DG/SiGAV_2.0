@@ -1,6 +1,6 @@
 using Application.Contracts.Authentication;
 using Application.Features.Authentication;
-using Infrastructure.Data;
+using Infrastructure.Helpers;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 
@@ -23,7 +23,7 @@ public class AuthRepository(UserManager<AppUser> userManager, IJwtBearerHelper j
 
     public async Task RegisterAsync(RegisterUserCommand command)
     {
-        var user = userManager.FindByNameAsync(command.username);
+        var user = await userManager.FindByNameAsync(command.username);
         
         if (user is not null) throw new Exception("Username already exists.");
 

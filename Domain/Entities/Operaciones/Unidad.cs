@@ -1,20 +1,119 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Abstraction;
+using Domain.Exceptions;
 
 namespace Domain.Entities.Operaciones;
 
 [Table("unidades", Schema = "operaciones")]
 public class Unidad : BaseEntityMetadata, IAuditableMetadata
 {
-    public required string Ficha { get; set; }
-    public string? Placa { get; set; }
-    
+    public const int FichaMaxLength = 20;
+    public const int PlacaMaxLength = 10;
+
+    public string Ficha { get; private set; } = null!;
+    public string? Placa { get; private set; }
+
+    /// <summary>
+    /// Indica si la unidad está operativa (puede iniciar sesión en la app / recibir asistencias).
+    /// </summary>
+    public bool EstaDisponible { get; private set; }
+
+    /// <summary>
+    /// Una unidad puede quedar sin denominación cuando otra unidad toma la suya.
+    /// </summary>
     [ForeignKey(nameof(Denominacion))]
-    public int DenominacionId { get; set; }
-    public virtual Denominacion? Denominacion { get; set; }
-    
+    public int? DenominacionId { get; private set; }
+    public virtual Denominacion? Denominacion { get; private set; }
+
     public DateOnly CreatedAt { get; set; }
     public DateOnly? UpdatedAt { get; set; }
     public int CreatedBy { get; set; }
     public int? UpdatedBy { get; set; }
+
+    // Requerido por EF Core
+    private Unidad() { }
+
+    /// <summary>
+    /// Crea la unidad sin denominación; la asignación se realiza a través de
+    /// <see cref="Services.AsignacionDenominacionService"/> para respetar la exclusividad.
+    /// </summary>
+    public static Unidad Crear(string ficha, string? placa = null)
+    {
+        return new Unidad
+        {
+            Ficha = NormalizarFicha(ficha),
+            Placa = NormalizarPlaca(placa),
+            EstaDisponible = false,
+            IsActive = true
+        };
+    }
+
+    public void ActualizarDatos(string ficha, string? placa)
+    {
+        AsegurarActiva();
+        Ficha = NormalizarFicha(ficha);
+        Placa = NormalizarPlaca(placa);
+    }
+
+    internal void AsignarDenominacion(Denominacion denominacion)
+    {
+        AsegurarActiva();
+        if (!denominacion.IsActive) throw new DomainException("No se puede asignar una denominación inactiva.");
+
+        Denominacion = denominacion;
+        // Si la denominación es nueva (Id = 0), EF Core resuelve la FK a partir de la navegación al guardar.
+        DenominacionId = denominacion.Id > 0 ? denominacion.Id : null;
+        EstaDisponible = true;
+    }
+
+    internal void LiberarDenominacion()
+    {
+        Denominacion = null;
+        DenominacionId = null;
+        EstaDisponible = false;
+    }
+
+    public void AlternarDisponibilidad()
+    {
+        AsegurarActiva();
+        EstaDisponible = !EstaDisponible;
+    }
+
+    /// <summary>
+    /// Desactivación lógica: la unidad ya no podrá iniciar sesión ni ser reasignada.
+    /// </summary>
+    public void Desactivar()
+    {
+        IsActive = false;
+        EstaDisponible = false;
+    }
+
+    public bool TieneDenominacion(int denominacionId) => DenominacionId == denominacionId;
+
+    private void AsegurarActiva()
+    {
+        if (!IsActive) throw new DomainException($"La unidad '{Ficha}' está desactivada.");
+    }
+
+    public static string NormalizarFicha(string ficha)
+    {
+        if (string.IsNullOrWhiteSpace(ficha)) throw new DomainException("La ficha de la unidad es requerida.");
+
+        var normalizada = ficha.Trim();
+        if (normalizada.Length > FichaMaxLength)
+            throw new DomainException($"La ficha no puede exceder {FichaMaxLength} caracteres.");
+
+        return normalizada;
+    }
+
+    private static string? NormalizarPlaca(string? placa)
+    {
+        if (string.IsNullOrWhiteSpace(placa)) return null;
+
+        var normalizada = placa.Trim().ToUpperInvariant();
+        if (normalizada.Length > PlacaMaxLength)
+            throw new DomainException($"La placa no puede exceder {PlacaMaxLength} caracteres.");
+
+        return normalizada;
+    }
 }

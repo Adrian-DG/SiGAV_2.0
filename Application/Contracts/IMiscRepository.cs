@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Infrastructure.Persistance.Misc
+namespace Application.Contracts
 {
     public interface IMiscRepository
     {

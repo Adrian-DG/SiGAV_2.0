@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
-using Infrastructure.Persistance.Misc;
+using Application.Contracts;
+using Domain.ViewModels;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Text;
 namespace Application.Features.Misc;
 
 public record GetNamedResourceQuery(string Column, string Table, object? Parameters = null) 
-    : IRequest<IEnumerable<NamedModel>>;
+    : IRequest<IEnumerable<NamedViewModel>>;
 
 public class GetNamedResourceQueryValidator : AbstractValidator<GetNamedResourceQuery>
 {
@@ -19,9 +20,9 @@ public class GetNamedResourceQueryValidator : AbstractValidator<GetNamedResource
     }
 }
 
-public class GetNamedResourceQueryHandler(IMiscRepository miscRepository) : IRequestHandler<GetNamedResourceQuery, IEnumerable<NamedModel>>
+public class GetNamedResourceQueryHandler(IMiscRepository miscRepository) : IRequestHandler<GetNamedResourceQuery, IEnumerable<NamedViewModel>>
 {
-    public async Task<IEnumerable<NamedModel>> Handle(GetNamedResourceQuery request, CancellationToken cancellationToken)
+    public async Task<IEnumerable<NamedViewModel>> Handle(GetNamedResourceQuery request, CancellationToken cancellationToken)
     {
         return await miscRepository.GetNamedResource(request.Column, request.Table, request.Parameters);
     }

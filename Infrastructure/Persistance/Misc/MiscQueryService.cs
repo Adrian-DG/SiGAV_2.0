@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using Application.Contracts;
+using Dapper;
 using Domain.ViewModels;
 
 namespace Infrastructure.Persistance.Misc
