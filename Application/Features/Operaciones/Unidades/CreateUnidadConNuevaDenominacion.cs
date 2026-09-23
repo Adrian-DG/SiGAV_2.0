@@ -1,3 +1,5 @@
+using Application.Common;
+using Application.Contracts;
 using Application.Contracts.Operaciones;
 using Application.Exceptions;
 using Domain.Entities.Operaciones;
@@ -43,10 +45,14 @@ public class CreateUnidadConNuevaDenominacionCommandValidator : AbstractValidato
 public class CreateUnidadConNuevaDenominacionCommandHandler(
     IUnidadRepository unidades,
     IDenominacionRepository denominaciones,
-    IUnitOfWork uow) : IRequestHandler<CreateUnidadConNuevaDenominacionCommand, int>
+    IUnitOfWork uow,
+    ICurrentUserService currentUser,
+    TimeProvider timeProvider) : IRequestHandler<CreateUnidadConNuevaDenominacionCommand, int>
 {
     public async Task<int> Handle(CreateUnidadConNuevaDenominacionCommand request, CancellationToken cancellationToken)
     {
+        var autor = currentUser.RequerirAutorWeb(timeProvider);
+
         var unidad = Unidad.Crear(request.Ficha, request.Placa);
         var denominacion = Denominacion.Crear(request.Denominacion, request.TramoId, request.NivelDenominacionId);
 
@@ -57,7 +63,7 @@ public class CreateUnidadConNuevaDenominacionCommandHandler(
             throw new ConflictException($"La denominación '{denominacion.Nombre}' ya está registrada en el sistema.");
 
         // Denominación nueva: no hay unidades que la ocupen
-        AsignacionDenominacionService.Asignar(unidad, denominacion, []);
+        AsignacionDenominacionService.Asignar(unidad, denominacion, [], autor);
 
         denominaciones.Add(denominacion);
         unidades.Add(unidad);

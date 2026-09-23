@@ -1,3 +1,4 @@
+using Application.Features.Operaciones.Historial;
 using Application.Features.Operaciones.Unidades;
 using Application.Contracts.Authentication;
 using MediatR;
@@ -25,6 +26,12 @@ public class UnidadesController(IMediator mediator) : GenericController(mediator
     [HttpGet("{id:int}/denominacion-actual")]
     public async Task<IActionResult> GetDenominacionActual([FromRoute] int id, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new GetDenominacionActualQuery(id), cancellationToken));
+
+    /// <summary>Auditoría: cambios de denominación de la unidad (solo front desk).</summary>
+    [Authorize(Policy = SesionPolicies.Web)]
+    [HttpGet("{id:int}/historial-denominaciones")]
+    public async Task<IActionResult> GetHistorialDenominaciones([FromRoute] int id, [FromQuery] int page = 1, [FromQuery] int size = 20, CancellationToken cancellationToken = default)
+        => Ok(await Mediator.Send(new GetHistorialDenominacionesUnidadQuery(id, page, size), cancellationToken));
 
     // Validación previa al login de la app: no hay token todavía.
     [AllowAnonymous]

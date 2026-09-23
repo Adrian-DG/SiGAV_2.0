@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Abstraction;
+using Domain.Enums;
 using Domain.Exceptions;
+using Domain.ValueObjects;
 
 namespace Domain.Entities.Operaciones;
 
@@ -24,6 +26,10 @@ public class Unidad : BaseEntityMetadata, IAuditableMetadata
     [ForeignKey(nameof(Denominacion))]
     public int? DenominacionId { get; private set; }
     public virtual Denominacion? Denominacion { get; private set; }
+
+    // Solo se agregan registros; no se carga al leer la unidad (se consulta aparte)
+    private readonly List<HistorialDenominacionUnidad> _historialDenominaciones = [];
+    public IReadOnlyCollection<HistorialDenominacionUnidad> HistorialDenominaciones => _historialDenominaciones.AsReadOnly();
 
     public DateOnly CreatedAt { get; set; }
     public DateOnly? UpdatedAt { get; set; }
@@ -55,10 +61,21 @@ public class Unidad : BaseEntityMetadata, IAuditableMetadata
         Placa = NormalizarPlaca(placa);
     }
 
-    internal void AsignarDenominacion(Denominacion denominacion)
+    /// <summary>
+    /// Asigna la denominación y deja el registro de auditoría. Si ya la tenía solo vuelve a
+    /// marcar la unidad como disponible (no hay cambio que auditar).
+    /// </summary>
+    internal void AsignarDenominacion(Denominacion denominacion, AutorCambio autor, Unidad? unidadDesplazada)
     {
         AsegurarActiva();
         if (!denominacion.IsActive) throw new DomainException("No se puede asignar una denominación inactiva.");
+
+        var yaLaTenia = ReferenceEquals(Denominacion, denominacion) || (denominacion.Id > 0 && DenominacionId == denominacion.Id);
+        if (!yaLaTenia)
+        {
+            var tipo = DenominacionId is null ? TipoCambioDenominacionEnum.Asignacion : TipoCambioDenominacionEnum.Reasignacion;
+            _historialDenominaciones.Add(HistorialDenominacionUnidad.Registrar(tipo, DenominacionId, denominacion, unidadDesplazada, autor));
+        }
 
         Denominacion = denominacion;
         // Si la denominación es nueva (Id = 0), EF Core resuelve la FK a partir de la navegación al guardar.
@@ -66,8 +83,14 @@ public class Unidad : BaseEntityMetadata, IAuditableMetadata
         EstaDisponible = true;
     }
 
-    internal void LiberarDenominacion()
+    /// <summary>La unidad pierde su denominación porque <paramref name="unidadQueLaToma"/> la ocupa.</summary>
+    internal void LiberarDenominacion(AutorCambio autor, Unidad unidadQueLaToma)
     {
+        if (DenominacionId is null && Denominacion is null) return;
+
+        _historialDenominaciones.Add(HistorialDenominacionUnidad.Registrar(
+            TipoCambioDenominacionEnum.Liberacion, DenominacionId ?? Denominacion?.Id, null, unidadQueLaToma, autor));
+
         Denominacion = null;
         DenominacionId = null;
         EstaDisponible = false;

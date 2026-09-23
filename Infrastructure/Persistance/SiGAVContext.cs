@@ -7,6 +7,7 @@ using Domain.Entities.Misc;
 using Domain.Entities.Historico;
 using Domain.Entities.Operaciones;
 using Domain.Repositories;
+using Domain.ValueObjects;
 
 namespace Infrastructure.Persistance;
 
@@ -104,6 +105,31 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        builder.Entity<HistorialDenominacionUnidad>(entity =>
+        {
+            // Registro de auditoría: nada en cascada, las referencias no pueden borrarse mientras exista el historial
+            entity.HasOne<Unidad>()
+                .WithMany(u => u.HistorialDenominaciones)
+                .HasForeignKey(h => h.UnidadId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(h => h.UnidadRelacionada)
+                .WithMany()
+                .HasForeignKey(h => h.UnidadRelacionadaId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(h => h.DenominacionAnterior)
+                .WithMany()
+                .HasForeignKey(h => h.DenominacionAnteriorId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(h => h.DenominacionNueva)
+                .WithMany()
+                .HasForeignKey(h => h.DenominacionNuevaId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(h => h.Observacion).HasMaxLength(AutorCambio.ObservacionMaxLength);
+            entity.HasIndex(h => new { h.UnidadId, h.FechaUtc });
+            entity.HasIndex(h => h.DenominacionAnteriorId);
+            entity.HasIndex(h => h.DenominacionNuevaId);
+        });
+
         builder.Entity<Denominacion>(entity =>
         {
             entity.Property(d => d.Nombre).HasMaxLength(Denominacion.NombreMaxLength);
@@ -192,6 +218,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     public DbSet<DenominacionRegion> DenominacionRegiones { get; set; }
     public DbSet<DenominacionTramo> DenominacionTramos { get; set; }
     public DbSet<EventoTipoEvento> EventoTiposEvento { get; set; }
+    public DbSet<HistorialDenominacionUnidad> HistorialDenominaciones { get; set; }
     public DbSet<Flota> Flotas { get; set; }
     public DbSet<Tramo> Tramos { get; set; }
     public DbSet<RegionAsistencia> Regiones { get; set; }

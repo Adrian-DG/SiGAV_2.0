@@ -1,4 +1,5 @@
 using Application.Features.Operaciones.Denominaciones;
+using Application.Features.Operaciones.Historial;
 using Application.Contracts.Authentication;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,11 @@ public class DenominacionesController(IMediator mediator) : GenericController(me
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetDetalle([FromRoute] int id, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new GetDenominacionDetalleQuery(id), cancellationToken));
+
+    /// <summary>Auditoría: unidades que han tenido esta denominación.</summary>
+    [HttpGet("{id:int}/historial-unidades")]
+    public async Task<IActionResult> GetHistorialUnidades([FromRoute] int id, [FromQuery] int page = 1, [FromQuery] int size = 20, CancellationToken cancellationToken = default)
+        => Ok(await Mediator.Send(new GetHistorialUnidadesDenominacionQuery(id, page, size), cancellationToken));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateDenominacionCommand command, CancellationToken cancellationToken)

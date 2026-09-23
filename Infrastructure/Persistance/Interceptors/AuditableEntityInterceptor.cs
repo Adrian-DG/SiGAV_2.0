@@ -30,6 +30,13 @@ public class AuditableEntityInterceptor(ICurrentUserService currentUser) : SaveC
     {
         if (context is null) return;
 
+        // Los registros de auditoría solo pueden insertarse
+        var alterado = context.ChangeTracker.Entries<IRegistroInmutable>()
+            .FirstOrDefault(e => e.State is EntityState.Modified or EntityState.Deleted);
+        if (alterado is not null)
+            throw new InvalidOperationException(
+                $"'{alterado.Metadata.ClrType.Name}' es un registro de auditoría inmutable: no puede modificarse ni eliminarse.");
+
         var today = DateOnly.FromDateTime(DateTime.Now);
         var userId = currentUser.UserId ?? 0;
 

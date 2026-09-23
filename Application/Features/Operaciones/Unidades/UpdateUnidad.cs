@@ -1,15 +1,18 @@
+using Application.Common;
+using Application.Contracts;
 using Application.Contracts.Operaciones;
 using Application.Exceptions;
 using Domain.Entities.Operaciones;
 using Domain.Repositories;
 using Domain.Services;
+using Domain.ValueObjects;
 using FluentValidation;
 using MediatR;
 
 namespace Application.Features.Operaciones.Unidades;
 
 // Command
-public record UpdateUnidadCommand(int UnidadId, string Ficha, string? Placa, int DenominacionId, int NivelDenominacionId) : IRequest;
+public record UpdateUnidadCommand(int UnidadId, string Ficha, string? Placa, int DenominacionId, int NivelDenominacionId, string? Motivo = null) : IRequest;
 
 // Validator
 public class UpdateUnidadCommandValidator : AbstractValidator<UpdateUnidadCommand>
@@ -26,6 +29,8 @@ public class UpdateUnidadCommandValidator : AbstractValidator<UpdateUnidadComman
         RuleFor(x => x.NivelDenominacionId)
             .GreaterThan(0).WithMessage("El nivel de la denominación es requerido.")
             .MustAsync(catalogos.ExisteNivelDenominacionAsync).WithMessage("El nivel de denominación especificado no existe.");
+        RuleFor(x => x.Motivo)
+            .MaximumLength(AutorCambio.ObservacionMaxLength).WithMessage($"El motivo no puede exceder {AutorCambio.ObservacionMaxLength} caracteres.");
     }
 }
 
@@ -33,10 +38,14 @@ public class UpdateUnidadCommandValidator : AbstractValidator<UpdateUnidadComman
 public class UpdateUnidadCommandHandler(
     IUnidadRepository unidades,
     IDenominacionRepository denominaciones,
-    IUnitOfWork uow) : IRequestHandler<UpdateUnidadCommand, Unit>
+    IUnitOfWork uow,
+    ICurrentUserService currentUser,
+    TimeProvider timeProvider) : IRequestHandler<UpdateUnidadCommand, Unit>
 {
     public async Task<Unit> Handle(UpdateUnidadCommand request, CancellationToken cancellationToken)
     {
+        var autor = currentUser.RequerirAutorWeb(timeProvider, request.Motivo);
+
         var unidad = await unidades.GetByIdAsync(request.UnidadId, cancellationToken)
             ?? throw new NotFoundException("La unidad", request.UnidadId);
 
@@ -63,7 +72,7 @@ public class UpdateUnidadCommandHandler(
             ? []
             : await unidades.GetActivasConDenominacionAsync(denominacion.Id, cancellationToken);
 
-        AsignacionDenominacionService.Asignar(unidad, denominacion, ocupantes);
+        AsignacionDenominacionService.Asignar(unidad, denominacion, ocupantes, autor);
 
         await uow.SaveChangesAsync(cancellationToken);
         return Unit.Value;

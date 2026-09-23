@@ -58,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IDenominacionQueries, DenominacionQueries>();
         services.AddScoped<ICatalogoQueries, CatalogoQueries>();
         services.AddScoped<IEstadisticasQueries, EstadisticasQueries>();
+        services.AddScoped<IHistorialDenominacionQueries, HistorialDenominacionQueries>();
 
         return services;
     }
