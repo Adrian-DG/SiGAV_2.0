@@ -14,6 +14,21 @@ public class CatalogoQueries(SiGAVContext context) : ICatalogoQueries
     public Task<bool> ExisteRangoAsync(int rangoId, CancellationToken cancellationToken = default)
         => context.Rangos.AnyAsync(r => r.Id == rangoId && r.IsActive, cancellationToken);
 
+    public Task<bool> ExisteMunicipioAsync(int municipioId, CancellationToken cancellationToken = default)
+        => context.Municipios.AnyAsync(m => m.Id == municipioId && m.IsActive, cancellationToken);
+
+    public async Task<IReadOnlyList<int>> TiposEventoInexistentesAsync(IReadOnlyCollection<int> tipoEventoIds, CancellationToken cancellationToken = default)
+    {
+        if (tipoEventoIds.Count == 0) return [];
+
+        var existentes = await context.TipoEventos
+            .Where(t => tipoEventoIds.Contains(t.Id) && t.IsActive)
+            .Select(t => t.Id)
+            .ToListAsync(cancellationToken);
+
+        return tipoEventoIds.Except(existentes).ToList();
+    }
+
     public async Task<IReadOnlyList<int>> TramosInexistentesAsync(IReadOnlyCollection<int> tramoIds, CancellationToken cancellationToken = default)
     {
         if (tramoIds.Count == 0) return [];

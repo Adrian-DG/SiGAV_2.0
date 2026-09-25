@@ -9,6 +9,11 @@ public class UnidadRepository(SiGAVContext context) : Repository(context), IUnid
     public Task<Unidad?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => _context.Unidades.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
+    public Task<Unidad?> GetConDenominacionAsync(int id, CancellationToken cancellationToken = default)
+        => _context.Unidades
+            .Include(u => u.Denominacion)
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+
     public Task<Unidad?> GetByFichaAsync(string ficha, CancellationToken cancellationToken = default)
         => _context.Unidades.FirstOrDefaultAsync(u => u.Ficha == ficha, cancellationToken);
 

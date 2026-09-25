@@ -1,3 +1,4 @@
+using Application.Exceptions;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,26 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
         builder.ApplyConfigurationsFromAssembly(typeof(SiGAVContext).Assembly);
 
         RestringirBorradoEnCascada(builder);
+    }
+
+    /// <summary>
+    /// Guardado de los casos de uso (Application solo conoce IUnitOfWork, no EF): las violaciones de
+    /// restricciones se traducen a excepciones de aplicación para responder 409/400 en lugar de 500.
+    /// </summary>
+    async Task<int> IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (DatabaseErrors.IsUniqueViolation(ex))
+        {
+            throw new DuplicateKeyException("El registro ya existe (se intentó guardar un valor duplicado).", ex);
+        }
+        catch (DbUpdateException ex) when (DatabaseErrors.IsForeignKeyViolation(ex))
+        {
+            throw new InvalidReferenceException("Uno o más datos hacen referencia a registros que no existen.", ex);
+        }
     }
 
     /// <summary>

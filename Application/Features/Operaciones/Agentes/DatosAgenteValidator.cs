@@ -35,7 +35,8 @@ public abstract class DatosAgenteValidator<T> : AbstractValidator<T> where T : I
             .MaximumLength(PersonMetadata.ApellidoMaxLength).WithMessage($"El apellido no puede exceder {PersonMetadata.ApellidoMaxLength} caracteres.");
         RuleFor(x => x.Sexo).IsInEnum().WithMessage("El sexo no es válido.");
         RuleFor(x => x.Institucion)
-            .IsInEnum().NotEqual(InstitucionEnum.NONE).WithMessage("La institución es requerida.");
+            .IsInEnum().WithMessage("La institución no es válida.")
+            .NotEqual(InstitucionEnum.NONE).WithMessage("La institución es requerida.");
         RuleFor(x => x.AreaOperativa).IsInEnum().WithMessage("El área operativa no es válida.");
         RuleFor(x => x.RangoId)
             .GreaterThan(0).WithMessage("El rango es requerido.")

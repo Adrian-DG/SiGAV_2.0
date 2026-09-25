@@ -17,6 +17,7 @@ public class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) : IExcepti
             DomainException => (StatusCodes.Status400BadRequest, null),
             UnauthorizedException => (StatusCodes.Status401Unauthorized, null),
             ForbiddenException => (StatusCodes.Status403Forbidden, null),
+            InvalidReferenceException => (StatusCodes.Status400BadRequest, null),
             NotFoundException => (StatusCodes.Status404NotFound, null),
             ConflictException => (StatusCodes.Status409Conflict, null),
             _ => (StatusCodes.Status500InternalServerError, (IDictionary<string, string[]>?)null)

@@ -6,6 +6,7 @@ using Domain.Exceptions;
 using Domain.ValueObjects;
 
 namespace Domain.Entities.Operaciones;
+ 
 
 /// <summary>
 /// Raíz del agregado de eventos (Asistencia en SiGAV 1.0). Las unidades, personas, tipos y
@@ -254,4 +255,4 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
 
         return normalizado;
     }
-}
+    }
