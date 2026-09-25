@@ -31,7 +31,7 @@ public sealed record DatosPersona
         if (!Enum.IsDefined(sexo)) throw new DomainException("El sexo no es válido.");
         if (nacionalidadId is <= 0) throw new DomainException("La nacionalidad no es válida.");
 
-        Identificacion = Normalizar(identificacion, IdentificacionMaxLength, "identificación", soloAlfanumericos: true);
+        Identificacion = NormalizarIdentificacion(identificacion);
         Nombre = Normalizar(nombre, NombreMaxLength, "nombre");
         Apellido = Normalizar(apellido, NombreMaxLength, "apellido");
         Telefono = Normalizar(telefono, TelefonoMaxLength, "teléfono");
@@ -40,6 +40,10 @@ public sealed record DatosPersona
     }
 
     public static DatosPersona Desconocida(SexoEnum sexo = SexoEnum.NONE) => new(null, null, null, sexo, null, null);
+
+    /// <summary>Misma normalización que al guardar (sin guiones, mayúsculas): para buscar por cédula/pasaporte.</summary>
+    public static string? NormalizarIdentificacion(string? identificacion)
+        => Normalizar(identificacion, IdentificacionMaxLength, "identificación", soloAlfanumericos: true);
 
     internal static string? Normalizar(string? valor, int maxLength, string campo, bool soloAlfanumericos = false)
     {

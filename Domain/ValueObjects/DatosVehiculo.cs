@@ -20,6 +20,10 @@ public sealed record DatosVehiculo
     public string? ModeloTexto { get; private init; }
     public string? ColorTexto { get; private init; }
 
+    /// <summary>Misma normalización que al guardar (sin guiones ni espacios, mayúsculas): para buscar por placa.</summary>
+    public static string? NormalizarPlaca(string? placa)
+        => DatosPersona.Normalizar(placa, PlacaMaxLength, "placa", soloAlfanumericos: true);
+
     // Requerido por EF Core
     private DatosVehiculo() { }
 
@@ -36,7 +40,7 @@ public sealed record DatosVehiculo
         foreach (var (id, campo) in new[] { (tipoVehiculoId, "tipo"), (marcaId, "marca"), (modeloId, "modelo"), (colorId, "color") })
             if (id is <= 0) throw new DomainException($"El {campo} de vehículo no es válido.");
 
-        Placa = DatosPersona.Normalizar(placa, PlacaMaxLength, "placa", soloAlfanumericos: true);
+        Placa = NormalizarPlaca(placa);
         TipoVehiculoId = tipoVehiculoId;
         MarcaId = marcaId;
         ModeloId = modeloId;

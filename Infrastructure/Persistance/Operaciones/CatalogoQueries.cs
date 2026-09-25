@@ -1,4 +1,6 @@
 using Application.Contracts.Operaciones;
+using Application.Features.Catalogos;
+using Domain.Abstraction;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistance.Operaciones;
@@ -13,6 +15,37 @@ public class CatalogoQueries(SiGAVContext context) : ICatalogoQueries
 
     public Task<bool> ExisteRangoAsync(int rangoId, CancellationToken cancellationToken = default)
         => context.Rangos.AnyAsync(r => r.Id == rangoId && r.IsActive, cancellationToken);
+
+    public async Task<IReadOnlyList<CatalogoItemViewModel>> ListarAsync(
+        CatalogoEnum catalogo, int? provinciaId, int? marcaId, int? tipoVehiculoId, CancellationToken cancellationToken = default)
+    {
+        IQueryable<NamedMetadata> query = catalogo switch
+        {
+            CatalogoEnum.Provincias => context.Provincias,
+            // Sin provincia no se listan todos los municipios del país
+            CatalogoEnum.Municipios => context.Municipios.Where(m => m.ProvinciaId == (provinciaId ?? 0)),
+            CatalogoEnum.TiposVehiculo => context.TipoVehiculos,
+            CatalogoEnum.Marcas => context.Marcas,
+            CatalogoEnum.Modelos => context.Modelos.Where(m => m.MarcaId == (marcaId ?? 0)
+                && (tipoVehiculoId == null || m.TipoVehiculoId == tipoVehiculoId)),
+            CatalogoEnum.Colores => context.Colores,
+            CatalogoEnum.Nacionalidades => context.Nacionalidades,
+            _ => throw new ArgumentOutOfRangeException(nameof(catalogo), catalogo, "Catálogo no soportado.")
+        };
+
+        return await query.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Nombre)
+            .Select(x => new CatalogoItemViewModel(x.Id, x.Nombre))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TipoEventoItemViewModel>> ListarTiposEventoAsync(CancellationToken cancellationToken = default)
+        => await context.TipoEventos.AsNoTracking()
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.Categoria).ThenBy(t => t.Nombre)
+            .Select(t => new TipoEventoItemViewModel(t.Id, t.Nombre, t.Categoria))
+            .ToListAsync(cancellationToken);
 
     public Task<bool> ExisteMunicipioAsync(int municipioId, CancellationToken cancellationToken = default)
         => context.Municipios.AnyAsync(m => m.Id == municipioId && m.IsActive, cancellationToken);

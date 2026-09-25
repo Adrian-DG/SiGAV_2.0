@@ -1,4 +1,5 @@
 using Application.Contracts;
+using Application.Contracts.Historico;
 using Application.Contracts.Operaciones;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Infrastructure.Persistance;
 using Infrastructure.Persistance.Authentication;
+using Infrastructure.Persistance.Historico;
 using Infrastructure.Persistance.Interceptors;
 using Infrastructure.Persistance.Misc;
 using Infrastructure.Persistance.Operaciones;
@@ -57,6 +59,8 @@ public static class DependencyInjection
         services.AddScoped<IAgenteQueries, AgenteQueries>();
         services.AddScoped<IEventoRepository, EventoRepository>();
         services.AddScoped<IEventoQueries, EventoQueries>();
+        services.AddScoped<IHistoricoRepository, HistoricoRepository>();
+        services.AddScoped<IHistoricoQueries, HistoricoQueries>();
         services.AddScoped<IUnidadQueries, UnidadQueries>();
         services.AddScoped<IDenominacionQueries, DenominacionQueries>();
         services.AddScoped<ICatalogoQueries, CatalogoQueries>();

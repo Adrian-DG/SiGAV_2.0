@@ -33,7 +33,8 @@ public record CiudadanoEventoRequest(
 /// <summary>
 /// Registra un evento. Es idempotente por <see cref="RequestId"/>: un reenvío (cola offline de la app)
 /// devuelve el evento ya registrado con EsDuplicado = true, sin crear otro.
-/// Desde la app, la unidad y el agente salen de la sesión (UnidadId/AgenteId del cuerpo se ignoran)
+/// Desde la app, la unidad y el agente salen de la sesión (UnidadId/AgenteId del cuerpo se ignoran),
+/// el tramo por defecto es el de la denominación de la unidad
 /// y el canal es siempre AgenteCampo. Puede enviarse ya atendido o completado (llegada y cierre).
 /// </summary>
 public record RegistrarEventoCommand(
@@ -115,6 +116,7 @@ public class RegistrarEventoCommandHandler(
     IEventoRepository eventos,
     IUnidadRepository unidades,
     IAgenteRepository agentes,
+    IHistoricoRepository historico,
     ICurrentUserService currentUser,
     IUnitOfWork uow,
     TimeProvider timeProvider) : IRequestHandler<RegistrarEventoCommand, RegistrarEventoResult>
@@ -140,12 +142,15 @@ public class RegistrarEventoCommandHandler(
         if (esWeb && await agentes.GetByIdAsync(agenteId, cancellationToken) is not { IsActive: true })
             throw new NotFoundException("El agente", agenteId);
 
+        // Evento de campo: si la app no indica el tramo, es el de la denominación actual de la unidad
+        var tramoId = request.TramoId ?? (esWeb ? null : unidad.Denominacion?.TramoId);
+
         var evento = Evento.Registrar(
             request.RequestId,
             canal,
             new Coordenada(request.Latitud, request.Longitud),
             request.MunicipioId,
-            request.TramoId,
+            tramoId,
             request.Direccion,
             request.Comentario,
             request.FechaHoraReporteUtc ?? ahoraUtc,
@@ -156,10 +161,20 @@ public class RegistrarEventoCommandHandler(
 
         foreach (var c in request.Ciudadanos ?? [])
         {
+            var persona = new DatosPersona(c.Identificacion, c.Nombre, c.Apellido, c.Sexo, c.Telefono, c.NacionalidadId);
             var vehiculo = c.Vehiculo is { } v
                 ? new DatosVehiculo(v.Placa, v.TipoVehiculoId, v.MarcaId, v.ModeloId, v.ColorId, v.MarcaTexto, v.ModeloTexto, v.ColorTexto)
                 : null;
-            evento.AgregarCiudadano(c.Rol, new DatosPersona(c.Identificacion, c.Nombre, c.Apellido, c.Sexo, c.Telefono, c.NacionalidadId), vehiculo);
+
+            // Vínculo con los maestros históricos cuando la persona/el vehículo ya existen en ellos
+            var ciudadano = persona.Identificacion is { } identificacion
+                ? await historico.GetCiudadanoAsync(identificacion, cancellationToken)
+                : null;
+            var vehiculoHistorico = vehiculo?.Placa is { } placa
+                ? await historico.GetVehiculoAsync(placa, cancellationToken)
+                : null;
+
+            evento.AgregarCiudadano(c.Rol, persona, vehiculo, ciudadano, vehiculoHistorico);
         }
 
         // Reportado ya atendido (p. ej. desde la cola offline): se aplican llegada y cierre

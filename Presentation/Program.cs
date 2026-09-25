@@ -10,6 +10,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 
+// CORS: solo para clientes web (front desk, Expo web). Las apps nativas no lo necesitan.
+// Orígenes por ambiente en "Cors:AllowedOrigins"; sin configurar no se permite ninguno.
+const string CorsPolicy = "SiGAVClients";
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddPolicy(CorsPolicy, policy => policy
+    .WithOrigins(allowedOrigins)
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
+
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();
 
@@ -52,6 +61,9 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
+
+// Antes de la autenticación: el preflight (OPTIONS) no lleva token
+app.UseCors(CorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
