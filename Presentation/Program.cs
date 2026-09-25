@@ -1,5 +1,6 @@
 using Application;
 using Infrastructure;
+using Infrastructure.Persistance.Seeding;
 using Presentation.Middleware;
 using Presentation.OpenApi;
 using Scalar.AspNetCore;
@@ -44,6 +45,9 @@ builder.Services.AddOpenApi(opt =>
 
 var app = builder.Build();
 
+// Esquema y carga inicial según la sección "Seed" (idempotente: solo llena tablas vacías)
+await app.Services.InitializeDatabaseAsync();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -70,4 +74,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();

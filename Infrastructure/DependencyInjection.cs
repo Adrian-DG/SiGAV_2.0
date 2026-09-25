@@ -18,6 +18,7 @@ using Infrastructure.Persistance.Historico;
 using Infrastructure.Persistance.Interceptors;
 using Infrastructure.Persistance.Misc;
 using Infrastructure.Persistance.Operaciones;
+using Infrastructure.Persistance.Seeding;
 using Infrastructure.Services;
 
 namespace Infrastructure;
@@ -66,6 +67,9 @@ public static class DependencyInjection
         services.AddScoped<ICatalogoQueries, CatalogoQueries>();
         services.AddScoped<IEstadisticasQueries, EstadisticasQueries>();
         services.AddScoped<IHistorialDenominacionQueries, HistorialDenominacionQueries>();
+
+        // Carga inicial (catálogos, administrador y datos de prueba) al arrancar
+        services.AddSeeding(configuration);
 
         return services;
     }
