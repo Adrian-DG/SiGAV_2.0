@@ -1,3 +1,4 @@
+using Application.Contracts;
 using Application.Exceptions;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -10,7 +11,7 @@ using Domain.Repositories;
 
 namespace Infrastructure.Persistance;
 
-public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbContext<AppUser, AppPermission, int>(options), IUnitOfWork
+public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbContext<AppUser, AppPermission, int>(options), IUnitOfWork, IReadDbContext
 {
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -98,8 +99,8 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     // Operaciones
     public DbSet<TipoEvento> TipoEventos { get; set; }
     public DbSet<Evento> Eventos { get; set; }
-    public DbSet<EventoCiudadano> EventoCiudadanos { get; set; }
-    public DbSet<EventoUnidad> EventoUnidades { get; set; }
+    public DbSet<EventoCiudadanoInfo> EventoCiudadanos { get; set; }
+    public DbSet<EventoUnidadInfo> EventoUnidades { get; set; }
     public DbSet<Agente> Agentes { get; set; }
     public DbSet<NivelDenominacion> NivelesDenominacion { get; set; }
     public DbSet<Unidad> Unidades { get; set; }
@@ -114,5 +115,33 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     public DbSet<RegionAsistencia> Regiones { get; set; }
 
     #endregion
-    
+
+    #region Lectura (IReadDbContext)
+
+    // Sin seguimiento: lo que se lee para una Query no puede terminar guardándose por accidente
+    IQueryable<Provincia> IReadDbContext.Provincias => Provincias.AsNoTracking();
+    IQueryable<Municipio> IReadDbContext.Municipios => Municipios.AsNoTracking();
+    IQueryable<Nacionalidad> IReadDbContext.Nacionalidades => Nacionalidades.AsNoTracking();
+    IQueryable<Rango> IReadDbContext.Rangos => Rangos.AsNoTracking();
+    IQueryable<TipoVehiculo> IReadDbContext.TiposVehiculo => TipoVehiculos.AsNoTracking();
+    IQueryable<Marca> IReadDbContext.Marcas => Marcas.AsNoTracking();
+    IQueryable<Modelo> IReadDbContext.Modelos => Modelos.AsNoTracking();
+    IQueryable<Domain.Entities.Misc.Color> IReadDbContext.Colores => Colores.AsNoTracking();
+    IQueryable<Ciudadano> IReadDbContext.Ciudadanos => Ciudadanos.AsNoTracking();
+    IQueryable<Vehiculo> IReadDbContext.Vehiculos => Vehiculos.AsNoTracking();
+    IQueryable<RegionAsistencia> IReadDbContext.Regiones => Regiones.AsNoTracking();
+    IQueryable<Tramo> IReadDbContext.Tramos => Tramos.AsNoTracking();
+    IQueryable<NivelDenominacion> IReadDbContext.NivelesDenominacion => NivelesDenominacion.AsNoTracking();
+    IQueryable<Denominacion> IReadDbContext.Denominaciones => Denominaciones.AsNoTracking();
+    IQueryable<Unidad> IReadDbContext.Unidades => Unidades.AsNoTracking();
+    IQueryable<HistorialDenominacionUnidad> IReadDbContext.HistorialDenominaciones => HistorialDenominaciones.AsNoTracking();
+    IQueryable<Agente> IReadDbContext.Agentes => Agentes.AsNoTracking();
+    IQueryable<TipoEvento> IReadDbContext.TiposEvento => TipoEventos.AsNoTracking();
+    IQueryable<Evento> IReadDbContext.Eventos => Eventos.AsNoTracking();
+    IQueryable<EventoTipoEvento> IReadDbContext.EventoTiposEvento => EventoTiposEvento.AsNoTracking();
+    IQueryable<EventoUnidadInfo> IReadDbContext.EventoUnidades => EventoUnidades.AsNoTracking();
+    IQueryable<EventoCiudadanoInfo> IReadDbContext.EventoCiudadanos => EventoCiudadanos.AsNoTracking();
+    IQueryable<UsuarioLectura> IReadDbContext.Usuarios => Users.AsNoTracking().Select(u => new UsuarioLectura { Id = u.Id, UserName = u.UserName });
+
+    #endregion
 }

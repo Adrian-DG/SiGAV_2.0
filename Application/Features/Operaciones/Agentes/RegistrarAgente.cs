@@ -1,4 +1,4 @@
-using Application.Contracts.Operaciones;
+using Application.Contracts;
 using Application.Exceptions;
 using Domain.Entities.Operaciones;
 using Domain.Enums;
@@ -20,7 +20,7 @@ public record RegistrarAgenteCommand(
     string? Especialidad = null) : IRequest, IDatosAgente;
 
 // Validator
-public class RegistrarAgenteCommandValidator(ICatalogoQueries catalogos) : DatosAgenteValidator<RegistrarAgenteCommand>(catalogos);
+public class RegistrarAgenteCommandValidator(IReadDbContext db) : DatosAgenteValidator<RegistrarAgenteCommand>(db);
 
 // Handler
 public class RegistrarAgenteCommandHandler(IAgenteRepository agentes, IUnitOfWork uow) : IRequestHandler<RegistrarAgenteCommand, Unit>
@@ -32,11 +32,11 @@ public class RegistrarAgenteCommandHandler(IAgenteRepository agentes, IUnitOfWor
             request.RangoId, request.AreaOperativa, accesoTotal: false, request.Especialidad,
             autorizado: false);
 
-        // Mensaje genérico: no se distingue si está pendiente o ya autorizada
         if (await agentes.ExisteIdentificacionAsync(agente.Identificacion, cancellationToken: cancellationToken))
-            throw new ConflictException("Esta cédula ya está registrada. Si aún no tiene acceso, contacte a front desk.");
+            throw new ConflictException("Ya existe un agente registrado con esta cédula.");
 
         agentes.Add(agente);
+
         await uow.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;

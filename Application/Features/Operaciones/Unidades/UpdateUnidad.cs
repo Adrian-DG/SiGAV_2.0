@@ -1,6 +1,5 @@
 using Application.Common;
 using Application.Contracts;
-using Application.Contracts.Operaciones;
 using Application.Exceptions;
 using Domain.Entities.Operaciones;
 using Domain.Repositories;
@@ -17,7 +16,7 @@ public record UpdateUnidadCommand(int UnidadId, string Ficha, string? Placa, int
 // Validator
 public class UpdateUnidadCommandValidator : AbstractValidator<UpdateUnidadCommand>
 {
-    public UpdateUnidadCommandValidator(ICatalogoQueries catalogos)
+    public UpdateUnidadCommandValidator(IReadDbContext db)
     {
         RuleFor(x => x.UnidadId).GreaterThan(0).WithMessage("La unidad es requerida.");
         RuleFor(x => x.Ficha)
@@ -28,7 +27,7 @@ public class UpdateUnidadCommandValidator : AbstractValidator<UpdateUnidadComman
         RuleFor(x => x.DenominacionId).GreaterThan(0).WithMessage("La denominación es requerida.");
         RuleFor(x => x.NivelDenominacionId)
             .GreaterThan(0).WithMessage("El nivel de la denominación es requerido.")
-            .MustAsync(catalogos.ExisteNivelDenominacionAsync).WithMessage("El nivel de denominación especificado no existe.");
+            .MustAsync((id, ct) => db.NivelesDenominacion.ExisteActivoAsync(id, ct)).WithMessage("El nivel de denominación especificado no existe.");
         RuleFor(x => x.Motivo)
             .MaximumLength(AutorCambio.ObservacionMaxLength).WithMessage($"El motivo no puede exceder {AutorCambio.ObservacionMaxLength} caracteres.");
     }

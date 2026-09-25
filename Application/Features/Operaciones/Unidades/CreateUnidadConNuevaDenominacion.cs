@@ -1,6 +1,5 @@
 using Application.Common;
 using Application.Contracts;
-using Application.Contracts.Operaciones;
 using Application.Exceptions;
 using Domain.Entities.Operaciones;
 using Domain.Repositories;
@@ -21,7 +20,7 @@ public record CreateUnidadConNuevaDenominacionCommand(
 // Validator
 public class CreateUnidadConNuevaDenominacionCommandValidator : AbstractValidator<CreateUnidadConNuevaDenominacionCommand>
 {
-    public CreateUnidadConNuevaDenominacionCommandValidator(ICatalogoQueries catalogos)
+    public CreateUnidadConNuevaDenominacionCommandValidator(IReadDbContext db)
     {
         RuleFor(x => x.Ficha)
             .NotEmpty().WithMessage("La ficha es requerida.")
@@ -34,10 +33,10 @@ public class CreateUnidadConNuevaDenominacionCommandValidator : AbstractValidato
             .WithMessage($"La denominación no puede exceder {Domain.Entities.Operaciones.Denominacion.NombreMaxLength} caracteres.");
         RuleFor(x => x.TramoId)
             .GreaterThan(0).WithMessage("El tramo es requerido.")
-            .MustAsync(catalogos.ExisteTramoAsync).WithMessage("El tramo especificado no existe.");
+            .MustAsync((id, ct) => db.Tramos.ExisteActivoAsync(id, ct)).WithMessage("El tramo especificado no existe.");
         RuleFor(x => x.NivelDenominacionId)
             .GreaterThan(0).WithMessage("El nivel de la denominación es requerido.")
-            .MustAsync(catalogos.ExisteNivelDenominacionAsync).WithMessage("El nivel de denominación especificado no existe.");
+            .MustAsync((id, ct) => db.NivelesDenominacion.ExisteActivoAsync(id, ct)).WithMessage("El nivel de denominación especificado no existe.");
     }
 }
 

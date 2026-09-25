@@ -1,4 +1,4 @@
-using Application.Contracts.Operaciones;
+using Application.Contracts;
 using Application.Exceptions;
 using Domain.Entities.Operaciones;
 using Domain.Enums;
@@ -20,7 +20,7 @@ public record CreateAgenteCommand(
     string? Especialidad = null) : IRequest<int>, IDatosAgente;
 
 // Validator
-public class CreateAgenteCommandValidator(ICatalogoQueries catalogos) : DatosAgenteValidator<CreateAgenteCommand>(catalogos);
+public class CreateAgenteCommandValidator(IReadDbContext db) : DatosAgenteValidator<CreateAgenteCommand>(db);
 
 // Handler
 public class CreateAgenteCommandHandler(IAgenteRepository agentes, IUnitOfWork uow) : IRequestHandler<CreateAgenteCommand, int>

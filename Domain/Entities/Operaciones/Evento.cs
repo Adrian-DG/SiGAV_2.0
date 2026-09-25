@@ -29,20 +29,7 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     public CanalReporteEnum CanalReporte { get; private set; }
     public EstadoEventoEnum Estado { get; private set; }
     public TipoCierreEventoEnum? TipoCierre { get; private set; }
-
     public Coordenada Ubicacion { get; private set; } = null!;
-    public string? Direccion { get; private set; }
-
-    public int MunicipioId { get; private set; }
-    public virtual Municipio? Municipio { get; private set; }
-
-    /// <summary>
-    /// Tramo donde ocurrió el evento (opcional). Las estadísticas lo atribuyen al tramo de la
-    /// unidad; este dato permite también atribuirlo al lugar.
-    /// </summary>
-    public int? TramoId { get; private set; }
-    public virtual Tramo? Tramo { get; private set; }
-
     public string? Comentario { get; private set; }
 
     /// <summary>Cuándo se reportó el evento (UTC). No confundir con CreatedAt, que es cuándo se guardó.</summary>
@@ -50,17 +37,9 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     public DateTime? FechaHoraLlegadaUtc { get; private set; }
     public DateTime? FechaHoraCompletadoUtc { get; private set; }
 
-    private readonly List<EventoUnidad> _unidades = [];
-    private readonly List<EventoCiudadano> _ciudadanos = [];
-    private readonly List<EventoTipoEvento> _tipos = [];
-    private readonly List<EventoEvidencia> _evidencias = [];
-
-    public IReadOnlyCollection<EventoUnidad> Unidades => _unidades.AsReadOnly();
-    public IReadOnlyCollection<EventoCiudadano> Ciudadanos => _ciudadanos.AsReadOnly();
-    public IReadOnlyCollection<EventoTipoEvento> Tipos => _tipos.AsReadOnly();
-    public IReadOnlyCollection<EventoEvidencia> Evidencias => _evidencias.AsReadOnly();
-
-    public EventoUnidad UnidadPrincipal => _unidades.Single(u => u.Rol == RolUnidadEventoEnum.Principal);
+    private readonly List<EventoUnidadInfo> _unidades = new();
+    private readonly List<EventoCiudadanoInfo> _ciudadanos = new();
+    private readonly List<EventoEvidencia> _evidencias = new();
 
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -104,7 +83,7 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
         evento.AsignarUbicacion(ubicacion, municipioId, tramoId, direccion);
         evento.Comentario = Normalizar(comentario, ComentarioMaxLength, "comentario");
         evento.ReemplazarTipos(tipoEventoIds);
-        evento._unidades.Add(EventoUnidad.Crear(unidadPrincipal, agenteId, RolUnidadEventoEnum.Principal));
+        evento._unidades.Add(EventoUnidadInfo.Crear(unidadPrincipal, agenteId, RolUnidadEventoEnum.Principal));
 
         return evento;
     }
@@ -148,28 +127,6 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     /// <summary>Anulación lógica (el "remove" de SiGAV 1.0): deja de contar en estadísticas.</summary>
     public void Anular() => IsActive = false;
 
-    // ---------------------------------------------------------------- Datos
-
-    public void ActualizarDatos(Coordenada ubicacion, int municipioId, int? tramoId, string? direccion, string? comentario)
-    {
-        AsegurarActivo();
-        AsignarUbicacion(ubicacion, municipioId, tramoId, direccion);
-        Comentario = Normalizar(comentario, ComentarioMaxLength, "comentario");
-    }
-
-    public void ReemplazarTipos(IEnumerable<int> tipoEventoIds)
-    {
-        var ids = (tipoEventoIds ?? []).Distinct().ToList();
-        if (ids.Count == 0) throw new DomainException("El evento debe tener al menos un tipo de evento.");
-        if (ids.Any(id => id <= 0)) throw new DomainException("Hay tipos de evento no válidos.");
-
-        _tipos.RemoveAll(t => !ids.Contains(t.TipoEventoId));
-        foreach (var id in ids.Where(id => _tipos.All(t => t.TipoEventoId != id)))
-            _tipos.Add(new EventoTipoEvento(id));
-    }
-
-    // ---------------------------------------------------------------- Unidades
-
     /// <summary>Agrega una unidad de apoyo (o un apoyo solicitado, como la unidad alfa).</summary>
     public void AgregarUnidadApoyo(Unidad unidad, int agenteId, bool yaLlego = true)
     {
@@ -177,7 +134,7 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
         if (_unidades.Any(u => u.UnidadId == unidad.Id))
             throw new DomainException($"La unidad '{unidad.Ficha}' ya participa en el evento.");
 
-        _unidades.Add(EventoUnidad.Crear(unidad, agenteId, yaLlego ? RolUnidadEventoEnum.Apoyo : RolUnidadEventoEnum.ApoyoSolicitado));
+        _unidades.Add(EventoUnidadInfo.Crear(unidad, agenteId, yaLlego ? RolUnidadEventoEnum.Apoyo : RolUnidadEventoEnum.ApoyoSolicitado));
     }
 
     /// <summary>El apoyo solicitado llegó al lugar.</summary>
@@ -189,46 +146,6 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
 
         participacion.CambiarRol(RolUnidadEventoEnum.Apoyo);
     }
-
-    // ---------------------------------------------------------------- Personas y evidencias
-
-    public void AgregarCiudadano(
-        RolCiudadanoEnum rol,
-        DatosPersona persona,
-        DatosVehiculo? vehiculo = null,
-        Ciudadano? ciudadano = null,
-        Vehiculo? vehiculoHistorico = null)
-    {
-        AsegurarActivo();
-        ArgumentNullException.ThrowIfNull(persona);
-
-        if (persona.Identificacion is { } identificacion
-            && _ciudadanos.Any(c => c.Persona.Identificacion == identificacion))
-            throw new DomainException($"La persona '{identificacion}' ya está registrada en el evento.");
-
-        _ciudadanos.Add(EventoCiudadano.Crear(rol, persona, vehiculo, ciudadano, vehiculoHistorico));
-    }
-
-    public void AgregarEvidencia(TipoEvidenciaEnum tipo, string ubicacion, string contentType, DateTime ahoraUtc)
-    {
-        AsegurarActivo();
-        _evidencias.Add(EventoEvidencia.Crear(tipo, ubicacion, contentType, ahoraUtc));
-    }
-
-    // ---------------------------------------------------------------- Reglas internas
-
-    private void AsignarUbicacion(Coordenada ubicacion, int municipioId, int? tramoId, string? direccion)
-    {
-        ArgumentNullException.ThrowIfNull(ubicacion);
-        if (municipioId <= 0) throw new DomainException("El municipio es requerido.");
-        if (tramoId is <= 0) throw new DomainException("El tramo no es válido.");
-
-        Ubicacion = ubicacion;
-        MunicipioId = municipioId;
-        TramoId = tramoId;
-        Direccion = Normalizar(direccion, DireccionMaxLength, "dirección");
-    }
-
     private void AsegurarActivo()
     {
         if (!IsActive) throw new DomainException("El evento está anulado.");
@@ -244,7 +161,6 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
 
         return utc;
     }
-
     private static string? Normalizar(string? valor, int maxLength, string campo)
     {
         if (string.IsNullOrWhiteSpace(valor)) return null;
@@ -255,4 +171,4 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
 
         return normalizado;
     }
-    }
+}

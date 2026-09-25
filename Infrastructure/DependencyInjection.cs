@@ -1,6 +1,4 @@
 using Application.Contracts;
-using Application.Contracts.Historico;
-using Application.Contracts.Operaciones;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -16,7 +14,6 @@ using Infrastructure.Persistance;
 using Infrastructure.Persistance.Authentication;
 using Infrastructure.Persistance.Historico;
 using Infrastructure.Persistance.Interceptors;
-using Infrastructure.Persistance.Misc;
 using Infrastructure.Persistance.Operaciones;
 using Infrastructure.Persistance.Seeding;
 using Infrastructure.Services;
@@ -37,11 +34,16 @@ public static class DependencyInjection
                 ? configuration.GetConnectionString("ProductionConnection")
                 : configuration.GetConnectionString("DevelopmentConnection");
 
-            opt.UseSqlite(connectionString,  b => b.MigrationsAssembly("Infrastructure"));
+            opt.UseSqlite(connectionString, b => b
+                .MigrationsAssembly("Infrastructure")
+                // Colecciones en consultas separadas (evita el producto cartesiano de los Include)
+                .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
             opt.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
             opt.EnableDetailedErrors();
         });
+        // Mismo contexto por request: escritura (IUnitOfWork + repositorios) y lectura (Queries)
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<SiGAVContext>());
+        services.AddScoped<IReadDbContext>(sp => sp.GetRequiredService<SiGAVContext>());
 
         services.AddIdentityCore<AppUser>()
             .AddRoles<AppPermission>()
@@ -51,22 +53,13 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IJwtBearerHelper, JwtBearerHelper>();
         services.AddScoped<IAuthRepository, AuthRepository>();
-        services.AddScoped<IMiscRepository, MiscQueryService>();
 
-        // Operaciones: escritura (repositorios del dominio) y lectura (query services)
+        // Repositorios del dominio (lado de escritura). La lectura la hacen las Queries con IReadDbContext.
         services.AddScoped<IUnidadRepository, UnidadRepository>();
         services.AddScoped<IDenominacionRepository, DenominacionRepository>();
         services.AddScoped<IAgenteRepository, AgenteRepository>();
-        services.AddScoped<IAgenteQueries, AgenteQueries>();
         services.AddScoped<IEventoRepository, EventoRepository>();
-        services.AddScoped<IEventoQueries, EventoQueries>();
         services.AddScoped<IHistoricoRepository, HistoricoRepository>();
-        services.AddScoped<IHistoricoQueries, HistoricoQueries>();
-        services.AddScoped<IUnidadQueries, UnidadQueries>();
-        services.AddScoped<IDenominacionQueries, DenominacionQueries>();
-        services.AddScoped<ICatalogoQueries, CatalogoQueries>();
-        services.AddScoped<IEstadisticasQueries, EstadisticasQueries>();
-        services.AddScoped<IHistorialDenominacionQueries, HistorialDenominacionQueries>();
 
         // Carga inicial (catálogos, administrador y datos de prueba) al arrancar
         services.AddSeeding(configuration);

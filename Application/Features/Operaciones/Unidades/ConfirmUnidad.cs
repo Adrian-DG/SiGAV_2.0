@@ -1,6 +1,8 @@
-using Application.Contracts.Operaciones;
+using Application.Contracts;
+using Domain.Entities.Operaciones;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Operaciones.Unidades;
 
@@ -11,14 +13,19 @@ public class ConfirmUnidadExisteQueryValidator : AbstractValidator<ConfirmUnidad
 {
     public ConfirmUnidadExisteQueryValidator()
     {
-        RuleFor(x => x.Ficha).NotEmpty().WithMessage("La ficha es requerida.");
+        RuleFor(x => x.Ficha)
+            .NotEmpty().WithMessage("La ficha es requerida.")
+            .Matches(Unidad.FichaRegex).WithMessage($"La ficha debe cumplir con el formato valido.");
     }
 }
 
-public class ConfirmUnidadExisteQueryHandler(IUnidadQueries queries) : IRequestHandler<ConfirmUnidadExisteQuery, bool>
+public class ConfirmUnidadExisteQueryHandler(IReadDbContext db) : IRequestHandler<ConfirmUnidadExisteQuery, bool>
 {
     public Task<bool> Handle(ConfirmUnidadExisteQuery request, CancellationToken cancellationToken)
-        => queries.ExisteActivaYDisponibleAsync(request.Ficha.Trim(), cancellationToken);
+    {
+        var ficha = request.Ficha.Trim();
+        return db.Unidades.AnyAsync(u => u.Ficha == ficha && u.IsActive && u.EstaDisponible, cancellationToken);
+    }
 }
 
 // Query: disponibilidad actual de la unidad
@@ -32,8 +39,11 @@ public class ConfirmUnidadDisponibleQueryValidator : AbstractValidator<ConfirmUn
     }
 }
 
-public class ConfirmUnidadDisponibleQueryHandler(IUnidadQueries queries) : IRequestHandler<ConfirmUnidadDisponibleQuery, bool>
+public class ConfirmUnidadDisponibleQueryHandler(IReadDbContext db) : IRequestHandler<ConfirmUnidadDisponibleQuery, bool>
 {
     public Task<bool> Handle(ConfirmUnidadDisponibleQuery request, CancellationToken cancellationToken)
-        => queries.EstaDisponibleAsync(request.Ficha.Trim(), cancellationToken);
+    {
+        var ficha = request.Ficha.Trim();
+        return db.Unidades.AnyAsync(u => u.Ficha == ficha && u.EstaDisponible, cancellationToken);
+    }
 }

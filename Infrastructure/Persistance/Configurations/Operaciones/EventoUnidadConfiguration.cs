@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Persistance.Configurations.Operaciones;
 
-internal sealed class EventoUnidadConfiguration : IEntityTypeConfiguration<EventoUnidad>
+internal sealed class EventoUnidadConfiguration : IEntityTypeConfiguration<EventoUnidadInfo>
 {
-    public void Configure(EntityTypeBuilder<EventoUnidad> builder)
+    public void Configure(EntityTypeBuilder<EventoUnidadInfo> builder)
     {
         builder.ToTable("evento_unidad", Schemas.Operaciones);
         builder.HasKey(eu => new { eu.EventoId, eu.UnidadId });

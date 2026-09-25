@@ -1,5 +1,6 @@
 using Domain.Enums;
 using Infrastructure.Identity;
+using Infrastructure.Persistance.Seeding.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -18,7 +19,8 @@ internal sealed class AdministradorSeeder(
     ILogger<AdministradorSeeder> logger) : ISeeder
 {
     private const string RangoAdministrador = "ASIMILADO";
-    private const string DepartamentoAdministrador = "Tecnología";
+    // El primero del catálogo (PersonalData.Departamentos), para no depender de un nombre fijo
+    private static readonly string DepartamentoAdministrador = PersonalData.Departamentos[0];
 
     public SeedCategoria Categoria => SeedCategoria.Identidad;
     public int Orden => 100;

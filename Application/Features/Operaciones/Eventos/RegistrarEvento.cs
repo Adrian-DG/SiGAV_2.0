@@ -1,5 +1,5 @@
 using Application.Contracts;
-using Application.Contracts.Operaciones;
+using Application.Common;
 using Application.Exceptions;
 using Domain.Entities.Operaciones;
 using Domain.Enums;
@@ -15,10 +15,7 @@ public record VehiculoEventoRequest(
     int? TipoVehiculoId,
     int? MarcaId,
     int? ModeloId,
-    int? ColorId,
-    string? MarcaTexto = null,
-    string? ModeloTexto = null,
-    string? ColorTexto = null);
+    int? ColorId);
 
 public record CiudadanoEventoRequest(
     RolCiudadanoEnum Rol,
@@ -41,7 +38,6 @@ public record RegistrarEventoCommand(
     Guid? RequestId,
     decimal Latitud,
     decimal Longitud,
-    int MunicipioId,
     IReadOnlyList<int> TipoEventoIds,
     DateTime? FechaHoraReporteUtc = null,
     int? TramoId = null,
@@ -61,7 +57,7 @@ public class RegistrarEventoCommandValidator : AbstractValidator<RegistrarEvento
     private const int MaxTipos = 20;
     private const int MaxCiudadanos = 30;
 
-    public RegistrarEventoCommandValidator(ICatalogoQueries catalogos, ICurrentUserService currentUser)
+    public RegistrarEventoCommandValidator(IReadDbContext db, ICurrentUserService currentUser)
     {
         var esWeb = EventoAcceso.EsWeb(currentUser);
 
@@ -70,15 +66,15 @@ public class RegistrarEventoCommandValidator : AbstractValidator<RegistrarEvento
 
         RuleFor(x => x.MunicipioId)
             .GreaterThan(0).WithMessage("El municipio es requerido.")
-            .MustAsync(catalogos.ExisteMunicipioAsync).WithMessage("El municipio especificado no existe.");
+            .MustAsync((id, ct) => db.Municipios.ExisteActivoAsync(id, ct)).WithMessage("El municipio especificado no existe.");
         RuleFor(x => x.TramoId!.Value)
-            .MustAsync(catalogos.ExisteTramoAsync).WithMessage("El tramo especificado no existe.")
+            .MustAsync((id, ct) => db.Tramos.ExisteActivoAsync(id, ct)).WithMessage("El tramo especificado no existe.")
             .When(x => x.TramoId is > 0);
 
         RuleFor(x => x.TipoEventoIds)
             .NotEmpty().WithMessage("Seleccione al menos un tipo de evento.")
             .Must(t => t is null || t.Count <= MaxTipos).WithMessage($"No se pueden indicar más de {MaxTipos} tipos de evento.")
-            .MustAsync(async (ids, ct) => ids is null || ids.Count == 0 || (await catalogos.TiposEventoInexistentesAsync(ids.Distinct().ToList(), ct)).Count == 0)
+            .MustAsync((ids, ct) => db.TiposEvento.ExistenActivosAsync(ids, ct))
             .WithMessage("Uno o más tipos de evento no existen.");
 
         RuleFor(x => x.Direccion).MaximumLength(Evento.DireccionMaxLength);

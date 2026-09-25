@@ -1,4 +1,5 @@
-using Application.Contracts.Operaciones;
+using Application.Common;
+using Application.Contracts;
 using Application.Exceptions;
 using Domain.Enums;
 using Domain.Repositories;
@@ -22,7 +23,7 @@ public class DefinirAsignacionesDenominacionCommandValidator : AbstractValidator
 {
     private const int MaxAsignaciones = 100;
 
-    public DefinirAsignacionesDenominacionCommandValidator(ICatalogoQueries catalogos)
+    public DefinirAsignacionesDenominacionCommandValidator(IReadDbContext db)
     {
         RuleFor(x => x.DenominacionId).GreaterThan(0).WithMessage("La denominación es requerida.");
 
@@ -31,12 +32,12 @@ public class DefinirAsignacionesDenominacionCommandValidator : AbstractValidator
 
         RuleFor(x => x.RegionesAsistencia)
             .Must(r => r is null || r.Count <= MaxAsignaciones).WithMessage($"No se pueden asignar más de {MaxAsignaciones} regiones.")
-            .MustAsync(async (ids, ct) => ids is null || (await catalogos.RegionesAsistenciaInexistentesAsync(ids.Distinct().ToList(), ct)).Count == 0)
+            .MustAsync((ids, ct) => db.Regiones.ExistenActivosAsync(ids, ct))
             .WithMessage("Una o más regiones de asistencia no existen.");
 
         RuleFor(x => x.Tramos)
             .Must(t => t is null || t.Count <= MaxAsignaciones).WithMessage($"No se pueden asignar más de {MaxAsignaciones} tramos.")
-            .MustAsync(async (ids, ct) => ids is null || (await catalogos.TramosInexistentesAsync(ids.Distinct().ToList(), ct)).Count == 0)
+            .MustAsync((ids, ct) => db.Tramos.ExistenActivosAsync(ids, ct))
             .WithMessage("Uno o más tramos no existen.");
     }
 }

@@ -7,7 +7,7 @@ namespace Domain.Entities.Operaciones;
 /// Participación de una unidad en un evento. Denominación y nivel quedan como foto del momento
 /// del evento (las estadísticas no cambian si luego se reasigna la denominación o su nivel).
 /// </summary>
-public class EventoUnidad
+public class EventoUnidadInfo
 {
     public int EventoId { get; private set; }
     public virtual Evento? Evento { get; private set; }
@@ -28,13 +28,13 @@ public class EventoUnidad
     public RolUnidadEventoEnum Rol { get; private set; }
 
     // Requerido por EF Core
-    private EventoUnidad() { }
+    private EventoUnidadInfo() { }
 
     /// <summary>
     /// Toma la foto de denominación y nivel desde la unidad: el cliente no los envía, así no
     /// pueden quedar inconsistentes. Requiere la unidad con su denominación cargada.
     /// </summary>
-    internal static EventoUnidad Crear(Unidad unidad, int agenteId, RolUnidadEventoEnum rol)
+    internal static EventoUnidadInfo Crear(Unidad unidad, int agenteId, RolUnidadEventoEnum rol)
     {
         if (!unidad.IsActive) throw new DomainException($"La unidad '{unidad.Ficha}' está desactivada.");
         if (unidad.DenominacionId is not { } denominacionId || unidad.Denominacion is null)
@@ -42,7 +42,7 @@ public class EventoUnidad
         if (agenteId <= 0) throw new DomainException("El agente de la unidad es requerido.");
         if (!Enum.IsDefined(rol)) throw new DomainException("El rol de la unidad no es válido.");
 
-        return new EventoUnidad
+        return new EventoUnidadInfo
         {
             UnidadId = unidad.Id,
             DenominacionId = denominacionId,

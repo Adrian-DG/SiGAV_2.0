@@ -13,7 +13,6 @@ public static class DependencyInjection
             services.AddMediatR(assembly);
             services.AddValidatorsFromAssembly(assembly);
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-            services.AddAutoMapper(assembly);
             return services;
         }
 }

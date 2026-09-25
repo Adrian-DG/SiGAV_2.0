@@ -20,9 +20,11 @@ public class CreateUnidadCommandValidator : AbstractValidator<CreateUnidadComman
     {
         RuleFor(x => x.Ficha)
             .NotEmpty().WithMessage("La ficha es requerida.")
-            .MaximumLength(Unidad.FichaMaxLength).WithMessage($"La ficha no puede exceder {Unidad.FichaMaxLength} caracteres.");
+            .MaximumLength(Unidad.FichaMaxLength).WithMessage($"La ficha no puede exceder {Unidad.FichaMaxLength} caracteres.")
+            .Matches(Unidad.FichaRegex).WithMessage($"La ficha debe cumplir con el formato valido");
         RuleFor(x => x.Placa)
-            .MaximumLength(Unidad.PlacaMaxLength).WithMessage($"La placa no puede exceder {Unidad.PlacaMaxLength} caracteres.");
+            .MaximumLength(Unidad.PlacaMaxLength).WithMessage($"La placa no puede exceder {Unidad.PlacaMaxLength} caracteres.")
+            .Matches(DomainRegexPattern.PlacaRegex).WithMessage($"La placa debe cumplir con el formato valido");
         RuleFor(x => x.DenominacionId).GreaterThan(0).WithMessage("La denominación es requerida.");
         RuleFor(x => x.Motivo)
             .MaximumLength(AutorCambio.ObservacionMaxLength).WithMessage($"El motivo no puede exceder {AutorCambio.ObservacionMaxLength} caracteres.");

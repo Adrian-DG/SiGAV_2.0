@@ -4,6 +4,8 @@ using MediatR;
 
 namespace Application.Features.Operaciones.Agentes;
 
+#region Autorizacion
+
 // Command: autoriza o revoca el acceso a la app (en SiGAV 1.0 era un toggle con "Type = 1")
 public record CambiarAutorizacionAgenteCommand(int AgenteId, bool Autorizado) : IRequest;
 
@@ -23,6 +25,10 @@ public class CambiarAutorizacionAgenteCommandHandler(IAgenteRepository agentes, 
     }
 }
 
+#endregion
+
+#region Desactivar
+
 // Command: baja lógica del agente
 public record DesactivarAgenteCommand(int AgenteId) : IRequest;
 
@@ -40,3 +46,6 @@ public class DesactivarAgenteCommandHandler(IAgenteRepository agentes, IUnitOfWo
         return Unit.Value;
     }
 }
+
+
+#endregion

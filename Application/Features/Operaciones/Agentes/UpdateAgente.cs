@@ -1,4 +1,4 @@
-using Application.Contracts.Operaciones;
+using Application.Contracts;
 using Application.Exceptions;
 using Domain.Entities.Operaciones;
 using Domain.Enums;
@@ -24,7 +24,7 @@ public record UpdateAgenteCommand(
 // Validator
 public class UpdateAgenteCommandValidator : DatosAgenteValidator<UpdateAgenteCommand>
 {
-    public UpdateAgenteCommandValidator(ICatalogoQueries catalogos) : base(catalogos)
+    public UpdateAgenteCommandValidator(IReadDbContext db) : base(db)
     {
         RuleFor(x => x.AgenteId).GreaterThan(0).WithMessage("El agente es requerido.");
     }

@@ -1,6 +1,7 @@
-using Application.Contracts.Operaciones;
+using Application.Contracts;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Operaciones.Unidades;
 
@@ -17,9 +18,13 @@ public class GetUnidadesPorTramoQueryValidator : AbstractValidator<GetUnidadesPo
 }
 
 // Handler
-public class GetUnidadesPorTramoQueryHandler(IUnidadQueries queries)
+public class GetUnidadesPorTramoQueryHandler(IReadDbContext db)
     : IRequestHandler<GetUnidadesPorTramoQuery, IReadOnlyList<UnidadViewModel>>
 {
-    public Task<IReadOnlyList<UnidadViewModel>> Handle(GetUnidadesPorTramoQuery request, CancellationToken cancellationToken)
-        => queries.GetByTramoAsync(request.TramoId, cancellationToken);
+    public async Task<IReadOnlyList<UnidadViewModel>> Handle(GetUnidadesPorTramoQuery request, CancellationToken cancellationToken)
+        => await db.Unidades
+            .Where(u => u.IsActive && u.Denominacion != null && u.Denominacion.TramoId == request.TramoId)
+            .OrderBy(u => u.Ficha)
+            .Select(UnidadViewModel.Proyeccion)
+            .ToListAsync(cancellationToken);
 }

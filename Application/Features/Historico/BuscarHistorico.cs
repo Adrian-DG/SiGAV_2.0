@@ -1,22 +1,12 @@
-using Application.Contracts.Historico;
+using Application.Contracts;
 using Application.Exceptions;
 using Domain.Enums;
 using Domain.ValueObjects;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Historico;
-
-/// <summary>De dónde salió el dato para autocompletar.</summary>
-public static class OrigenDato
-{
-    /// <summary>El último evento en que se registró esa cédula/placa (lo más reciente).</summary>
-    public const string Evento = "evento";
-
-    /// <summary>Maestro histórico (p. ej. importado de SiGAV 1.0), si nunca se registró en un evento.</summary>
-    public const string Maestro = "maestro";
-}
-
 public record CiudadanoConocidoViewModel(
     string Identificacion,
     string? Nombre,
@@ -32,12 +22,9 @@ public record VehiculoConocidoViewModel(
     int? TipoVehiculoId,
     int? MarcaId,
     int? ModeloId,
-    int? ColorId,
-    string? MarcaTexto,
-    string? ModeloTexto,
-    string? ColorTexto,
-    string Origen,
-    DateTime? UltimoRegistro);
+    int? ColorId);
+
+#region Ciudadano
 
 // Query: datos conocidos de una persona para autocompletar el formulario de evento
 public record GetCiudadanoConocidoQuery(string Identificacion) : IRequest<CiudadanoConocidoViewModel>;
@@ -57,16 +44,23 @@ public class GetCiudadanoConocidoQueryValidator : AbstractValidator<GetCiudadano
     }
 }
 
-public class GetCiudadanoConocidoQueryHandler(IHistoricoQueries queries) : IRequestHandler<GetCiudadanoConocidoQuery, CiudadanoConocidoViewModel>
+public class GetCiudadanoConocidoQueryHandler(IReadDbContext db) : IRequestHandler<GetCiudadanoConocidoQuery, CiudadanoConocidoViewModel>
 {
     public async Task<CiudadanoConocidoViewModel> Handle(GetCiudadanoConocidoQuery request, CancellationToken cancellationToken)
     {
         var identificacion = DatosPersona.NormalizarIdentificacion(request.Identificacion)!;
-        return await queries.BuscarCiudadanoAsync(identificacion, cancellationToken)
+
+        return await db.Ciudadanos
+            .Where(c => c.Identificacion == identificacion && c.IsActive)
+            .Select(c => new CiudadanoConocidoViewModel(identificacion, c.Nombre, c.Apellido, c.Sexo, null, c.NacionalidadId, OrigenDato.Maestro, null))
+            .FirstOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("La persona", identificacion);
     }
 }
 
+#endregion
+
+#region Vehiculo
 // Query: datos conocidos de un vehículo para autocompletar el formulario de evento
 public record GetVehiculoConocidoQuery(string Placa) : IRequest<VehiculoConocidoViewModel>;
 
@@ -84,12 +78,17 @@ public class GetVehiculoConocidoQueryValidator : AbstractValidator<GetVehiculoCo
     }
 }
 
-public class GetVehiculoConocidoQueryHandler(IHistoricoQueries queries) : IRequestHandler<GetVehiculoConocidoQuery, VehiculoConocidoViewModel>
+public class GetVehiculoConocidoQueryHandler(IReadDbContext db) : IRequestHandler<GetVehiculoConocidoQuery, VehiculoConocidoViewModel>
 {
     public async Task<VehiculoConocidoViewModel> Handle(GetVehiculoConocidoQuery request, CancellationToken cancellationToken)
     {
         var placa = DatosVehiculo.NormalizarPlaca(request.Placa)!;
-        return await queries.BuscarVehiculoAsync(placa, cancellationToken)
+
+        return await db.Vehiculos
+            .Where(x => x.Placa == placa && x.IsActive)
+            .Select(x => new VehiculoConocidoViewModel(placa, x.TipoId, x.Modelo != null ? x.Modelo.MarcaId : null, x.ModeloId, x.ColorId))
+            .FirstOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("El vehículo", placa);
     }
 }
+#endregion

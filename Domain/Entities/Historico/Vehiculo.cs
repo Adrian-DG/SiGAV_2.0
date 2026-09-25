@@ -1,5 +1,6 @@
 using Domain.Abstraction;
 using Domain.Entities.Misc;
+using System.Text.RegularExpressions;
 
 namespace Domain.Entities.Historico;
 
@@ -19,6 +20,4 @@ public class Vehiculo : BaseEntityMetadata
     
     public required string Placa { get; set; }
 
-    public string? PlacaURI { get; set; }
-    
 }

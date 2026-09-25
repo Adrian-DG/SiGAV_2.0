@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Persistance.Configurations.Operaciones;
 
-internal sealed class EventoCiudadanoConfiguration : IEntityTypeConfiguration<EventoCiudadano>
+internal sealed class EventoCiudadanoConfiguration : IEntityTypeConfiguration<EventoCiudadanoInfo>
 {
-    public void Configure(EntityTypeBuilder<EventoCiudadano> builder)
+    public void Configure(EntityTypeBuilder<EventoCiudadanoInfo> builder)
     {
         builder.ToTable("evento_ciudadano", Schemas.Operaciones);
         builder.HasKey(ec => ec.Id);
@@ -58,9 +58,9 @@ internal sealed class EventoCiudadanoConfiguration : IEntityTypeConfiguration<Ev
             .HasForeignKey(ec => ec.CiudadanoId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
-        builder.HasOne(ec => ec.VehiculoHistorico)
+        builder.HasOne(ec => ec.Vehiculo)
             .WithMany()
-            .HasForeignKey(ec => ec.VehiculoHistoricoId)
+            .HasForeignKey(ec => ec.VehiculoId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
     }

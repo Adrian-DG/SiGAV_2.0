@@ -2,6 +2,7 @@ using Domain.Abstraction;
 using Domain.Enums;
 using Domain.Exceptions;
 using Domain.ValueObjects;
+using System.Text.RegularExpressions;
 
 namespace Domain.Entities.Operaciones;
 
@@ -9,6 +10,8 @@ public class Unidad : BaseEntityMetadata, IAuditableMetadata
 {
     public const int FichaMaxLength = 20;
     public const int PlacaMaxLength = 10;
+    private const string FichaRegexPattern = @"^[A-Z]{1,2}-\d{3,4}$";
+    public static readonly Regex FichaRegex = new(FichaRegexPattern, RegexOptions.Compiled);
 
     public string Ficha { get; private set; } = null!;
     public string? Placa { get; private set; }

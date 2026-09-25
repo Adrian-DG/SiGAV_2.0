@@ -1,6 +1,8 @@
+using Application.Common;
 using Application.Common.Models;
-using Application.Contracts.Operaciones;
+using Application.Contracts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Operaciones.Denominaciones;
 
@@ -12,9 +14,27 @@ public record GetDenominacionesQuery(int Page = 1, int Size = 10, string? Search
 public class GetDenominacionesQueryValidator : PagedQueryValidator<GetDenominacionesQuery>;
 
 // Handler
-public class GetDenominacionesQueryHandler(IDenominacionQueries queries)
+public class GetDenominacionesQueryHandler(IReadDbContext db)
     : IRequestHandler<GetDenominacionesQuery, PagedResult<DenominacionViewModel>>
 {
     public Task<PagedResult<DenominacionViewModel>> Handle(GetDenominacionesQuery request, CancellationToken cancellationToken)
-        => queries.GetPagedAsync(request.Page, request.Size, request.SearchTerm, cancellationToken);
+    {
+        var query = db.Denominaciones.Where(d => d.IsActive);
+
+        if (QueryableExtensions.PatronBusqueda(request.SearchTerm) is { } patron)
+            query = query.Where(d => EF.Functions.Like(d.Nombre, patron));
+
+        return query
+            .OrderBy(d => d.Nivel!.Jerarquia)
+            .ThenBy(d => d.Nombre)
+            .Select(d => new DenominacionViewModel(
+                d.Id,
+                d.Nombre,
+                d.NivelDenominacionId,
+                d.Nivel!.Nombre,
+                d.Nivel.Jerarquia,
+                d.TramoId,
+                d.Tramo!.Nombre))
+            .ToPagedResultAsync(request.Page, request.Size, cancellationToken);
+    }
 }

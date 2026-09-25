@@ -1,4 +1,5 @@
-using Application.Contracts.Operaciones;
+using Application.Common;
+using Application.Contracts;
 using Domain.Abstraction;
 using Domain.Entities.Operaciones;
 using Domain.Enums;
@@ -21,7 +22,7 @@ public interface IDatosAgente
 /// <summary>Reglas comunes a crear, registrar y editar un agente.</summary>
 public abstract class DatosAgenteValidator<T> : AbstractValidator<T> where T : IDatosAgente
 {
-    protected DatosAgenteValidator(ICatalogoQueries catalogos)
+    protected DatosAgenteValidator(IReadDbContext db)
     {
         RuleFor(x => x.Identificacion)
             .NotEmpty().WithMessage("La cédula es requerida.")
@@ -40,7 +41,7 @@ public abstract class DatosAgenteValidator<T> : AbstractValidator<T> where T : I
         RuleFor(x => x.AreaOperativa).IsInEnum().WithMessage("El área operativa no es válida.");
         RuleFor(x => x.RangoId)
             .GreaterThan(0).WithMessage("El rango es requerido.")
-            .MustAsync(catalogos.ExisteRangoAsync).WithMessage("El rango especificado no existe.");
+            .MustAsync((id, ct) => db.Rangos.ExisteActivoAsync(id, ct)).WithMessage("El rango especificado no existe.");
         RuleFor(x => x.Especialidad)
             .MaximumLength(Agente.EspecialidadMaxLength).WithMessage($"La especialidad no puede exceder {Agente.EspecialidadMaxLength} caracteres.");
     }
