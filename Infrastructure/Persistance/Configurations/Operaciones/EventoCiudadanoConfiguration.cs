@@ -58,9 +58,9 @@ internal sealed class EventoCiudadanoConfiguration : IEntityTypeConfiguration<Ev
             .HasForeignKey(ec => ec.CiudadanoId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
-        builder.HasOne(ec => ec.Vehiculo)
+        builder.HasOne(ec => ec.VehiculoHistorico)
             .WithMany()
-            .HasForeignKey(ec => ec.VehiculoId)
+            .HasForeignKey(ec => ec.VehiculoHistoricoId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
     }

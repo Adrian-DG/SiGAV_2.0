@@ -7,6 +7,17 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Historico;
+
+/// <summary>De dónde salió el dato para autocompletar.</summary>
+public static class OrigenDato
+{
+    /// <summary>El último evento en que se registró esa cédula/placa (lo más reciente).</summary>
+    public const string Evento = "evento";
+
+    /// <summary>Maestro histórico (p. ej. importado de SiGAV 1.0), si nunca se registró en un evento.</summary>
+    public const string Maestro = "maestro";
+}
+
 public record CiudadanoConocidoViewModel(
     string Identificacion,
     string? Nombre,

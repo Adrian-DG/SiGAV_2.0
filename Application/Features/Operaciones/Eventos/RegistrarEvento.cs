@@ -38,6 +38,7 @@ public record RegistrarEventoCommand(
     Guid? RequestId,
     decimal Latitud,
     decimal Longitud,
+    int MunicipioId,
     IReadOnlyList<int> TipoEventoIds,
     DateTime? FechaHoraReporteUtc = null,
     int? TramoId = null,
@@ -159,7 +160,7 @@ public class RegistrarEventoCommandHandler(
         {
             var persona = new DatosPersona(c.Identificacion, c.Nombre, c.Apellido, c.Sexo, c.Telefono, c.NacionalidadId);
             var vehiculo = c.Vehiculo is { } v
-                ? new DatosVehiculo(v.Placa, v.TipoVehiculoId, v.MarcaId, v.ModeloId, v.ColorId, v.MarcaTexto, v.ModeloTexto, v.ColorTexto)
+                ? new DatosVehiculo(v.Placa, v.TipoVehiculoId, v.MarcaId, v.ModeloId, v.ColorId)
                 : null;
 
             // Vínculo con los maestros históricos cuando la persona/el vehículo ya existen en ellos

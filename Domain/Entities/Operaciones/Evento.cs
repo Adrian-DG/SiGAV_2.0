@@ -30,6 +30,18 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     public EstadoEventoEnum Estado { get; private set; }
     public TipoCierreEventoEnum? TipoCierre { get; private set; }
     public Coordenada Ubicacion { get; private set; } = null!;
+    public string? Direccion { get; private set; }
+
+    public int MunicipioId { get; private set; }
+    public virtual Municipio? Municipio { get; private set; }
+
+    /// <summary>
+    /// Tramo donde ocurrió el evento (opcional). Las estadísticas lo atribuyen al tramo de la
+    /// unidad; este dato permite también atribuirlo al lugar.
+    /// </summary>
+    public int? TramoId { get; private set; }
+    public virtual Tramo? Tramo { get; private set; }
+
     public string? Comentario { get; private set; }
 
     /// <summary>Cuándo se reportó el evento (UTC). No confundir con CreatedAt, que es cuándo se guardó.</summary>
@@ -40,6 +52,16 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     private readonly List<EventoUnidadInfo> _unidades = new();
     private readonly List<EventoCiudadanoInfo> _ciudadanos = new();
     private readonly List<EventoEvidencia> _evidencias = new();
+    private readonly List<EventoTipoEvento> _tipos = new();
+
+    public IReadOnlyCollection<EventoUnidadInfo> Unidades => _unidades.AsReadOnly();
+    public IReadOnlyCollection<EventoCiudadanoInfo> Ciudadanos => _ciudadanos.AsReadOnly();
+    public IReadOnlyCollection<EventoEvidencia> Evidencias => _evidencias.AsReadOnly();
+
+    /// <summary>Tipos atendidos (un evento puede tener varios, como en SiGAV 1.0). Nunca vacío.</summary>
+    public IReadOnlyCollection<EventoTipoEvento> Tipos => _tipos.AsReadOnly();
+
+    public EventoUnidadInfo UnidadPrincipal => _unidades.Single(u => u.Rol == RolUnidadEventoEnum.Principal);
 
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -127,6 +149,45 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     /// <summary>Anulación lógica (el "remove" de SiGAV 1.0): deja de contar en estadísticas.</summary>
     public void Anular() => IsActive = false;
 
+    // ---------------------------------------------------------------- Datos
+
+    /// <summary>
+    /// Dónde ocurrió el evento. Se reemplaza completa: coordenada, municipio, tramo (opcional)
+    /// y dirección de referencia. La existencia de municipio y tramo la valida la aplicación.
+    /// </summary>
+    public void AsignarUbicacion(Coordenada ubicacion, int municipioId, int? tramoId, string? direccion)
+    {
+        AsegurarActivo();
+        ArgumentNullException.ThrowIfNull(ubicacion);
+        if (municipioId <= 0) throw new DomainException("El municipio es requerido.");
+        if (tramoId is <= 0) throw new DomainException("El tramo no es válido.");
+
+        Ubicacion = ubicacion;
+        // Si cambia el municipio o el tramo, la navegación cargada deja de corresponder
+        if (Municipio?.Id != municipioId) Municipio = null;
+        MunicipioId = municipioId;
+        if (Tramo?.Id != tramoId) Tramo = null;
+        TramoId = tramoId;
+        Direccion = Normalizar(direccion, DireccionMaxLength, "dirección");
+    }
+
+    /// <summary>
+    /// Deja exactamente los tipos indicados (sin duplicados). Conserva los que ya tenía y solo
+    /// agrega o quita la diferencia, así la persistencia no borra y reinserta las mismas filas.
+    /// </summary>
+    public void ReemplazarTipos(IEnumerable<int> tipoEventoIds)
+    {
+        AsegurarActivo();
+
+        var ids = (tipoEventoIds ?? []).Distinct().ToList();
+        if (ids.Count == 0) throw new DomainException("El evento debe tener al menos un tipo de evento.");
+        if (ids.Any(id => id <= 0)) throw new DomainException("Hay tipos de evento no válidos.");
+
+        _tipos.RemoveAll(t => !ids.Contains(t.TipoEventoId));
+        foreach (var id in ids.Where(id => _tipos.All(t => t.TipoEventoId != id)))
+            _tipos.Add(new EventoTipoEvento(id));
+    }
+
     /// <summary>Agrega una unidad de apoyo (o un apoyo solicitado, como la unidad alfa).</summary>
     public void AgregarUnidadApoyo(Unidad unidad, int agenteId, bool yaLlego = true)
     {
@@ -146,6 +207,32 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
 
         participacion.CambiarRol(RolUnidadEventoEnum.Apoyo);
     }
+
+    // ---------------------------------------------------------------- Personas
+
+    /// <summary>
+    /// Agrega una persona involucrada (con su vehículo si aplica). <paramref name="ciudadano"/> y
+    /// <paramref name="vehiculoHistorico"/> vinculan los maestros cuando la persona o el vehículo ya existen.
+    /// </summary>
+    public void AgregarCiudadano(
+        RolCiudadanoEnum rol,
+        DatosPersona persona,
+        DatosVehiculo? vehiculo = null,
+        Ciudadano? ciudadano = null,
+        Vehiculo? vehiculoHistorico = null)
+    {
+        AsegurarActivo();
+        ArgumentNullException.ThrowIfNull(persona);
+
+        if (persona.Identificacion is { } identificacion
+            && _ciudadanos.Any(c => c.Persona.Identificacion == identificacion))
+            throw new DomainException($"La persona '{identificacion}' ya está registrada en el evento.");
+
+        _ciudadanos.Add(EventoCiudadanoInfo.Crear(rol, persona, vehiculo, ciudadano, vehiculoHistorico));
+    }
+
+    // ---------------------------------------------------------------- Reglas internas
+
     private void AsegurarActivo()
     {
         if (!IsActive) throw new DomainException("El evento está anulado.");
