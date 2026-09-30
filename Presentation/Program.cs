@@ -1,4 +1,5 @@
 using Application;
+using Microsoft.AspNetCore.HttpOverrides;
 using Infrastructure;
 using Infrastructure.Persistance.Seeding;
 using Presentation.Middleware;
@@ -10,6 +11,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
+
+// Detrás de un proxy (Dev Tunnels, IIS, nginx...): la URL pública llega en X-Forwarded-*.
+// Sin esto HTTPS redirige a https://localhost y el documento OpenAPI (Scalar) apunta a localhost.
+// Solo se aceptan de proxies en loopback (valor por defecto), así un cliente externo no puede falsearlos.
+builder.Services.Configure<ForwardedHeadersOptions>(options => options.ForwardedHeaders =
+    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost);
 
 // CORS: solo para clientes web (front desk, Expo web). Las apps nativas no lo necesitan.
 // Orígenes por ambiente en "Cors:AllowedOrigins"; sin configurar no se permite ninguno.
@@ -49,6 +56,9 @@ var app = builder.Build();
 await app.Services.InitializeDatabaseAsync();
 
 // Configure the HTTP request pipeline.
+// Primero: todo lo que sigue (redirección HTTPS, OpenAPI, logs) debe ver el esquema y host públicos
+app.UseForwardedHeaders();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -56,10 +66,24 @@ if (app.Environment.IsDevelopment())
     // https://localhost:{7148/5282}/scalar
     app.MapScalarApiReference(options => options
         .WithTitle("SiGAV API")
+        .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
         .AddPreferredSecuritySchemes([BearerSecuritySchemeTransformer.SchemeName])
         .AddHttpAuthentication(BearerSecuritySchemeTransformer.SchemeName, _ => { })
         // Conserva el token al recargar la página (solo en el navegador de quien lo usa)
         .EnablePersistentAuthentication());
+
+    // Con un Dev Tunnel activo, Visual Studio pasa su URL pública en VS_TUNNEL_URL: la raíz abierta
+    // desde localhost lleva a Scalar en el túnel. Solo la raíz; la API nunca redirige (rompería a
+    // los clientes locales, como Expo web).
+    var tunnelUrl = Environment.GetEnvironmentVariable("VS_TUNNEL_URL")?.TrimEnd('/');
+    if (tunnelUrl is not null)
+        app.Logger.LogInformation("Dev Tunnel activo: {TunnelUrl}/scalar/v1", tunnelUrl);
+
+    app.MapGet("/", (HttpRequest request) =>
+            tunnelUrl is not null && !tunnelUrl.EndsWith(request.Host.Value!, StringComparison.OrdinalIgnoreCase)
+                ? Results.Redirect($"{tunnelUrl}/scalar/v1")
+                : Results.Redirect("/scalar/v1"))
+        .ExcludeFromDescription();
 }
 
 app.UseExceptionHandler();

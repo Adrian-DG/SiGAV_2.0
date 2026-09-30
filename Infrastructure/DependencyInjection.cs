@@ -34,10 +34,7 @@ public static class DependencyInjection
                 ? configuration.GetConnectionString("ProductionConnection")
                 : configuration.GetConnectionString("DevelopmentConnection");
 
-            opt.UseSqlite(connectionString, b => b
-                .MigrationsAssembly("Infrastructure")
-                // Colecciones en consultas separadas (evita el producto cartesiano de los Include)
-                .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            opt.UsarSqlite(connectionString);
             opt.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
             opt.EnableDetailedErrors();
         });
