@@ -9,7 +9,7 @@ public class AgenteRepository(SiGAVContext context) : IAgenteRepository
     public Task<Agente?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => context.Agentes.FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
-    // Rango se incluye porque Agente.GetRango / GetInfo lo necesitan
+    // Rango se incluye porque Agente.GetRango lo necesita
     public Task<Agente?> GetActivoByIdentificacionAsync(string identificacion, CancellationToken cancellationToken = default)
         => context.Agentes
             .AsNoTracking()

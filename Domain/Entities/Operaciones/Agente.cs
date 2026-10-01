@@ -42,7 +42,8 @@ public class Agente : PersonMetadata, IAuditableMetadata
     // La Armada (ARD) usa su propia nomenclatura de rangos. Requiere que Rango esté cargado.
     public string GetRango => (Institucion == InstitucionEnum.ARD ? Rango?.NombreArmada : Rango?.Nombre) ?? string.Empty;
 
-    public string GetInfo => $"{GetRango}, {Apellido} {Nombre}, {Institucion.ToString()}";
+    public string NombreCompleto => $"{Apellido} {Nombre}";
+    public string SiglasInstitucion => Institucion.ToString();
 
     public bool PuedeIniciarSesion => IsActive && Autorizado;
 

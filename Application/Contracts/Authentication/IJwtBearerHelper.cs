@@ -27,6 +27,7 @@ public record WebUserIdentity(
 public record MovilUserIdentity(
     int AgenteId,
     string Identificacion,
+    string Institucion,
     string Rango,
     string NombreCompleto,
     int UnidadId,

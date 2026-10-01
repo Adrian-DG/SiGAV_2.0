@@ -42,8 +42,9 @@ public class LoginMovilCommandHandler(
         return jwt.GenerateMovilToken(new MovilUserIdentity(
             agente.Id,
             agente.Identificacion,
+            agente.SiglasInstitucion,
             agente.GetRango ?? string.Empty,
-            agente.GetInfo,
+            agente.NombreCompleto,
             unidad.Id,
             unidad.Ficha));
     }

@@ -38,9 +38,10 @@ public class JwtBearerHelper(IOptions<JwtOptions> options, TimeProvider timeProv
         {
             new(SesionClaims.Subject, identity.AgenteId.ToString(CultureInfo.InvariantCulture)),
             new(SesionClaims.TipoSesion, TiposSesion.Movil),
-            new(SesionClaims.Name, identity.Identificacion),
-            new(SesionClaims.NombreCompleto, identity.NombreCompleto),
+            new(SesionClaims.Institucion, identity.Institucion),
             new(SesionClaims.Rango, identity.Rango),
+            new(SesionClaims.Name, identity.Identificacion),
+            new(SesionClaims.NombreCompleto, identity.NombreCompleto), 
             new(SesionClaims.UnidadId, identity.UnidadId.ToString(CultureInfo.InvariantCulture)),
             new(SesionClaims.Ficha, identity.Ficha),
         };

@@ -185,7 +185,7 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
                     u.NivelDenominacion?.Nombre ?? string.Empty,
                     u.Rol,
                     u.AgenteId,
-                    u.Agente?.GetInfo ?? string.Empty))
+                    u.Agente is { } a ? $"{a.GetRango}, {a.NombreCompleto}, {a.SiglasInstitucion}" : string.Empty))
                 .ToList(),
             evento.Vehiculos
                 .OrderBy(v => v.Id)
