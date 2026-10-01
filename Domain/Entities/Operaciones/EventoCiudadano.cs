@@ -6,9 +6,9 @@ using Domain.ValueObjects;
 namespace Domain.Entities.Operaciones;
 
 /// <summary>
-/// Persona involucrada en un evento, con su vehículo si aplica (un peatón o un paciente no
-/// tienen). Los datos quedan como foto del momento; el vínculo con los maestros históricos
-/// (Ciudadano, Vehiculo) es opcional y solo existe para personas y vehículos identificados.
+/// Persona involucrada en un evento, asociada a uno de los vehículos del evento si iba en él
+/// (conductor, pasajero) o sin vehículo (peatón...). Los datos quedan como foto del momento; el
+/// vínculo con el maestro histórico es opcional y solo existe para personas identificadas.
 /// </summary>
 public class EventoCiudadanoInfo
 {
@@ -21,40 +21,46 @@ public class EventoCiudadanoInfo
 
     public DatosPersona Persona { get; private set; } = null!;
 
-    /// <summary>null = sin vehículo (peatón, paciente...).</summary>
-    public DatosVehiculo? Vehiculo { get; private set; }
+    /// <summary>Vehículo del mismo evento en que iba la persona. null = sin vehículo.</summary>
+    public int? EventoVehiculoId { get; private set; }
+    public virtual EventoVehiculoInfo? Vehiculo { get; private set; }
 
     public int? CiudadanoId { get; private set; }
     public virtual Ciudadano? Ciudadano { get; private set; }
 
-    public int? VehiculoHistoricoId { get; private set; }
-    public virtual Vehiculo? VehiculoHistorico { get; private set; }
-
     // Requerido por EF Core
     private EventoCiudadanoInfo() { }
+
+    /// <summary>Conductor y pasajero van siempre en un vehículo del evento.</summary>
+    public static bool RequiereVehiculo(RolCiudadanoEnum rol)
+        => rol is RolCiudadanoEnum.Conductor or RolCiudadanoEnum.Pasajero;
+
+    /// <summary>Un peatón nunca va en un vehículo; paciente u otro pueden ir o no.</summary>
+    public static bool AdmiteVehiculo(RolCiudadanoEnum rol) => rol != RolCiudadanoEnum.Peaton;
 
     internal static EventoCiudadanoInfo Crear(
         RolCiudadanoEnum rol,
         DatosPersona persona,
-        DatosVehiculo? vehiculo,
-        Ciudadano? ciudadano,
-        Vehiculo? vehiculoHistorico)
+        EventoVehiculoInfo? vehiculo,
+        Ciudadano? ciudadano)
     {
         if (!Enum.IsDefined(rol)) throw new DomainException("El rol del ciudadano no es válido.");
-        if (vehiculoHistorico is not null && vehiculo is null)
-            throw new DomainException("No se puede vincular un vehículo histórico sin registrar los datos del vehículo.");
+        if (vehiculo is null && RequiereVehiculo(rol))
+            throw new DomainException($"El {Descripcion(rol)} debe estar asociado a un vehículo del evento.");
+        if (vehiculo is not null && !AdmiteVehiculo(rol))
+            throw new DomainException("Un peatón no puede estar asociado a un vehículo.");
 
         return new EventoCiudadanoInfo
         {
             Rol = rol,
-            // Copias propias: cada participación debe tener su instancia (el mismo DatosPersona
+            // Copia propia: cada participación debe tener su instancia (el mismo DatosPersona
             // podría reutilizarse para varias personas y la persistencia los asocia por referencia)
             Persona = persona with { },
-            Vehiculo = vehiculo is null ? null : vehiculo with { },
+            Vehiculo = vehiculo,
             Ciudadano = ciudadano,
-            CiudadanoId = ciudadano is { Id: > 0 } ? ciudadano.Id : null,
-            VehiculoHistorico = vehiculoHistorico,
-            VehiculoHistoricoId = vehiculoHistorico is { Id: > 0 } ? vehiculoHistorico.Id : null
+            CiudadanoId = ciudadano is { Id: > 0 } ? ciudadano.Id : null
         };
     }
+
+    private static string Descripcion(RolCiudadanoEnum rol) => rol == RolCiudadanoEnum.Conductor ? "conductor" : "pasajero";
 }

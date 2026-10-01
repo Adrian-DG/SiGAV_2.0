@@ -21,6 +21,7 @@ public interface IReadDbContext
     IQueryable<Marca> Marcas { get; }
     IQueryable<Modelo> Modelos { get; }
     IQueryable<Color> Colores { get; }
+    IQueryable<PrefijoPlaca> PrefijosPlaca { get; }
 
     // Histórico
     IQueryable<Ciudadano> Ciudadanos { get; }
@@ -40,6 +41,7 @@ public interface IReadDbContext
     IQueryable<EventoTipoEvento> EventoTiposEvento { get; }
     IQueryable<EventoUnidadInfo> EventoUnidades { get; }
     IQueryable<EventoCiudadanoInfo> EventoCiudadanos { get; }
+    IQueryable<EventoVehiculoInfo> EventoVehiculos { get; }
 
     /// <summary>Usuarios de la web (la entidad de Identity vive en Infrastructure).</summary>
     IQueryable<UsuarioLectura> Usuarios { get; }

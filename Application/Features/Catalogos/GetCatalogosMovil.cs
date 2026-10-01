@@ -20,7 +20,8 @@ public record CatalogosMovilViewModel(
     IReadOnlyList<CatalogoItemViewModel> Colores,
     IReadOnlyList<CatalogoItemViewModel> TiposVehiculo,
     IReadOnlyList<CatalogoItemViewModel> Marcas,
-    IReadOnlyList<ModeloItemViewModel> Modelos);
+    IReadOnlyList<ModeloItemViewModel> Modelos,
+    IReadOnlyList<PrefijoPlacaItemViewModel> PrefijosPlaca);
 
 /// <summary>
 /// <see cref="Version"/> identifica el contenido (hash). <see cref="Catalogos"/> es null cuando la
@@ -59,7 +60,8 @@ public class GetCatalogosMovilQueryHandler(IReadDbContext db) : IRequestHandler<
             await db.Marcas.Where(x => x.IsActive).OrderBy(x => x.Id)
                 .Select(x => new CatalogoItemViewModel(x.Id, x.Nombre)).ToListAsync(cancellationToken),
             await db.Modelos.Where(x => x.IsActive).OrderBy(x => x.Id)
-                .Select(x => new ModeloItemViewModel(x.Id, x.Nombre, x.MarcaId, x.TipoVehiculoId)).ToListAsync(cancellationToken));
+                .Select(x => new ModeloItemViewModel(x.Id, x.Nombre, x.MarcaId, x.TipoVehiculoId)).ToListAsync(cancellationToken),
+            await ReglaPlaca.CargarAsync(db, cancellationToken));
 
         var version = CalcularVersion(catalogos);
         return string.Equals(version, request.VersionActual, StringComparison.Ordinal)

@@ -68,8 +68,14 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
                     .Where(u => u.Rol == RolUnidadEventoEnum.Principal)
                     .Select(u => new PrincipalFila(u.Unidad!.Ficha, u.Denominacion!.Nombre))
                     .FirstOrDefault(),
-                e.Ciudadanos.OrderBy(c => c.Id).Select(c => c.Persona).FirstOrDefault(),
-                e.Ciudadanos.Where(c => c.Vehiculo != null).OrderBy(c => c.Id).Select(c => c.Vehiculo).FirstOrDefault()))
+                // Principal: el primer conductor (en un choque, el del primer vehículo); si no hay, la primera persona
+                e.Ciudadanos
+                    .OrderBy(c => c.Rol == RolCiudadanoEnum.Conductor ? 0 : 1)
+                    .ThenBy(c => c.EventoVehiculoId ?? int.MaxValue)
+                    .ThenBy(c => c.Id)
+                    .Select(c => c.Persona)
+                    .FirstOrDefault(),
+                e.Vehiculos.OrderBy(v => v.Id).Select(v => v.Datos).FirstOrDefault()))
             .ToPagedResultAsync(request.Page, request.Size, cancellationToken);
 
         var catalogo = await CatalogoVehiculo.CargarAsync(db, pagina.Items.Select(f => f.Vehiculo), cancellationToken);
@@ -80,7 +86,7 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
                 f.Tipos.Select(t => t.Nombre).OrderBy(n => n).ToList(),
                 f.Tipos.Select(t => t.Categoria).Distinct().Order().ToList(),
                 NombrePersona(f.Persona),
-                f.Vehiculo is null ? null : catalogo.Describir(f.Vehiculo).Descripcion,
+                f.Vehiculo is null ? null : catalogo.Describir(0, f.Vehiculo).Descripcion,
                 f.Direccion,
                 f.FechaHoraReporteUtc,
                 f.Principal?.Ficha ?? string.Empty,
@@ -131,12 +137,13 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
             .Include(e => e.Unidades).ThenInclude(u => u.Denominacion)
             .Include(e => e.Unidades).ThenInclude(u => u.NivelDenominacion)
             .Include(e => e.Unidades).ThenInclude(u => u.Agente!).ThenInclude(a => a.Rango)
+            .Include(e => e.Vehiculos)
             .Include(e => e.Ciudadanos)
             .Include(e => e.Evidencias)
             .FirstOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("El evento", request.EventoId);
 
-        var catalogo = await CatalogoVehiculo.CargarAsync(db, evento.Ciudadanos.Select(c => c.Vehiculo), cancellationToken);
+        var catalogo = await CatalogoVehiculo.CargarAsync(db, evento.Vehiculos.Select(v => v.Datos), cancellationToken);
         var nacionalidadIds = evento.Ciudadanos.Select(c => c.Persona.NacionalidadId).OfType<int>().Distinct().ToList();
         var nacionalidades = nacionalidadIds.Count == 0
             ? []
@@ -180,6 +187,10 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
                     u.AgenteId,
                     u.Agente?.GetInfo ?? string.Empty))
                 .ToList(),
+            evento.Vehiculos
+                .OrderBy(v => v.Id)
+                .Select(v => catalogo.Describir(v.Id, v.Datos))
+                .ToList(),
             evento.Ciudadanos
                 .OrderBy(c => c.Id)
                 .Select(c => new EventoCiudadanoViewModel(
@@ -191,7 +202,7 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
                     c.Persona.Sexo,
                     c.Persona.Telefono,
                     c.Persona.NacionalidadId is { } n ? nacionalidades.GetValueOrDefault(n) : null,
-                    c.Vehiculo is null ? null : catalogo.Describir(c.Vehiculo)))
+                    c.EventoVehiculoId))
                 .ToList(),
             evento.Evidencias
                 .OrderBy(e => e.Id)

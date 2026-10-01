@@ -18,7 +18,7 @@ internal sealed class EventoCiudadanoConfiguration : IEntityTypeConfiguration<Ev
             .HasForeignKey(ec => ec.EventoId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Foto de la persona y del vehículo, en columnas de la misma tabla
+        // Foto de la persona, en columnas de la misma tabla
         builder.OwnsOne(ec => ec.Persona, persona =>
         {
             persona.Property(p => p.Identificacion).HasColumnName("Identificacion").HasMaxLength(DatosPersona.IdentificacionMaxLength);
@@ -35,32 +35,18 @@ internal sealed class EventoCiudadanoConfiguration : IEntityTypeConfiguration<Ev
         });
         builder.Navigation(ec => ec.Persona).IsRequired();
 
-        builder.OwnsOne(ec => ec.Vehiculo, vehiculo =>
-        {
-            vehiculo.Property(v => v.Placa).HasColumnName("Placa").HasMaxLength(DatosVehiculo.PlacaMaxLength);
-            vehiculo.Property(v => v.TipoVehiculoId).HasColumnName("TipoVehiculoId");
-            vehiculo.Property(v => v.MarcaId).HasColumnName("MarcaId");
-            vehiculo.Property(v => v.ModeloId).HasColumnName("ModeloId");
-            vehiculo.Property(v => v.ColorId).HasColumnName("ColorId");
-            vehiculo.Property(v => v.MarcaTexto).HasColumnName("MarcaTexto").HasMaxLength(DatosVehiculo.TextoMaxLength);
-            vehiculo.Property(v => v.ModeloTexto).HasColumnName("ModeloTexto").HasMaxLength(DatosVehiculo.TextoMaxLength);
-            vehiculo.Property(v => v.ColorTexto).HasColumnName("ColorTexto").HasMaxLength(DatosVehiculo.TextoMaxLength);
-            vehiculo.HasIndex(v => v.Placa);
-            vehiculo.HasOne<Domain.Entities.Misc.TipoVehiculo>().WithMany().HasForeignKey(v => v.TipoVehiculoId).OnDelete(DeleteBehavior.Restrict);
-            vehiculo.HasOne<Domain.Entities.Misc.Marca>().WithMany().HasForeignKey(v => v.MarcaId).OnDelete(DeleteBehavior.Restrict);
-            vehiculo.HasOne<Domain.Entities.Misc.Modelo>().WithMany().HasForeignKey(v => v.ModeloId).OnDelete(DeleteBehavior.Restrict);
-            vehiculo.HasOne<Domain.Entities.Misc.Color>().WithMany().HasForeignKey(v => v.ColorId).OnDelete(DeleteBehavior.Restrict);
-        });
+        // Vehículo del mismo evento. Restrict (no cascade): el evento ya borra ambos en cascada y
+        // dos rutas de cascada hacia la misma fila no se permiten en todos los motores.
+        builder.HasOne(ec => ec.Vehiculo)
+            .WithMany()
+            .HasForeignKey(ec => ec.EventoVehiculoId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        // Vínculos opcionales con los maestros históricos
+        // Vínculo opcional con el maestro histórico
         builder.HasOne(ec => ec.Ciudadano)
             .WithMany()
             .HasForeignKey(ec => ec.CiudadanoId)
-            .IsRequired(false)
-            .OnDelete(DeleteBehavior.Restrict);
-        builder.HasOne(ec => ec.VehiculoHistorico)
-            .WithMany()
-            .HasForeignKey(ec => ec.VehiculoHistoricoId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
     }

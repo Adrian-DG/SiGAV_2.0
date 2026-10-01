@@ -17,6 +17,22 @@ internal static class VehiculosData
         "Patana"
     ];
 
+    /// <summary>
+    /// (Prefijo, descripción, patrón, ejemplo, tipos de vehículo). Prefijos según la DGII; los
+    /// formatos (cantidad de dígitos) deben confirmarse con la lista oficial y se corrigen en el
+    /// catálogo sin publicar la app. Sin tipos = cualquier tipo.
+    /// </summary>
+    public static readonly (string Prefijo, string Nombre, string Patron, string Ejemplo, string[] Tipos)[] PrefijosPlaca =
+    [
+        ("A", "Automóvil privado", @"^A\d{5,6}$", "A123456", ["Carro"]),
+        ("G", "Jeep privado", @"^G\d{5,6}$", "G123456", ["Jeep", "Jeepeta"]),
+        ("L", "Carga", @"^L\d{5,6}$", "L123456", ["Camión", "Camioneta", "Patana"]),
+        ("K", "Motocicleta", @"^K\d{5,6}$", "K123456", ["Motor o Motocicleta"]),
+        ("N", "Motocicleta (placa anterior a la K)", @"^N\d{5,6}$", "N123456", ["Motor o Motocicleta"]),
+        ("X", "Exhibición", @"^X\d{5,6}$", "X123456", []),
+        ("OE", "Ejército", @"^OE\d{4,6}$", "OE12345", [])
+    ];
+
     public static readonly string[] Colores =
     [
         "Otro",

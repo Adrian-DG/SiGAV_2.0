@@ -9,13 +9,15 @@ namespace Domain.Entities.Operaciones;
  
 
 /// <summary>
-/// Raíz del agregado de eventos (Asistencia en SiGAV 1.0). Las unidades, personas, tipos y
-/// evidencias solo se modifican a través de él, que garantiza sus invariantes.
+/// Raíz del agregado de eventos (Asistencia en SiGAV 1.0). Las unidades, vehículos, personas,
+/// tipos y evidencias solo se modifican a través de él, que garantiza sus invariantes.
 /// </summary>
 public class Evento : BaseEntityMetadata, IAuditableMetadata
 {
     public const int DireccionMaxLength = 250;
     public const int ComentarioMaxLength = 2000;
+    public const int MaxVehiculos = 30;
+    public const int MaxCiudadanos = 30;
 
     /// <summary>Tolerancia ante relojes de dispositivos adelantados.</summary>
     public static readonly TimeSpan ToleranciaReloj = TimeSpan.FromMinutes(5);
@@ -52,11 +54,13 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     public DateTime? FechaHoraCompletadoUtc { get; private set; }
 
     private readonly List<EventoUnidadInfo> _unidades = new();
+    private readonly List<EventoVehiculoInfo> _vehiculos = new();
     private readonly List<EventoCiudadanoInfo> _ciudadanos = new();
     private readonly List<EventoEvidencia> _evidencias = new();
     private readonly List<EventoTipoEvento> _tipos = new();
 
     public IReadOnlyCollection<EventoUnidadInfo> Unidades => _unidades.AsReadOnly();
+    public IReadOnlyCollection<EventoVehiculoInfo> Vehiculos => _vehiculos.AsReadOnly();
     public IReadOnlyCollection<EventoCiudadanoInfo> Ciudadanos => _ciudadanos.AsReadOnly();
     public IReadOnlyCollection<EventoEvidencia> Evidencias => _evidencias.AsReadOnly();
 
@@ -212,27 +216,57 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
         participacion.CambiarRol(RolUnidadEventoEnum.Apoyo);
     }
 
-    // ---------------------------------------------------------------- Personas
+    // ---------------------------------------------------------------- Vehículos y personas
 
     /// <summary>
-    /// Agrega una persona involucrada (con su vehículo si aplica). <paramref name="ciudadano"/> y
-    /// <paramref name="vehiculoHistorico"/> vinculan los maestros cuando la persona o el vehículo ya existen.
+    /// Agrega un vehículo involucrado. Devuelve la participación para asociarle personas con
+    /// <see cref="AgregarCiudadano"/>. <paramref name="vehiculoHistorico"/> vincula el maestro
+    /// cuando la placa ya es conocida.
+    /// </summary>
+    public EventoVehiculoInfo AgregarVehiculo(DatosVehiculo datos, Vehiculo? vehiculoHistorico = null)
+    {
+        AsegurarActivo();
+        ArgumentNullException.ThrowIfNull(datos);
+        if (_vehiculos.Count >= MaxVehiculos)
+            throw new DomainException($"No se pueden registrar más de {MaxVehiculos} vehículos en un evento.");
+        if (datos.Placa is { } placa && _vehiculos.Any(v => v.Datos.Placa == placa))
+            throw new DomainException($"El vehículo con placa '{placa}' ya está registrado en el evento.");
+
+        var vehiculo = EventoVehiculoInfo.Crear(datos, vehiculoHistorico);
+        _vehiculos.Add(vehiculo);
+        return vehiculo;
+    }
+
+    /// <summary>
+    /// Agrega una persona involucrada. Conductor y pasajero van en un <paramref name="vehiculo"/>
+    /// de este evento (máximo un conductor por vehículo); un peatón, en ninguno.
+    /// <paramref name="ciudadano"/> vincula el maestro cuando la persona ya existe.
     /// </summary>
     public void AgregarCiudadano(
         RolCiudadanoEnum rol,
         DatosPersona persona,
-        DatosVehiculo? vehiculo = null,
-        Ciudadano? ciudadano = null,
-        Vehiculo? vehiculoHistorico = null)
+        EventoVehiculoInfo? vehiculo = null,
+        Ciudadano? ciudadano = null)
     {
         AsegurarActivo();
         ArgumentNullException.ThrowIfNull(persona);
+        if (_ciudadanos.Count >= MaxCiudadanos)
+            throw new DomainException($"No se pueden registrar más de {MaxCiudadanos} personas en un evento.");
 
         if (persona.Identificacion is { } identificacion
             && _ciudadanos.Any(c => c.Persona.Identificacion == identificacion))
             throw new DomainException($"La persona '{identificacion}' ya está registrada en el evento.");
 
-        _ciudadanos.Add(EventoCiudadanoInfo.Crear(rol, persona, vehiculo, ciudadano, vehiculoHistorico));
+        if (vehiculo is not null)
+        {
+            if (!_vehiculos.Contains(vehiculo))
+                throw new DomainException("El vehículo de la persona no está registrado en este evento.");
+            if (rol == RolCiudadanoEnum.Conductor
+                && _ciudadanos.Any(c => c.Rol == RolCiudadanoEnum.Conductor && ReferenceEquals(c.Vehiculo, vehiculo)))
+                throw new DomainException($"El vehículo {vehiculo.Datos.Placa ?? "sin placa"} ya tiene un conductor.");
+        }
+
+        _ciudadanos.Add(EventoCiudadanoInfo.Crear(rol, persona, vehiculo, ciudadano));
     }
 
     // ---------------------------------------------------------------- Reglas internas

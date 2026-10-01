@@ -19,6 +19,10 @@ public class CatalogosController(IMediator mediator) : GenericController(mediato
     public async Task<IActionResult> Movil([FromQuery] string? version, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new GetCatalogosMovilQuery(version), cancellationToken));
 
+    [HttpGet("prefijos-placa")]
+    public async Task<IActionResult> PrefijosPlaca(CancellationToken cancellationToken)
+        => Ok(await Mediator.Send(new GetPrefijosPlacaQuery(), cancellationToken));
+
     [HttpGet("tipos-cierre")]
     public Task<IActionResult> TiposCierre(CancellationToken cancellationToken)
         => Listar(new GetCatalogoQuery(CatalogoEnum.TiposCierre), cancellationToken);

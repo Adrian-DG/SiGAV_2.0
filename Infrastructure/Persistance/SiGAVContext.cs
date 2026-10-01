@@ -84,6 +84,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     // Misc
     public DbSet<TipoVehiculo> TipoVehiculos { get; set; }
     public DbSet<Domain.Entities.Misc.Color> Colores { get; set; }
+    public DbSet<PrefijoPlaca> PrefijosPlaca { get; set; }
     public DbSet<Marca> Marcas { get; set; }
     public DbSet<Modelo> Modelos { get; set; }
     public DbSet<Provincia> Provincias { get; set; }
@@ -101,6 +102,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     public DbSet<TipoCierre> TiposCierre { get; set; }
     public DbSet<Evento> Eventos { get; set; }
     public DbSet<EventoCiudadanoInfo> EventoCiudadanos { get; set; }
+    public DbSet<EventoVehiculoInfo> EventoVehiculos { get; set; }
     public DbSet<EventoUnidadInfo> EventoUnidades { get; set; }
     public DbSet<Agente> Agentes { get; set; }
     public DbSet<NivelDenominacion> NivelesDenominacion { get; set; }
@@ -128,6 +130,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     IQueryable<Marca> IReadDbContext.Marcas => Marcas.AsNoTracking();
     IQueryable<Modelo> IReadDbContext.Modelos => Modelos.AsNoTracking();
     IQueryable<Domain.Entities.Misc.Color> IReadDbContext.Colores => Colores.AsNoTracking();
+    IQueryable<PrefijoPlaca> IReadDbContext.PrefijosPlaca => PrefijosPlaca.AsNoTracking();
     IQueryable<Ciudadano> IReadDbContext.Ciudadanos => Ciudadanos.AsNoTracking();
     IQueryable<Vehiculo> IReadDbContext.Vehiculos => Vehiculos.AsNoTracking();
     IQueryable<RegionAsistencia> IReadDbContext.Regiones => Regiones.AsNoTracking();
@@ -143,6 +146,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     IQueryable<EventoTipoEvento> IReadDbContext.EventoTiposEvento => EventoTiposEvento.AsNoTracking();
     IQueryable<EventoUnidadInfo> IReadDbContext.EventoUnidades => EventoUnidades.AsNoTracking();
     IQueryable<EventoCiudadanoInfo> IReadDbContext.EventoCiudadanos => EventoCiudadanos.AsNoTracking();
+    IQueryable<EventoVehiculoInfo> IReadDbContext.EventoVehiculos => EventoVehiculos.AsNoTracking();
     IQueryable<UsuarioLectura> IReadDbContext.Usuarios => Users.AsNoTracking().Select(u => new UsuarioLectura { Id = u.Id, UserName = u.UserName });
 
     #endregion

@@ -40,6 +40,7 @@ public record EventoDetalleViewModel(
     DateTime? FechaHoraCompletado,
     IReadOnlyList<EventoTipoViewModel> Tipos,
     IReadOnlyList<EventoUnidadViewModel> Unidades,
+    IReadOnlyList<EventoVehiculoViewModel> Vehiculos,
     IReadOnlyList<EventoCiudadanoViewModel> Ciudadanos,
     IReadOnlyList<EventoEvidenciaViewModel> Evidencias,
     DateTime CreatedAt);
@@ -65,10 +66,12 @@ public record EventoCiudadanoViewModel(
     SexoEnum Sexo,
     string? Telefono,
     string? Nacionalidad,
-    EventoVehiculoViewModel? Vehiculo);
+    /// <summary>Id del vehículo del evento (Vehiculos) en que iba; null = sin vehículo.</summary>
+    int? VehiculoId);
 
 /// <summary>Marca/modelo/color: el nombre del catálogo o, si no estaba en el catálogo, el texto libre.</summary>
 public record EventoVehiculoViewModel(
+    int Id,
     string? Placa,
     string? TipoVehiculo,
     string? Marca,
