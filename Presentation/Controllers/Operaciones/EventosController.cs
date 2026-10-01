@@ -47,7 +47,7 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
     [HttpPatch("{id:int}/completar")]
     public async Task<IActionResult> Completar([FromRoute] int id, [FromBody] CompletarRequest request, CancellationToken cancellationToken)
     {
-        await Mediator.Send(new CompletarEventoCommand(id, request.TipoCierre, request.FechaHoraCompletadoUtc), cancellationToken);
+        await Mediator.Send(new CompletarEventoCommand(id, request.TipoCierreId, request.FechaHoraCompletadoUtc), cancellationToken);
         return NoContent();
     }
 
@@ -61,5 +61,5 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
 
     public record IniciarRequest(DateTime? FechaHoraLlegadaUtc);
 
-    public record CompletarRequest(Domain.Enums.TipoCierreEventoEnum TipoCierre, DateTime? FechaHoraCompletadoUtc);
+    public record CompletarRequest(int TipoCierreId, DateTime? FechaHoraCompletadoUtc);
 }

@@ -11,6 +11,18 @@ namespace Presentation.Controllers.Catalogos;
 [Route("api/catalogos")]
 public class CatalogosController(IMediator mediator) : GenericController(mediator)
 {
+    /// <summary>
+    /// Todos los catálogos de la app móvil en una sola descarga. Con <paramref name="version"/> (la
+    /// que el dispositivo ya tiene) devuelve catalogos = null si no cambiaron.
+    /// </summary>
+    [HttpGet("movil")]
+    public async Task<IActionResult> Movil([FromQuery] string? version, CancellationToken cancellationToken)
+        => Ok(await Mediator.Send(new GetCatalogosMovilQuery(version), cancellationToken));
+
+    [HttpGet("tipos-cierre")]
+    public Task<IActionResult> TiposCierre(CancellationToken cancellationToken)
+        => Listar(new GetCatalogoQuery(CatalogoEnum.TiposCierre), cancellationToken);
+
     [HttpGet("tipos-evento")]
     public async Task<IActionResult> TiposEvento(CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new GetTiposEventoQuery(), cancellationToken));

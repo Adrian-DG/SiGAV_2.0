@@ -97,4 +97,16 @@ internal static class OperacionesData
         ("Talleres", CategoriaEventoEnum.ASISTENCIA),
         ("Camión. Rescate", CategoriaEventoEnum.ASISTENCIA)
     ];
+
+    /// <summary>TipoCierreAsistenciaEnum de SiGAV 1.0, en el orden de sus valores (Ids 1 a 7).</summary>
+    public static readonly string[] TiposCierre =
+    [
+        "Asistida por MOPC",
+        "Transferida a 911",
+        "Transferida a Policía Nacional",
+        "Transferida a DIGESETT",
+        "Ciudadano resolvió",
+        "Unidad no hizo contacto",
+        "Fuera de jurisdicción"
+    ];
 }

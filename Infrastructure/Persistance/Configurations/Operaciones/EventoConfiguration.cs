@@ -41,6 +41,11 @@ internal sealed class EventoConfiguration : IEntityTypeConfiguration<Evento>
             .HasForeignKey(e => e.TramoId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(e => e.TipoCierre)
+            .WithMany()
+            .HasForeignKey(e => e.TipoCierreId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Evidencias: parte del agregado
         builder.HasMany(e => e.Evidencias)

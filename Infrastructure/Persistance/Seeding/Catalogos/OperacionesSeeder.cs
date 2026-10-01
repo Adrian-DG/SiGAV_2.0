@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Infrastructure.Persistance.Seeding.Catalogos;
 
 /// <summary>
-/// Regiones de asistencia, tramos, niveles de denominación y tipos de evento. Las denominaciones
+/// Regiones de asistencia, tramos, niveles de denominación, tipos de evento y tipos de cierre. Las denominaciones
 /// y unidades no son catálogo: las reales se migran del legacy (ver <c>Demo</c> para las de prueba).
 /// </summary>
 internal sealed class OperacionesSeeder(SiGAVContext context) : ISeeder
@@ -48,6 +48,13 @@ internal sealed class OperacionesSeeder(SiGAVContext context) : ISeeder
             {
                 Nombre = t.Nombre,
                 Categoria = t.Categoria,
+                IsActive = true
+            }));
+
+        if (!await context.TiposCierre.AnyAsync(cancellationToken))
+            context.TiposCierre.AddRange(OperacionesData.TiposCierre.Select(nombre => new TipoCierre
+            {
+                Nombre = nombre,
                 IsActive = true
             }));
 

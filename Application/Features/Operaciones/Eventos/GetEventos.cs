@@ -125,6 +125,7 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
         var evento = await query
             .Include(e => e.Municipio!).ThenInclude(m => m.Provincia)
             .Include(e => e.Tramo)
+            .Include(e => e.TipoCierre)
             .Include(e => e.Tipos).ThenInclude(t => t.TipoEvento)
             .Include(e => e.Unidades).ThenInclude(u => u.Unidad)
             .Include(e => e.Unidades).ThenInclude(u => u.Denominacion)
@@ -148,7 +149,8 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
             evento.RequestId,
             evento.Estado,
             evento.CanalReporte,
-            evento.TipoCierre,
+            evento.TipoCierreId,
+            evento.TipoCierre?.Nombre,
             evento.IsActive,
             evento.Ubicacion.Latitud,
             evento.Ubicacion.Longitud,

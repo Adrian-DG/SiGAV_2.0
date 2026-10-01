@@ -28,7 +28,9 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
 
     public CanalReporteEnum CanalReporte { get; private set; }
     public EstadoEventoEnum Estado { get; private set; }
-    public TipoCierreEventoEnum? TipoCierre { get; private set; }
+    /// <summary>Solo en eventos completados. La existencia del tipo la valida la aplicación.</summary>
+    public int? TipoCierreId { get; private set; }
+    public virtual TipoCierre? TipoCierre { get; private set; }
     public Coordenada Ubicacion { get; private set; } = null!;
     public string? Direccion { get; private set; }
 
@@ -131,18 +133,20 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     /// Cierra el evento. Puede completarse sin haber estado en curso (p. ej. el ciudadano
     /// resolvió antes de que llegara la unidad).
     /// </summary>
-    public void Completar(DateTime completadoUtc, TipoCierreEventoEnum tipoCierre, DateTime ahoraUtc)
+    public void Completar(DateTime completadoUtc, int tipoCierreId, DateTime ahoraUtc)
     {
         AsegurarActivo();
         if (Estado == EstadoEventoEnum.Completado) throw new DomainException("El evento ya está completado.");
-        if (!Enum.IsDefined(tipoCierre)) throw new DomainException("El tipo de cierre no es válido.");
+        if (tipoCierreId <= 0) throw new DomainException("El tipo de cierre no es válido.");
 
         var completado = ValidarFecha(completadoUtc, ahoraUtc, "de cierre");
         if (completado < (FechaHoraLlegadaUtc ?? FechaHoraReporteUtc))
             throw new DomainException("El cierre no puede ser anterior a la llegada ni al reporte.");
 
         FechaHoraCompletadoUtc = completado;
-        TipoCierre = tipoCierre;
+        // Si cambia el tipo, la navegación cargada deja de corresponder
+        if (TipoCierre?.Id != tipoCierreId) TipoCierre = null;
+        TipoCierreId = tipoCierreId;
         Estado = EstadoEventoEnum.Completado;
     }
 

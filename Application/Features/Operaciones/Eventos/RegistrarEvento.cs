@@ -49,7 +49,7 @@ public record RegistrarEventoCommand(
     int? AgenteId = null,
     DateTime? FechaHoraLlegadaUtc = null,
     DateTime? FechaHoraCompletadoUtc = null,
-    TipoCierreEventoEnum? TipoCierre = null,
+    int? TipoCierreId = null,
     IReadOnlyList<CiudadanoEventoRequest>? Ciudadanos = null) : IRequest<RegistrarEventoResult>;
 
 // Validator
@@ -80,9 +80,12 @@ public class RegistrarEventoCommandValidator : AbstractValidator<RegistrarEvento
 
         RuleFor(x => x.Direccion).MaximumLength(Evento.DireccionMaxLength);
         RuleFor(x => x.Comentario).MaximumLength(Evento.ComentarioMaxLength);
-        RuleFor(x => x.TipoCierre)
+        RuleFor(x => x.TipoCierreId)
             .NotNull().When(x => x.FechaHoraCompletadoUtc.HasValue)
             .WithMessage("Indique el tipo de cierre del evento completado.");
+        RuleFor(x => x.TipoCierreId!.Value)
+            .MustAsync((id, ct) => db.TiposCierre.ExisteActivoAsync(id, ct)).WithMessage("El tipo de cierre no es válido.")
+            .When(x => x.TipoCierreId.HasValue);
         RuleFor(x => x.Ciudadanos)
             .Must(c => c is null || c.Count <= MaxCiudadanos)
             .WithMessage($"No se pueden registrar más de {MaxCiudadanos} personas en un evento.");
@@ -178,7 +181,7 @@ public class RegistrarEventoCommandHandler(
         if (request.FechaHoraLlegadaUtc is { } llegada)
             evento.IniciarAtencion(llegada, ahoraUtc);
         if (request.FechaHoraCompletadoUtc is { } completado)
-            evento.Completar(completado, request.TipoCierre!.Value, ahoraUtc);
+            evento.Completar(completado, request.TipoCierreId!.Value, ahoraUtc);
 
         eventos.Add(evento);
 

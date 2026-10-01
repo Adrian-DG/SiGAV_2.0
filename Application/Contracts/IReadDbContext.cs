@@ -35,6 +35,7 @@ public interface IReadDbContext
     IQueryable<HistorialDenominacionUnidad> HistorialDenominaciones { get; }
     IQueryable<Agente> Agentes { get; }
     IQueryable<TipoEvento> TiposEvento { get; }
+    IQueryable<TipoCierre> TiposCierre { get; }
     IQueryable<Evento> Eventos { get; }
     IQueryable<EventoTipoEvento> EventoTiposEvento { get; }
     IQueryable<EventoUnidadInfo> EventoUnidades { get; }

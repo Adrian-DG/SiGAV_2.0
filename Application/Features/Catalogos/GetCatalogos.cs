@@ -18,7 +18,8 @@ public enum CatalogoEnum
     Marcas,
     Modelos,
     Colores,
-    Nacionalidades
+    Nacionalidades,
+    TiposCierre
 }
 
 /// <summary>
@@ -43,6 +44,7 @@ public class GetCatalogoQueryHandler(IReadDbContext db) : IRequestHandler<GetCat
                 && (request.TipoVehiculoId == null || m.TipoVehiculoId == request.TipoVehiculoId)),
             CatalogoEnum.Colores => db.Colores,
             CatalogoEnum.Nacionalidades => db.Nacionalidades,
+            CatalogoEnum.TiposCierre => db.TiposCierre,
             _ => throw new ArgumentOutOfRangeException(nameof(request), request.Catalogo, "Catálogo no soportado.")
         };
 

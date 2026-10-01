@@ -1,6 +1,6 @@
+using Application.Common;
 using Application.Contracts;
 using Application.Exceptions;
-using Domain.Enums;
 using Domain.Repositories;
 using FluentValidation;
 using MediatR;
@@ -31,13 +31,15 @@ public class IniciarAtencionEventoCommandHandler(
 }
 
 // Command: cierre del evento. Sin fecha se usa la hora actual.
-public record CompletarEventoCommand(int EventoId, TipoCierreEventoEnum TipoCierre, DateTime? FechaHoraCompletadoUtc = null) : IRequest;
+public record CompletarEventoCommand(int EventoId, int TipoCierreId, DateTime? FechaHoraCompletadoUtc = null) : IRequest;
 
 public class CompletarEventoCommandValidator : AbstractValidator<CompletarEventoCommand>
 {
-    public CompletarEventoCommandValidator()
+    public CompletarEventoCommandValidator(IReadDbContext db)
     {
-        RuleFor(x => x.TipoCierre).IsInEnum().WithMessage("El tipo de cierre no es válido.");
+        RuleFor(x => x.TipoCierreId)
+            .GreaterThan(0).WithMessage("Indique el tipo de cierre.")
+            .MustAsync((id, ct) => db.TiposCierre.ExisteActivoAsync(id, ct)).WithMessage("El tipo de cierre no es válido.");
     }
 }
 
@@ -54,7 +56,7 @@ public class CompletarEventoCommandHandler(
         EventoAcceso.AsegurarPuedeOperar(evento, currentUser);
 
         var ahoraUtc = timeProvider.GetUtcNow().UtcDateTime;
-        evento.Completar(request.FechaHoraCompletadoUtc ?? ahoraUtc, request.TipoCierre, ahoraUtc);
+        evento.Completar(request.FechaHoraCompletadoUtc ?? ahoraUtc, request.TipoCierreId, ahoraUtc);
 
         await uow.SaveChangesAsync(cancellationToken);
         return Unit.Value;
