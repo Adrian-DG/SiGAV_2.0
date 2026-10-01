@@ -34,20 +34,20 @@ internal static class DemoData
             TramosAdicionales: ["Las Américas tramo II"]),
 
         // Unidades operativas
-        new("Móvil 101", "Móvil", "Tramo Carretero Punta Cana", "M-101", "EL00301"),
-        new("Móvil 102", "Móvil", "Tramo Carretero Miches", "M-102", "EL00302"),
-        new("Móvil 201", "Móvil", "Las Américas tramo I", "M-201", "EL00303"),
-        new("Motorizada 202", "Motorizada", "Las Américas tramo II", "MT-202"),
-        new("Ambulancia 301", "Ambulancia", "Tramo El Coral y Circ. Romana", "A-301", "EL00401"),
-        new("Grúa 302", "Grúa", "Tramo El Coral y Circ. Romana", "G-302", "EL00402"),
-        new("Móvil 401", "Móvil", "Tramo Cibao Norte", "M-401", "EL00304")
+        new("Móvil 101", "Móvil", "Tramo Carretero Punta Cana", "CA-1010", "EL00301"),
+        new("Móvil 102", "Móvil", "Tramo Carretero Miches", "CA-1020", "EL00302"),
+        new("Móvil 201", "Móvil", "Las Américas tramo I", "CA-201", "EL00303"),
+        new("Motorizada 202", "Motorizada", "Las Américas tramo II", "CA-2020", "EL00305"),
+        new("Ambulancia 301", "Ambulancia", "Tramo El Coral y Circ. Romana", "CA-3010", "EL00401"),
+        new("Grúa 302", "Grúa", "Tramo El Coral y Circ. Romana", "CA-3020", "EL00402"),
+        new("Móvil 401", "Móvil", "Tramo Cibao Norte", "CA-4010", "EL00304")
     ];
 
     /// <summary>Unidades sin denominación (en reserva), para probar asignaciones y reasignaciones.</summary>
     public static readonly (string Ficha, string? Placa)[] UnidadesEnReserva =
     [
-        ("M-900", "EL00901"),
-        ("M-901", null)
+        ("CA-9000", "EL00901"),
+        ("CA-9010", null)
     ];
 
     public sealed record AgenteDemo(
