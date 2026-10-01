@@ -22,15 +22,15 @@ internal static class DemoData
     public static readonly DenominacionDemo[] Denominaciones =
     [
         // Regionales: una por región macro y otra por regiones de asistencia puntuales
-        new("Supervisor Norte", "Supervisor Regional", "Tramo Cibao Norte", "S-01", "EL00101",
+        new("Supervisor Norte", "Supervisor Regional", "Tramo Cibao Norte", "CA-0110", "EL00101",
             RegionesMacro: [RegionMacroEnum.NORTE]),
-        new("Supervisor Este", "Supervisor Regional", "Tramo Carretero Punta Cana", "S-02", "EL00102",
+        new("Supervisor Este", "Supervisor Regional", "Tramo Carretero Punta Cana", "CA-0220", "EL00102",
             RegionesAsistencia: ["Region Este", "Region Las Americas"]),
 
         // Encargados de tramo: su tramo más los adicionales
-        new("Encargado Punta Cana", "Encargado de Tramo", "Tramo Carretero Punta Cana", "E-01", "EL00201",
+        new("Encargado Punta Cana", "Encargado de Tramo", "Tramo Carretero Punta Cana", "CA-0330", "EL00201",
             TramosAdicionales: ["Tramo Carretero Miches", "Tramo del Seibo"]),
-        new("Encargado Las Américas", "Encargado de Tramo", "Las Américas tramo I", "E-02", "EL00202",
+        new("Encargado Las Américas", "Encargado de Tramo", "Las Américas tramo I", "CA-0440", "EL00202",
             TramosAdicionales: ["Las Américas tramo II"]),
 
         // Unidades operativas
