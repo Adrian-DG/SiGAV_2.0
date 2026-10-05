@@ -14,10 +14,20 @@ namespace Presentation.Controllers.Operaciones;
 [Route("api/eventos")]
 public class EventosController(IMediator mediator) : GenericController(mediator)
 {
-    /// <summary>Listado paginado (más recientes primero). desde/hasta: días operativos de RD (yyyy-MM-dd).</summary>
+    /// <summary>
+    /// Listado paginado (más recientes primero). desde/hasta: días operativos de RD (yyyy-MM-dd).
+    /// agenteId/unidadId/denominacionId: eventos en que participan; ciudadano: cédula, nombre,
+    /// apellido, teléfono o placa.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] GetEventosQuery query, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(query, cancellationToken));
+
+    /// <summary>Opciones de los filtros del listado: agentes, unidades, denominaciones y tramos.</summary>
+    [Authorize(Policy = SesionPolicies.Web)]
+    [HttpGet("filtros")]
+    public async Task<IActionResult> Filtros(CancellationToken cancellationToken)
+        => Ok(await Mediator.Send(new GetFiltrosEventosQuery(), cancellationToken));
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get([FromRoute] int id, CancellationToken cancellationToken)

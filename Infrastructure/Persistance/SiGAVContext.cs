@@ -126,6 +126,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     IQueryable<Municipio> IReadDbContext.Municipios => Municipios.AsNoTracking();
     IQueryable<Nacionalidad> IReadDbContext.Nacionalidades => Nacionalidades.AsNoTracking();
     IQueryable<Rango> IReadDbContext.Rangos => Rangos.AsNoTracking();
+    IQueryable<Departamento> IReadDbContext.Departamentos => Departamentos.AsNoTracking();
     IQueryable<TipoVehiculo> IReadDbContext.TiposVehiculo => TipoVehiculos.AsNoTracking();
     IQueryable<Marca> IReadDbContext.Marcas => Marcas.AsNoTracking();
     IQueryable<Modelo> IReadDbContext.Modelos => Modelos.AsNoTracking();

@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IJwtBearerHelper, JwtBearerHelper>();
         services.AddScoped<IAuthRepository, AuthRepository>();
+        services.AddScoped<IUsuariosRepository, UsuariosRepository>();
 
         // Repositorios del dominio (lado de escritura). La lectura la hacen las Queries con IReadDbContext.
         services.AddScoped<IUnidadRepository, UnidadRepository>();

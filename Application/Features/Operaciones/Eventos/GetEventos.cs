@@ -12,22 +12,34 @@ namespace Application.Features.Operaciones.Eventos;
 
 // Query: listado paginado, más recientes primero. Las fechas son días operativos de RD.
 // En la app solo aparecen los eventos en que participa su unidad y nunca los anulados.
+// Agente, unidad y denominación: eventos en que participan con cualquier rol. Ciudadano: cédula,
+// nombre, apellido o teléfono de una persona del evento, o la placa de uno de sus vehículos.
 public record GetEventosQuery(
     EstadoEventoEnum? Estado = null,
     DateOnly? Desde = null,
     DateOnly? Hasta = null,
     bool IncluirAnulados = false,
+    int? AgenteId = null,
+    int? UnidadId = null,
+    int? DenominacionId = null,
+    int? TramoId = null,
+    string? Ciudadano = null,
     int Page = 1,
     int Size = 20) : IRequest<PagedResult<EventoListItemViewModel>>, IPagedQuery;
 
 public class GetEventosQueryValidator : PagedQueryValidator<GetEventosQuery>
 {
+    public const int CiudadanoMaxLength = 100;
+
     public GetEventosQueryValidator()
     {
         RuleFor(x => x.Estado).IsInEnum().When(x => x.Estado.HasValue).WithMessage("El estado no es válido.");
         RuleFor(x => x.Desde)
             .Must((q, desde) => desde is null || q.Hasta is null || desde <= q.Hasta)
             .WithMessage("La fecha inicial no puede ser posterior a la final.");
+        RuleFor(x => x.Ciudadano)
+            .MaximumLength(CiudadanoMaxLength)
+            .WithMessage($"La búsqueda del ciudadano no puede exceder {CiudadanoMaxLength} caracteres.");
     }
 }
 
@@ -54,6 +66,23 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
             query = query.Where(e => e.FechaHoraReporteUtc < hastaExclusivoUtc);
         }
         if (unidadId is { } id) query = query.Where(e => e.Unidades.Any(u => u.UnidadId == id));
+        if (request.AgenteId is { } agenteId) query = query.Where(e => e.Unidades.Any(u => u.AgenteId == agenteId));
+        if (request.UnidadId is { } filtroUnidadId) query = query.Where(e => e.Unidades.Any(u => u.UnidadId == filtroUnidadId));
+        if (request.DenominacionId is { } denominacionId) query = query.Where(e => e.Unidades.Any(u => u.DenominacionId == denominacionId));
+        if (request.TramoId is { } tramoId) query = query.Where(e => e.TramoId == tramoId);
+        if (QueryableExtensions.PatronBusqueda(request.Ciudadano) is { } patron)
+        {
+            // La cédula se guarda sin guiones: "001-2345678-9" también debe encontrarla
+            var patronCedula = QueryableExtensions.PatronBusqueda(SoloDigitosSiEsCedula(request.Ciudadano!))!;
+            query = query.Where(e =>
+                e.Ciudadanos.Any(c =>
+                    (c.Persona.Identificacion != null
+                        && (EF.Functions.Like(c.Persona.Identificacion, patron) || EF.Functions.Like(c.Persona.Identificacion, patronCedula)))
+                    || (c.Persona.Telefono != null && EF.Functions.Like(c.Persona.Telefono, patron))
+                    || EF.Functions.Like((c.Persona.Nombre ?? "") + " " + (c.Persona.Apellido ?? ""), patron)
+                    || EF.Functions.Like((c.Persona.Apellido ?? "") + " " + (c.Persona.Nombre ?? ""), patron))
+                || e.Vehiculos.Any(v => v.Datos.Placa != null && EF.Functions.Like(v.Datos.Placa, patron)));
+        }
 
         var pagina = await query
             .OrderByDescending(e => e.FechaHoraReporteUtc)
@@ -64,9 +93,15 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
                 e.Direccion,
                 e.FechaHoraReporteUtc,
                 e.Tipos.Select(t => new TipoFila(t.TipoEvento!.Nombre, t.TipoEvento.Categoria)).ToList(),
+                e.Tramo != null ? e.Tramo.Nombre : null,
                 e.Unidades
                     .Where(u => u.Rol == RolUnidadEventoEnum.Principal)
-                    .Select(u => new PrincipalFila(u.Unidad!.Ficha, u.Denominacion!.Nombre))
+                    .Select(u => new PrincipalFila(
+                        u.Unidad!.Ficha,
+                        u.Denominacion!.Nombre,
+                        u.Agente!.Institucion == InstitucionEnum.ARD ? u.Agente.Rango!.NombreArmada : u.Agente.Rango!.Nombre,
+                        u.Agente.Nombre,
+                        u.Agente.Apellido))
                     .FirstOrDefault(),
                 // Principal: el primer conductor (en un choque, el del primer vehículo); si no hay, la primera persona
                 e.Ciudadanos
@@ -90,7 +125,9 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
                 f.Direccion,
                 f.FechaHoraReporteUtc,
                 f.Principal?.Ficha ?? string.Empty,
-                f.Principal?.Denominacion ?? string.Empty))
+                f.Principal?.Denominacion ?? string.Empty,
+                f.Principal is { } p ? $"{p.AgenteRango} {p.AgenteNombre} {p.AgenteApellido}".Trim() : null,
+                f.Tramo))
             .ToList();
 
         return new PagedResult<EventoListItemViewModel>(items, pagina.Page, pagina.Size, pagina.TotalCount);
@@ -103,14 +140,24 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
         return nombre.Length > 0 ? nombre : persona.Identificacion ?? "Persona no identificada";
     }
 
+    /// <summary>"001-2345678-9" → "00123456789"; cualquier otro texto queda igual.</summary>
+    private static string SoloDigitosSiEsCedula(string termino)
+    {
+        var limpio = termino.Trim();
+        return limpio.Any(char.IsDigit) && limpio.All(c => char.IsDigit(c) || c is '-' or ' ')
+            ? new string(limpio.Where(char.IsDigit).ToArray())
+            : limpio;
+    }
+
     private sealed record TipoFila(string Nombre, CategoriaEventoEnum Categoria);
-    private sealed record PrincipalFila(string Ficha, string Denominacion);
+    private sealed record PrincipalFila(string Ficha, string Denominacion, string? AgenteRango, string AgenteNombre, string AgenteApellido);
     private sealed record FilaEvento(
         int Id,
         EstadoEventoEnum Estado,
         string? Direccion,
         DateTime FechaHoraReporteUtc,
         List<TipoFila> Tipos,
+        string? Tramo,
         PrincipalFila? Principal,
         DatosPersona? Persona,
         DatosVehiculo? Vehiculo);

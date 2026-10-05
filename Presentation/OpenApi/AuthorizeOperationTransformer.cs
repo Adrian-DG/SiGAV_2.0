@@ -44,8 +44,14 @@ internal sealed class AuthorizeOperationTransformer : IOpenApiOperationTransform
         if (nombres.Contains(SesionPolicies.Web) || nombres.Contains(SesionPolicies.Movil))
             nombres.Remove(SesionPolicies.Operativa);
 
+        // Un permiso ya implica sesión web
+        if (nombres.Any(n => SesionPolicies.EsDePermiso(n, out _)))
+            nombres.RemoveAll(n => n is SesionPolicies.Web or SesionPolicies.Operativa);
+
         var politicas = nombres
-            .Select(p => DescripcionPoliticas.TryGetValue(p, out var descripcion) ? $"`{p}`: {descripcion}" : $"`{p}`")
+            .Select(p => DescripcionPoliticas.TryGetValue(p, out var descripcion)
+                ? $"`{p}`: {descripcion}"
+                : SesionPolicies.EsDePermiso(p, out var permiso) ? $"sesión web con el permiso `{permiso}`" : $"`{p}`")
             .ToList();
 
         if (politicas.Count > 0)

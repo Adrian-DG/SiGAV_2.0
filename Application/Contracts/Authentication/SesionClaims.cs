@@ -46,4 +46,17 @@ public static class SesionPolicies
 
     /// <summary>Cualquier sesión válida, web o móvil.</summary>
     public const string Operativa = "SesionOperativa";
+
+    private const string PrefijoPermiso = "Permiso:";
+
+    /// <summary>Política de un permiso de <see cref="Permisos"/>: sesión web que tenga ese permiso.</summary>
+    public static string ConPermiso(string permiso) => PrefijoPermiso + permiso;
+
+    /// <summary>Lee de vuelta una política de <see cref="ConPermiso"/> (para documentarla en OpenAPI).</summary>
+    public static bool EsDePermiso(string politica, out string permiso)
+    {
+        var esPermiso = politica.StartsWith(PrefijoPermiso, StringComparison.Ordinal);
+        permiso = esPermiso ? politica[PrefijoPermiso.Length..] : string.Empty;
+        return esPermiso;
+    }
 }

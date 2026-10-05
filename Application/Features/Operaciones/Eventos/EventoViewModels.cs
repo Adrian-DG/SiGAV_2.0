@@ -4,7 +4,8 @@ namespace Application.Features.Operaciones.Eventos;
 
 /// <summary>
 /// Fila del listado. Los nombres coinciden con EventoListItem de la app móvil
-/// (Mobile/src/features/events/types.ts). Las fechas van en UTC (con "Z").
+/// (Mobile/src/features/events/types.ts); Agente y Tramo son para front desk (la app los ignora).
+/// Agente: el que operaba la unidad principal. Las fechas van en UTC (con "Z").
 /// </summary>
 public record EventoListItemViewModel(
     int Id,
@@ -16,7 +17,9 @@ public record EventoListItemViewModel(
     string? Direccion,
     DateTime FechaHoraReporte,
     string UnidadFicha,
-    string UnidadDenominacion);
+    string UnidadDenominacion,
+    string? Agente,
+    string? Tramo);
 
 public record EventoDetalleViewModel(
     int Id,

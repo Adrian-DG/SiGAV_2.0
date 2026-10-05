@@ -96,6 +96,14 @@ public static class JwtAuthenticationExtensions
                             && context.User.HasClaim(SesionClaims.Audience, jwt.Web.Audience))
                         || (context.User.HasClaim(SesionClaims.TipoSesion, TiposSesion.Movil)
                             && context.User.HasClaim(SesionClaims.Audience, jwt.Movil.Audience))));
+
+                // Una política por permiso (SesionPolicies.ConPermiso): sesión web con ese claim "permission"
+                foreach (var permiso in Permisos.Todos.Select(p => p.Nombre))
+                    authorization.AddPolicy(SesionPolicies.ConPermiso(permiso), policy => policy
+                        .RequireAuthenticatedUser()
+                        .RequireClaim(SesionClaims.TipoSesion, TiposSesion.Web)
+                        .RequireClaim(SesionClaims.Audience, jwt.Web.Audience)
+                        .RequireClaim(SesionClaims.Permiso, permiso));
             });
 
         return services;
