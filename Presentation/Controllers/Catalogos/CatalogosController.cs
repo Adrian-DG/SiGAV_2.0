@@ -55,6 +55,11 @@ public class CatalogosController(IMediator mediator) : GenericController(mediato
     public Task<IActionResult> Colores(CancellationToken cancellationToken)
         => Listar(new GetCatalogoQuery(CatalogoEnum.Colores), cancellationToken);
 
+    /// <summary>Rangos en orden jerárquico; nombreArmada es el nombre del rango en la ARD.</summary>
+    [HttpGet("rangos")]
+    public async Task<IActionResult> Rangos(CancellationToken cancellationToken)
+        => Ok(await Mediator.Send(new GetRangosQuery(), cancellationToken));
+
     [HttpGet("nacionalidades")]
     public Task<IActionResult> Nacionalidades(CancellationToken cancellationToken)
         => Listar(new GetCatalogoQuery(CatalogoEnum.Nacionalidades), cancellationToken);

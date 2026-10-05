@@ -67,3 +67,16 @@ public class GetTiposEventoQueryHandler(IReadDbContext db) : IRequestHandler<Get
             .Select(t => new TipoEventoItemViewModel(t.Id, t.Nombre, t.Categoria))
             .ToListAsync(cancellationToken);
 }
+
+// Query: rangos activos en el orden del catálogo (jerárquico). NombreArmada: el nombre en la ARD.
+public record GetRangosQuery : IRequest<IReadOnlyList<Usuarios.RangoItemViewModel>>;
+
+public class GetRangosQueryHandler(IReadDbContext db) : IRequestHandler<GetRangosQuery, IReadOnlyList<Usuarios.RangoItemViewModel>>
+{
+    public async Task<IReadOnlyList<Usuarios.RangoItemViewModel>> Handle(GetRangosQuery request, CancellationToken cancellationToken)
+        => await db.Rangos
+            .Where(r => r.IsActive)
+            .OrderBy(r => r.Id)
+            .Select(r => new Usuarios.RangoItemViewModel(r.Id, r.Nombre, r.NombreArmada))
+            .ToListAsync(cancellationToken);
+}

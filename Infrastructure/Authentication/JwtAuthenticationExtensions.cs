@@ -50,6 +50,9 @@ public static class JwtAuthenticationExtensions
 
                 bearer.Events = new JwtBearerEvents
                 {
+                    // Sesión móvil de un agente desautorizado o desactivado: deja de valer al momento
+                    OnTokenValidated = SesionMovilValidator.ValidarAsync,
+
                     // Mismo formato { message } que el resto de errores de la API
                     OnChallenge = async context =>
                     {
@@ -57,9 +60,10 @@ public static class JwtAuthenticationExtensions
                         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                         await context.Response.WriteAsJsonAsync(new
                         {
-                            message = context.AuthenticateFailure is SecurityTokenExpiredException
-                                ? "La sesión expiró, inicie sesión nuevamente."
-                                : "Se requiere una sesión válida."
+                            message = context.HttpContext.Items[SesionMovilValidator.MotivoItem] as string
+                                ?? (context.AuthenticateFailure is SecurityTokenExpiredException
+                                    ? "La sesión expiró, inicie sesión nuevamente."
+                                    : "Se requiere una sesión válida.")
                         });
                     },
                     OnForbidden = async context =>
