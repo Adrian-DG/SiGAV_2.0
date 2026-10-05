@@ -18,7 +18,7 @@ public class UnidadRepository(SiGAVContext context) : IUnidadRepository
         => context.Unidades.FirstOrDefaultAsync(u => u.Ficha == ficha, cancellationToken);
 
     public Task<bool> ExisteFichaAsync(string ficha, int? excluirUnidadId = null, CancellationToken cancellationToken = default)
-        => context.Unidades.AnyAsync(u => u.Ficha == ficha && (excluirUnidadId == null || u.Id != excluirUnidadId), cancellationToken);
+        => context.Unidades.AnyAsync(u => u.Ficha.ToUpper() == ficha.ToUpper() && (excluirUnidadId == null || u.Id != excluirUnidadId), cancellationToken);
 
     public Task<List<Unidad>> GetActivasConDenominacionAsync(int denominacionId, CancellationToken cancellationToken = default)
         => context.Unidades.Where(u => u.DenominacionId == denominacionId && u.IsActive).ToListAsync(cancellationToken);

@@ -13,6 +13,9 @@ public class Unidad : BaseEntityMetadata, IAuditableMetadata
     private const string FichaRegexPattern = @"^[A-Z]{1,2}-\d{3,4}$";
     public static readonly Regex FichaRegex = new(FichaRegexPattern, RegexOptions.Compiled);
 
+    /// <summary>Placa de una unidad (oficial: 1 o 2 letras y 5 o 6 números, como EL00101).</summary>
+    public static readonly Regex PlacaRegex = new(@"^[A-Z]{1,2}\d{5,6}$", RegexOptions.Compiled);
+
     public string Ficha { get; private set; } = null!;
     public string? Placa { get; private set; }
 
@@ -52,6 +55,18 @@ public class Unidad : BaseEntityMetadata, IAuditableMetadata
             EstaDisponible = false,
             IsActive = true
         };
+    }
+
+    /// <summary>
+    /// Alta desde el front desk: además de crear la unidad deja el registro de quién la creó en el
+    /// historial (la carga inicial usa <see cref="Crear(string, string?)"/>, sin autor).
+    /// </summary>
+    public static Unidad Crear(string ficha, string? placa, AutorCambio autor)
+    {
+        var unidad = Crear(ficha, placa);
+        unidad._historialDenominaciones.Add(HistorialDenominacionUnidad.Registrar(
+            TipoCambioDenominacionEnum.Alta, denominacionAnteriorId: null, nueva: null, relacionada: null, autor));
+        return unidad;
     }
 
     public void ActualizarDatos(string ficha, string? placa)

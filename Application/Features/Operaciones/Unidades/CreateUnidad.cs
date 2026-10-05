@@ -10,22 +10,19 @@ using MediatR;
 
 namespace Application.Features.Operaciones.Unidades;
 
-// Command: crea una unidad y le asigna una denominación existente
-public record CreateUnidadCommand(string Ficha, string? Placa, int DenominacionId, string? Motivo = null) : IRequest<int>;
+// Command: crea una unidad. Sin DenominacionId queda sin denominación (No disponible) hasta que se
+// le asigne una; con DenominacionId se le asigna, liberándola de la unidad que la tuviera.
+public record CreateUnidadCommand(string Ficha, string? Placa, int? DenominacionId = null, string? Motivo = null) : IRequest<int>;
 
 // Validator
 public class CreateUnidadCommandValidator : AbstractValidator<CreateUnidadCommand>
 {
     public CreateUnidadCommandValidator()
     {
-        RuleFor(x => x.Ficha)
-            .NotEmpty().WithMessage("La ficha es requerida.")
-            .MaximumLength(Unidad.FichaMaxLength).WithMessage($"La ficha no puede exceder {Unidad.FichaMaxLength} caracteres.")
-            .Matches(Unidad.FichaRegex).WithMessage($"La ficha debe cumplir con el formato valido");
-        RuleFor(x => x.Placa)
-            .MaximumLength(Unidad.PlacaMaxLength).WithMessage($"La placa no puede exceder {Unidad.PlacaMaxLength} caracteres.")
-            .Matches(DomainRegexPattern.PlacaRegex).WithMessage($"La placa debe cumplir con el formato valido");
-        RuleFor(x => x.DenominacionId).GreaterThan(0).WithMessage("La denominación es requerida.");
+        RuleFor(x => new NuevaUnidadRequest(x.Ficha, x.Placa))
+            .SetValidator(new NuevaUnidadValidator())
+            .OverridePropertyName(string.Empty);
+        RuleFor(x => x.DenominacionId).GreaterThan(0).When(x => x.DenominacionId.HasValue).WithMessage("La denominación no es válida.");
         RuleFor(x => x.Motivo)
             .MaximumLength(AutorCambio.ObservacionMaxLength).WithMessage($"El motivo no puede exceder {AutorCambio.ObservacionMaxLength} caracteres.");
     }
@@ -43,16 +40,19 @@ public class CreateUnidadCommandHandler(
     {
         var autor = currentUser.RequerirAutorWeb(timeProvider, request.Motivo);
 
-        var unidad = Unidad.Crear(request.Ficha, request.Placa);
+        var unidad = Unidad.Crear(FichaUnidad.Normalizar(request.Ficha), request.Placa, autor);
 
         if (await unidades.ExisteFichaAsync(unidad.Ficha, cancellationToken: cancellationToken))
             throw new ConflictException($"La ficha '{unidad.Ficha}' ya está registrada en el sistema.");
 
-        var denominacion = await denominaciones.GetByIdAsync(request.DenominacionId, cancellationToken)
-            ?? throw new NotFoundException("La denominación", request.DenominacionId);
+        if (request.DenominacionId is { } denominacionId)
+        {
+            var denominacion = await denominaciones.GetByIdAsync(denominacionId, cancellationToken)
+                ?? throw new NotFoundException("La denominación", denominacionId);
 
-        var ocupantes = await unidades.GetActivasConDenominacionAsync(denominacion.Id, cancellationToken);
-        AsignacionDenominacionService.Asignar(unidad, denominacion, ocupantes, autor);
+            var ocupantes = await unidades.GetActivasConDenominacionAsync(denominacion.Id, cancellationToken);
+            AsignacionDenominacionService.Asignar(unidad, denominacion, ocupantes, autor);
+        }
 
         unidades.Add(unidad);
         await uow.SaveChangesAsync(cancellationToken);

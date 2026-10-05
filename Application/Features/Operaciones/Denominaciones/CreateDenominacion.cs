@@ -19,10 +19,10 @@ public class CreateDenominacionCommandValidator : AbstractValidator<CreateDenomi
         RuleFor(x => x.Nombre)
             .NotEmpty().WithMessage("El nombre es requerido.")
             .MaximumLength(Denominacion.NombreMaxLength).WithMessage($"El nombre no puede exceder {Denominacion.NombreMaxLength} caracteres.");
-        RuleFor(x => x.TramoId)
+        RuleFor(x => x.TramoId).Cascade(CascadeMode.Stop)
             .GreaterThan(0).WithMessage("El tramo es requerido.")
             .MustAsync((id, ct) => db.Tramos.ExisteActivoAsync(id, ct)).WithMessage("El tramo especificado no existe.");
-        RuleFor(x => x.NivelDenominacionId)
+        RuleFor(x => x.NivelDenominacionId).Cascade(CascadeMode.Stop)
             .GreaterThan(0).WithMessage("El nivel de la denominación es requerido.")
             .MustAsync((id, ct) => db.NivelesDenominacion.ExisteActivoAsync(id, ct)).WithMessage("El nivel de denominación especificado no existe.");
     }

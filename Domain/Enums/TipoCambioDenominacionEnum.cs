@@ -9,5 +9,8 @@ public enum TipoCambioDenominacionEnum
     Reasignacion = 2,
 
     /// <summary>La unidad perdió su denominación porque otra unidad la tomó.</summary>
-    Liberacion = 3
+    Liberacion = 3,
+
+    /// <summary>Se registró la unidad (desde el front desk). Si se le asigna una denominación, va en otro registro.</summary>
+    Alta = 4
 }

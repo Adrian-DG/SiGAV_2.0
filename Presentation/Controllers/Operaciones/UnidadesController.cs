@@ -43,6 +43,23 @@ public class UnidadesController(IMediator mediator) : GenericController(mediator
     public async Task<IActionResult> ConfirmDisponibilidad([FromQuery] string? ficha, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new ConfirmUnidadDisponibleQuery(ficha ?? string.Empty), cancellationToken));
 
+    /// <summary>Unidades, denominaciones (con la unidad que la ocupa), tramos y niveles activos para los formularios.</summary>
+    [Authorize(Policy = SesionPolicies.Web)]
+    [HttpGet("opciones-asignacion")]
+    public async Task<IActionResult> GetOpcionesAsignacion(CancellationToken cancellationToken)
+        => Ok(await Mediator.Send(new GetOpcionesAsignacionQuery(), cancellationToken));
+
+    /// <summary>
+    /// Asigna una denominación a una unidad. Unidad: unidadId (existente) o nuevaUnidad {ficha, placa}.
+    /// Denominación: denominacionId (existente) o nuevaDenominacion {nombre, tramoId, nivelDenominacionId}.
+    /// Si otra unidad tenía la denominación, queda sin denominación y No disponible (unidadesLiberadas).
+    /// </summary>
+    [Authorize(Policy = SesionPolicies.Web)]
+    [HttpPost("asignar-denominacion")]
+    public async Task<IActionResult> AsignarDenominacion([FromBody] AsignarDenominacionCommand command, CancellationToken cancellationToken)
+        => Ok(await Mediator.Send(command, cancellationToken));
+
+    /// <summary>Crea una unidad; sin denominacionId queda sin denominación (No disponible).</summary>
     [Authorize(Policy = SesionPolicies.Web)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUnidadCommand command, CancellationToken cancellationToken)

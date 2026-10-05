@@ -52,7 +52,7 @@ public class CreateUnidadConNuevaDenominacionCommandHandler(
     {
         var autor = currentUser.RequerirAutorWeb(timeProvider);
 
-        var unidad = Unidad.Crear(request.Ficha, request.Placa);
+        var unidad = Unidad.Crear(FichaUnidad.Normalizar(request.Ficha), request.Placa, autor);
         var denominacion = Denominacion.Crear(request.Denominacion, request.TramoId, request.NivelDenominacionId);
 
         if (await unidades.ExisteFichaAsync(unidad.Ficha, cancellationToken: cancellationToken))

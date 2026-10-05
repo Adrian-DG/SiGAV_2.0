@@ -34,7 +34,9 @@ public class GetDenominacionesQueryHandler(IReadDbContext db)
                 d.Nivel!.Nombre,
                 d.Nivel.Jerarquia,
                 d.TramoId,
-                d.Tramo!.Nombre))
+                d.Tramo!.Nombre,
+                db.Unidades.Where(u => u.IsActive && u.DenominacionId == d.Id).Select(u => (int?)u.Id).FirstOrDefault(),
+                db.Unidades.Where(u => u.IsActive && u.DenominacionId == d.Id).Select(u => u.Ficha).FirstOrDefault()))
             .ToPagedResultAsync(request.Page, request.Size, cancellationToken);
     }
 }

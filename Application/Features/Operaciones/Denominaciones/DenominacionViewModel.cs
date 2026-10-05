@@ -2,6 +2,7 @@ using Domain.Enums;
 
 namespace Application.Features.Operaciones.Denominaciones;
 
+/// <param name="UnidadId">Unidad activa que la usa ahora (null: libre). UnidadFicha: su ficha.</param>
 public record DenominacionViewModel(
     int Id,
     string Nombre,
@@ -9,7 +10,9 @@ public record DenominacionViewModel(
     string NivelDenominacion,
     JerarquiaEnum Jerarquia,
     int TramoId,
-    string Tramo);
+    string Tramo,
+    int? UnidadId,
+    string? UnidadFicha);
 
 public record DenominacionDetalleViewModel(
     int Id,
