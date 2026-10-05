@@ -12,6 +12,7 @@ public record PosicionUnidadViewModel(
     string? Placa,
     int? DenominacionId,
     string? Denominacion,
+    string? Nivel,
     int? TramoId,
     string? Tramo,
     int AgenteId,
@@ -58,6 +59,8 @@ public class GetPosicionesUnidadesQueryHandler(IReadDbContext db, TimeProvider t
                 p.Unidad.Placa,
                 p.Unidad.DenominacionId,
                 Denominacion = p.Unidad.Denominacion != null ? p.Unidad.Denominacion.Nombre : null,
+                // Nivel de la denominación (Móvil, Grúa, Taller...): el tipo de unidad en el mapa
+                Nivel = p.Unidad.Denominacion != null ? p.Unidad.Denominacion.Nivel!.Nombre : null,
                 TramoId = p.Unidad.Denominacion != null ? (int?)p.Unidad.Denominacion.TramoId : null,
                 Tramo = p.Unidad.Denominacion != null ? p.Unidad.Denominacion.Tramo!.Nombre : null,
                 p.AgenteId,
@@ -79,7 +82,7 @@ public class GetPosicionesUnidadesQueryHandler(IReadDbContext db, TimeProvider t
 
         var unidades = filas
             .Select(f => new PosicionUnidadViewModel(
-                f.UnidadId, f.Ficha, f.Placa, f.DenominacionId, f.Denominacion, f.TramoId, f.Tramo,
+                f.UnidadId, f.Ficha, f.Placa, f.DenominacionId, f.Denominacion, f.Nivel, f.TramoId, f.Tramo,
                 f.AgenteId,
                 // Igual que Agente.NombreCompleto / GetRango (propiedades calculadas, EF no las traduce)
                 $"{f.Apellido} {f.Nombre}",
