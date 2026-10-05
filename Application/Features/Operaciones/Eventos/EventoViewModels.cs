@@ -82,6 +82,17 @@ public record EventoVehiculoViewModel(
     string? Color,
     string Descripcion);
 
-public record EventoEvidenciaViewModel(int Id, TipoEvidenciaEnum Tipo, string Ubicacion, string ContentType, DateTime Registrada);
+/// <summary>
+/// El archivo se descarga de GET /api/eventos/{eventoId}/evidencias/{id}/archivo (la clave interna del
+/// almacenamiento no se expone). CiudadanoId/VehiculoId: Ciudadanos[].Id / Vehiculos[].Id del evento.
+/// </summary>
+public record EventoEvidenciaViewModel(
+    int Id,
+    TipoEvidenciaEnum Tipo,
+    string ContentType,
+    long TamanoBytes,
+    int? CiudadanoId,
+    int? VehiculoId,
+    DateTime Registrada);
 
 public record RegistrarEventoResult(int Id, bool EsDuplicado);

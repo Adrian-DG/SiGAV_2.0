@@ -25,6 +25,13 @@ internal static class EventoAcceso
             : throw new ForbiddenException("La sesión actual no tiene acceso a eventos.");
     }
 
+    /// <summary>Front desk, o una unidad que participa en el evento (con cualquier rol).</summary>
+    public static void AsegurarParticipa(Evento evento, ICurrentUserService currentUser)
+    {
+        if (UnidadDeAlcance(currentUser) is { } unidadId && !evento.Unidades.Any(u => u.UnidadId == unidadId))
+            throw new NotFoundException("El evento", evento.Id);
+    }
+
     public static void AsegurarPuedeOperar(Evento evento, ICurrentUserService currentUser)
     {
         if (EsWeb(currentUser)) return;

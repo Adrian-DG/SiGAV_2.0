@@ -1,5 +1,6 @@
 using Application.Contracts.Authentication;
 using Application.Features.Operaciones.Eventos;
+using Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -68,6 +69,50 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
         await Mediator.Send(new AnularEventoCommand(id), cancellationToken);
         return NoContent();
     }
+
+    /// <summary>
+    /// Sube una evidencia (multipart/form-data): archivo (JPEG, PNG o WebP, máx. 10 MB), tipo
+    /// (1 Foto, 2 Firma del ciudadano, 3 Firma del agente, 4 Foto de placa, 5 Foto de cédula) y,
+    /// opcionales, requestId (idempotencia), ciudadanoId o vehiculoId (de este evento). La app solo
+    /// puede subirla a eventos en que participa su unidad. Nueva: 201; reenvío: 200 con esDuplicado.
+    /// </summary>
+    [HttpPost("{id:int}/evidencias")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(LimiteSubida)]
+    [RequestFormLimits(MultipartBodyLengthLimit = LimiteSubida)]
+    public async Task<IActionResult> SubirEvidencia([FromRoute] int id, [FromForm] SubirEvidenciaRequest request, CancellationToken cancellationToken)
+    {
+        await using var contenido = request.Archivo?.OpenReadStream();
+        var resultado = await Mediator.Send(
+            new RegistrarEvidenciaCommand(id, request.Tipo, contenido!, request.RequestId, request.CiudadanoId, request.VehiculoId),
+            cancellationToken);
+
+        return resultado.EsDuplicado
+            ? Ok(resultado)
+            : CreatedAtAction(nameof(GetArchivoEvidencia), new { id, evidenciaId = resultado.Id }, resultado);
+    }
+
+    /// <summary>Archivo de la evidencia (la imagen), con su content type.</summary>
+    [HttpGet("{id:int}/evidencias/{evidenciaId:int}/archivo")]
+    public async Task<IActionResult> GetArchivoEvidencia([FromRoute] int id, [FromRoute] int evidenciaId, CancellationToken cancellationToken)
+    {
+        var archivo = await Mediator.Send(new GetArchivoEvidenciaQuery(id, evidenciaId), cancellationToken);
+
+        // Una evidencia no cambia nunca: el navegador puede reutilizarla (solo él, no proxies)
+        Response.Headers.CacheControl = "private, max-age=86400";
+        Response.Headers.ContentDisposition = $"inline; filename=\"{archivo.NombreArchivo}\"";
+        return File(archivo.Contenido, archivo.ContentType);
+    }
+
+    // Archivo más el resto del formulario
+    private const long LimiteSubida = ArchivoEvidencia.MaxBytes + 1024 * 1024;
+
+    public record SubirEvidenciaRequest(
+        IFormFile? Archivo,
+        TipoEvidenciaEnum Tipo,
+        Guid? RequestId,
+        int? CiudadanoId,
+        int? VehiculoId);
 
     public record IniciarRequest(DateTime? FechaHoraLlegadaUtc);
 

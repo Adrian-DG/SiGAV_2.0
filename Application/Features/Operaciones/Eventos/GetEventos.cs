@@ -253,7 +253,7 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
                 .ToList(),
             evento.Evidencias
                 .OrderBy(e => e.Id)
-                .Select(e => new EventoEvidenciaViewModel(e.Id, e.Tipo, e.Ubicacion, e.ContentType, e.RegistradaUtc))
+                .Select(e => new EventoEvidenciaViewModel(e.Id, e.Tipo, e.ContentType, e.TamanoBytes, e.EventoCiudadanoId, e.EventoVehiculoId, e.RegistradaUtc))
                 .ToList(),
             evento.CreatedAt);
     }

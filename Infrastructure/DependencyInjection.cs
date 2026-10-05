@@ -1,4 +1,5 @@
 using Application.Contracts;
+using Infrastructure.Almacenamiento;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -58,6 +59,9 @@ public static class DependencyInjection
         services.AddScoped<IAgenteRepository, AgenteRepository>();
         services.AddScoped<IEventoRepository, EventoRepository>();
         services.AddScoped<IHistoricoRepository, HistoricoRepository>();
+
+        // Archivos de las evidencias (fuera de la base de datos)
+        services.AddAlmacenamiento(configuration, environment);
 
         // Carga inicial (catálogos, administrador y datos de prueba) al arrancar
         services.AddSeeding(configuration);

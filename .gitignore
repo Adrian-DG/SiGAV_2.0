@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 *.db
 *.db-shm
 *.db-wal
+
+# Archivos de evidencias del almacenamiento local (Almacenamiento:Proveedor = Local)
+**/App_Data/

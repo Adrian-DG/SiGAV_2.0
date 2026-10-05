@@ -18,6 +18,7 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     public const int ComentarioMaxLength = 2000;
     public const int MaxVehiculos = 30;
     public const int MaxCiudadanos = 30;
+    public const int MaxEvidencias = 50;
 
     /// <summary>Tolerancia ante relojes de dispositivos adelantados.</summary>
     public static readonly TimeSpan ToleranciaReloj = TimeSpan.FromMinutes(5);
@@ -267,6 +268,40 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
         }
 
         _ciudadanos.Add(EventoCiudadanoInfo.Crear(rol, persona, vehiculo, ciudadano));
+    }
+
+    /// <summary>
+    /// Agrega una foto o firma ya guardada en el almacenamiento (<paramref name="ubicacion"/> es su
+    /// clave). Requiere los ciudadanos, vehículos y evidencias cargados: la persona o el vehículo
+    /// indicados deben ser de este evento.
+    /// </summary>
+    public EventoEvidencia AgregarEvidencia(
+        TipoEvidenciaEnum tipo,
+        string ubicacion,
+        string contentType,
+        long tamanoBytes,
+        DateTime registradaUtc,
+        Guid? requestId = null,
+        int? eventoCiudadanoId = null,
+        int? eventoVehiculoId = null)
+    {
+        AsegurarActivo();
+        if (_evidencias.Count >= MaxEvidencias)
+            throw new DomainException($"No se pueden registrar más de {MaxEvidencias} evidencias en un evento.");
+
+        EventoCiudadanoInfo? ciudadano = null;
+        if (eventoCiudadanoId is { } ciudadanoId)
+            ciudadano = _ciudadanos.FirstOrDefault(c => c.Id == ciudadanoId)
+                ?? throw new DomainException("La persona indicada no está registrada en este evento.");
+
+        EventoVehiculoInfo? vehiculo = null;
+        if (eventoVehiculoId is { } vehiculoId)
+            vehiculo = _vehiculos.FirstOrDefault(v => v.Id == vehiculoId)
+                ?? throw new DomainException("El vehículo indicado no está registrado en este evento.");
+
+        var evidencia = EventoEvidencia.Crear(tipo, ubicacion, contentType, tamanoBytes, registradaUtc, requestId, ciudadano, vehiculo);
+        _evidencias.Add(evidencia);
+        return evidencia;
     }
 
     // ---------------------------------------------------------------- Reglas internas
