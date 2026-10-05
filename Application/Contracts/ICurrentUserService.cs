@@ -20,6 +20,9 @@ public interface ICurrentUserService
     int? UnidadId { get; }
 
     string? Ficha { get; }
+
+    /// <summary>Cuándo se emitió el token (claim iat, precisión de segundos), o null si es anónima.</summary>
+    DateTime? SesionEmitidaUtc { get; }
     string? Nombre { get; }
     IReadOnlyCollection<string> Permisos { get; }
 }

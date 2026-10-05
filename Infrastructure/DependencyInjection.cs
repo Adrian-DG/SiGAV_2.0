@@ -55,6 +55,7 @@ public static class DependencyInjection
 
         // Repositorios del dominio (lado de escritura). La lectura la hacen las Queries con IReadDbContext.
         services.AddScoped<IUnidadRepository, UnidadRepository>();
+        services.AddScoped<IUnidadPosicionRepository, UnidadPosicionRepository>();
         services.AddScoped<IDenominacionRepository, DenominacionRepository>();
         services.AddScoped<IAgenteRepository, AgenteRepository>();
         services.AddScoped<IEventoRepository, EventoRepository>();

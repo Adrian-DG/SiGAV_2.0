@@ -1,5 +1,6 @@
 using Application.Contracts.Authentication;
 using Application.Features.Authentication;
+using Application.Features.Operaciones.Posiciones;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +22,18 @@ public class AuthenticationController(IMediator mediator) : ControllerBase
     [HttpPost("movil/login")]
     public async Task<IActionResult> LoginMovil([FromBody] LoginMovilCommand request, CancellationToken cancellationToken)
         => Ok(await mediator.Send(request, cancellationToken));
+
+    /// <summary>
+    /// App móvil: cierra la sesión de la unidad (deja de mostrarse en línea en el mapa y otro agente
+    /// puede iniciar sesión con ella). El token sigue siendo válido hasta que expire; la app lo descarta.
+    /// </summary>
+    [Authorize(Policy = SesionPolicies.Movil)]
+    [HttpPost("movil/logout")]
+    public async Task<IActionResult> LogoutMovil(CancellationToken cancellationToken)
+    {
+        await mediator.Send(new CerrarSesionMovilCommand(), cancellationToken);
+        return NoContent();
+    }
 
     /// <summary>Identidad de la sesión actual, para ambos tipos de token.</summary>
     [Authorize(Policy = SesionPolicies.Operativa)]

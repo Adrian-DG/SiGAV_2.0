@@ -1,9 +1,11 @@
 using Application.Features.Operaciones.Historial;
+using Application.Features.Operaciones.Posiciones;
 using Application.Features.Operaciones.Unidades;
 using Application.Contracts.Authentication;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Presentation.Authorization;
 
 namespace Presentation.Controllers.Operaciones;
 
@@ -81,6 +83,30 @@ public class UnidadesController(IMediator mediator) : GenericController(mediator
     public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdateUnidadCommand command, CancellationToken cancellationToken)
     {
         await Mediator.Send(command with { UnidadId = id }, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>App móvil: posición actual de la unidad de la sesión (cada ~30 s). 403: la unidad ya no puede operar; 409: otro agente la opera.</summary>
+    [Authorize(Policy = SesionPolicies.Movil)]
+    [HttpPost("posicion")]
+    public async Task<IActionResult> ReportarPosicion([FromBody] ReportarPosicionCommand command, CancellationToken cancellationToken)
+    {
+        await Mediator.Send(command, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>Mapa del front desk: última posición de cada unidad, con su agente, denominación y estado de conexión.</summary>
+    [RequierePermiso(Permisos.UnidadesVer)]
+    [HttpGet("posiciones")]
+    public async Task<IActionResult> GetPosiciones(CancellationToken cancellationToken)
+        => Ok(await Mediator.Send(new GetPosicionesUnidadesQuery(), cancellationToken));
+
+    /// <summary>Cierra la sesión de la unidad para que otro agente pueda iniciarla sin esperar.</summary>
+    [RequierePermiso(Permisos.UnidadesVer)]
+    [HttpPost("{id:int}/liberar-sesion")]
+    public async Task<IActionResult> LiberarSesion([FromRoute] int id, CancellationToken cancellationToken)
+    {
+        await Mediator.Send(new LiberarSesionUnidadCommand(id), cancellationToken);
         return NoContent();
     }
 

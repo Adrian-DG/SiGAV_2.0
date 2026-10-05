@@ -21,6 +21,10 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICur
 
     public string? Ficha => TipoSesion == TiposSesion.Movil ? User!.FindFirst(SesionClaims.Ficha)?.Value : null;
 
+    public DateTime? SesionEmitidaUtc => IsAuthenticated && long.TryParse(User!.FindFirst(SesionClaims.IssuedAt)?.Value, out var segundos)
+        ? DateTime.UnixEpoch.AddSeconds(segundos)
+        : null;
+
     public string? Nombre => IsAuthenticated ? User!.FindFirst(SesionClaims.NombreCompleto)?.Value : null;
 
     public IReadOnlyCollection<string> Permisos => IsAuthenticated

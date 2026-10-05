@@ -25,7 +25,9 @@ public class LoginMovilCommandValidator : AbstractValidator<LoginMovilCommand>
 public class LoginMovilCommandHandler(
     IAgenteRepository agentes,
     IUnidadRepository unidades,
-    IJwtBearerHelper jwt) : IRequestHandler<LoginMovilCommand, AuthenticatedResponse>
+    IUnidadPosicionRepository posiciones,
+    IJwtBearerHelper jwt,
+    TimeProvider timeProvider) : IRequestHandler<LoginMovilCommand, AuthenticatedResponse>
 {
     public async Task<AuthenticatedResponse> Handle(LoginMovilCommand request, CancellationToken cancellationToken)
     {
@@ -38,6 +40,12 @@ public class LoginMovilCommandHandler(
         // activo y autorizado por front desk.
         if (agente is null || !agente.PuedeIniciarSesion || unidad is null || !unidad.IsActive || !unidad.EstaDisponible || unidad.DenominacionId is null)
             throw new UnauthorizedException("La cédula o la ficha no son válidas, o la unidad no está disponible.");
+
+        // Una sola sesión por unidad: si otro agente la está operando (sigue enviando su posición)
+        // no se permite entrar hasta que cierre sesión, front desk la libere o pase a desconectada.
+        var posicion = await posiciones.GetByUnidadIdAsync(unidad.Id, cancellationToken);
+        if (posicion is not null && posicion.OcupadaPorOtroAgente(agente.Id, timeProvider.GetUtcNow().UtcDateTime))
+            throw new ConflictException($"La unidad {unidad.Ficha} ya tiene una sesión activa de otro agente. Debe cerrarla primero o pedir a front desk que la libere.");
 
         return jwt.GenerateMovilToken(new MovilUserIdentity(
             agente.Id,

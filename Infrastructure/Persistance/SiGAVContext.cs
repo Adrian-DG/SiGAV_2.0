@@ -113,6 +113,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     public DbSet<EventoTipoEvento> EventoTiposEvento { get; set; }
     public DbSet<EventoEvidencia> EventoEvidencias { get; set; }
     public DbSet<HistorialDenominacionUnidad> HistorialDenominaciones { get; set; }
+    public DbSet<UnidadPosicion> UnidadPosiciones { get; set; }
     public DbSet<Flota> Flotas { get; set; }
     public DbSet<Tramo> Tramos { get; set; }
     public DbSet<RegionAsistencia> Regiones { get; set; }
@@ -140,6 +141,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     IQueryable<Denominacion> IReadDbContext.Denominaciones => Denominaciones.AsNoTracking();
     IQueryable<Unidad> IReadDbContext.Unidades => Unidades.AsNoTracking();
     IQueryable<HistorialDenominacionUnidad> IReadDbContext.HistorialDenominaciones => HistorialDenominaciones.AsNoTracking();
+    IQueryable<UnidadPosicion> IReadDbContext.UnidadPosiciones => UnidadPosiciones.AsNoTracking();
     IQueryable<Agente> IReadDbContext.Agentes => Agentes.AsNoTracking();
     IQueryable<TipoEvento> IReadDbContext.TiposEvento => TipoEventos.AsNoTracking();
     IQueryable<TipoCierre> IReadDbContext.TiposCierre => TiposCierre.AsNoTracking();

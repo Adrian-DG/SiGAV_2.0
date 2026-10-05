@@ -11,6 +11,7 @@ public static class SesionClaims
     public const string TokenId = "jti";
     public const string Name = "name";
     public const string Audience = "aud";
+    public const string IssuedAt = "iat";
 
     /// <summary>Tipo de sesión: <see cref="TiposSesion.Web"/> o <see cref="TiposSesion.Movil"/>.</summary>
     public const string TipoSesion = "sesion";
