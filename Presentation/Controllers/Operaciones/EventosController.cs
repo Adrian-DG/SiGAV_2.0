@@ -24,6 +24,15 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
     public async Task<IActionResult> GetAll([FromQuery] GetEventosQuery query, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(query, cancellationToken));
 
+    /// <summary>
+    /// Ubicación y categorías de los eventos del período, para el mapa de calor (solo front desk).
+    /// Por defecto los últimos 30 días; como máximo 20 000 puntos (los más recientes).
+    /// </summary>
+    [Authorize(Policy = SesionPolicies.Web)]
+    [HttpGet("mapa")]
+    public async Task<IActionResult> Mapa([FromQuery] DateOnly? desde, [FromQuery] DateOnly? hasta, CancellationToken cancellationToken)
+        => Ok(await Mediator.Send(new GetMapaEventosQuery(desde, hasta), cancellationToken));
+
     /// <summary>Opciones de los filtros del listado: agentes, unidades, denominaciones y tramos.</summary>
     [Authorize(Policy = SesionPolicies.Web)]
     [HttpGet("filtros")]
