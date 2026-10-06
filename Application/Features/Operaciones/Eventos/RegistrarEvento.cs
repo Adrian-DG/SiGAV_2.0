@@ -16,6 +16,7 @@ namespace Application.Features.Operaciones.Eventos;
 /// conexión, antes de que exista un Id) para que las personas indiquen en cuál iban.
 /// <see cref="PlacaNoEstandar"/>: el agente confirmó que la placa no sigue los formatos del
 /// catálogo (extranjera, temporal, ilegible...), así que no se valida su formato.
+/// <see cref="TipoEventoIds"/>: tipos atendidos a este vehículo, de entre los del evento.
 /// </summary>
 public record VehiculoEventoRequest(
     string Clave,
@@ -27,9 +28,13 @@ public record VehiculoEventoRequest(
     string? MarcaTexto = null,
     string? ModeloTexto = null,
     string? ColorTexto = null,
-    bool PlacaNoEstandar = false);
+    bool PlacaNoEstandar = false,
+    IReadOnlyList<int>? TipoEventoIds = null);
 
-/// <summary><see cref="VehiculoClave"/>: <see cref="VehiculoEventoRequest.Clave"/> del vehículo en que iba (null = sin vehículo).</summary>
+/// <summary>
+/// <see cref="VehiculoClave"/>: <see cref="VehiculoEventoRequest.Clave"/> del vehículo en que iba (null = sin vehículo).
+/// <see cref="TipoEventoIds"/>: tipos atendidos a esta persona, de entre los del evento.
+/// </summary>
 public record CiudadanoEventoRequest(
     RolCiudadanoEnum Rol,
     string? Identificacion,
@@ -38,7 +43,8 @@ public record CiudadanoEventoRequest(
     SexoEnum Sexo = SexoEnum.NONE,
     string? Telefono = null,
     int? NacionalidadId = null,
-    string? VehiculoClave = null);
+    string? VehiculoClave = null,
+    IReadOnlyList<int>? TipoEventoIds = null);
 
 /// <summary>
 /// Registra un evento. Es idempotente por <see cref="RequestId"/>: un reenvío (cola offline de la app)
@@ -46,6 +52,7 @@ public record CiudadanoEventoRequest(
 /// Desde la app, la unidad y el agente salen de la sesión (UnidadId/AgenteId del cuerpo se ignoran),
 /// el tramo por defecto es el de la denominación de la unidad
 /// y el canal es siempre AgenteCampo. Puede enviarse ya atendido o completado (llegada y cierre).
+/// <see cref="TipoEventoIds"/> son todos los tipos del evento: incluyen los de cada vehículo y persona.
 /// </summary>
 public record RegistrarEventoCommand(
     Guid? RequestId,
@@ -134,6 +141,14 @@ public class RegistrarEventoCommandValidator : AbstractValidator<RegistrarEvento
             .MustAsync((v, ct) => db.Colores.ExistenActivosAsync(v?.Select(x => x.ColorId).OfType<int>(), ct))
             .WithMessage("Uno o más colores no existen.");
 
+        // ---- Tipos de cada vehículo y persona: de entre los del evento
+        RuleForEach(x => x.Vehiculos)
+            .Must((cmd, v) => TiposDelEvento(cmd, v.TipoEventoIds))
+            .WithMessage("Los tipos de un vehículo deben estar entre los tipos del evento.");
+        RuleForEach(x => x.Ciudadanos)
+            .Must((cmd, c) => TiposDelEvento(cmd, c.TipoEventoIds))
+            .WithMessage("Los tipos de una persona deben estar entre los tipos del evento.");
+
         // ---- Personas: en qué vehículo iban
         RuleForEach(x => x.Ciudadanos)
             .Must((cmd, c) => c.VehiculoClave is null || (cmd.Vehiculos ?? []).Any(v => v.Clave == c.VehiculoClave))
@@ -168,6 +183,9 @@ public class RegistrarEventoCommandValidator : AbstractValidator<RegistrarEvento
             RuleFor(x => x.FechaHoraReporteUtc).NotNull().WithMessage("La fecha y hora del reporte es requerida.");
         }
     }
+
+    private static bool TiposDelEvento(RegistrarEventoCommand cmd, IReadOnlyList<int>? tipoEventoIds)
+        => tipoEventoIds is null || tipoEventoIds.All(id => cmd.TipoEventoIds?.Contains(id) == true);
 
     private static bool PlacasDistintas(IReadOnlyList<VehiculoEventoRequest> vehiculos)
     {
@@ -253,7 +271,7 @@ public class RegistrarEventoCommandHandler(
             var vehiculoHistorico = datos.Placa is { } placa
                 ? await historico.GetVehiculoAsync(placa, cancellationToken)
                 : null;
-            vehiculoPorClave[v.Clave] = evento.AgregarVehiculo(datos, vehiculoHistorico);
+            vehiculoPorClave[v.Clave] = evento.AgregarVehiculo(datos, vehiculoHistorico, v.TipoEventoIds);
         }
 
         foreach (var c in request.Ciudadanos ?? [])
@@ -264,7 +282,7 @@ public class RegistrarEventoCommandHandler(
                 : null;
             var vehiculo = c.VehiculoClave is { } clave ? vehiculoPorClave[clave] : null;
 
-            evento.AgregarCiudadano(c.Rol, persona, vehiculo, ciudadano);
+            evento.AgregarCiudadano(c.Rol, persona, vehiculo, ciudadano, c.TipoEventoIds);
         }
 
         // Reportado ya atendido (p. ej. desde la cola offline): se aplican llegada y cierre

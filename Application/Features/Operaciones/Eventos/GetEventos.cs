@@ -97,6 +97,8 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
                 e.Unidades
                     .Where(u => u.Rol == RolUnidadEventoEnum.Principal)
                     .Select(u => new PrincipalFila(
+                        u.UnidadId,
+                        u.AgenteId,
                         u.Unidad!.Ficha,
                         u.Denominacion!.Nombre,
                         u.Agente!.Institucion == InstitucionEnum.ARD ? u.Agente.Rango!.NombreArmada : u.Agente.Rango!.Nombre,
@@ -110,7 +112,9 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
                     .ThenBy(c => c.Id)
                     .Select(c => c.Persona)
                     .FirstOrDefault(),
-                e.Vehiculos.OrderBy(v => v.Id).Select(v => v.Datos).FirstOrDefault()))
+                e.Vehiculos.OrderBy(v => v.Id).Select(v => v.Datos).FirstOrDefault(),
+                e.Ciudadanos.Count(),
+                e.Vehiculos.Count()))
             .ToPagedResultAsync(request.Page, request.Size, cancellationToken);
 
         var catalogo = await CatalogoVehiculo.CargarAsync(db, pagina.Items.Select(f => f.Vehiculo), cancellationToken);
@@ -121,13 +125,17 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
                 f.Tipos.Select(t => t.Nombre).OrderBy(n => n).ToList(),
                 f.Tipos.Select(t => t.Categoria).Distinct().Order().ToList(),
                 NombrePersona(f.Persona),
-                f.Vehiculo is null ? null : catalogo.Describir(0, f.Vehiculo).Descripcion,
+                f.Vehiculo is null ? null : catalogo.Describir(0, f.Vehiculo, []).Descripcion,
                 f.Direccion,
                 f.FechaHoraReporteUtc,
                 f.Principal?.Ficha ?? string.Empty,
                 f.Principal?.Denominacion ?? string.Empty,
                 f.Principal is { } p ? $"{p.AgenteRango} {p.AgenteNombre} {p.AgenteApellido}".Trim() : null,
-                f.Tramo))
+                f.Tramo,
+                f.TotalPersonas,
+                f.TotalVehiculos,
+                f.Principal?.UnidadId,
+                f.Principal?.AgenteId))
             .ToList();
 
         return new PagedResult<EventoListItemViewModel>(items, pagina.Page, pagina.Size, pagina.TotalCount);
@@ -150,7 +158,14 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
     }
 
     private sealed record TipoFila(string Nombre, CategoriaEventoEnum Categoria);
-    private sealed record PrincipalFila(string Ficha, string Denominacion, string? AgenteRango, string AgenteNombre, string AgenteApellido);
+    private sealed record PrincipalFila(
+        int UnidadId,
+        int AgenteId,
+        string Ficha,
+        string Denominacion,
+        string? AgenteRango,
+        string AgenteNombre,
+        string AgenteApellido);
     private sealed record FilaEvento(
         int Id,
         EstadoEventoEnum Estado,
@@ -160,7 +175,9 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
         string? Tramo,
         PrincipalFila? Principal,
         DatosPersona? Persona,
-        DatosVehiculo? Vehiculo);
+        DatosVehiculo? Vehiculo,
+        int TotalPersonas,
+        int TotalVehiculos);
 }
 
 // Query: detalle. Para la app, un evento de otra unidad responde 404 (no se revela que existe).
@@ -184,8 +201,8 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
             .Include(e => e.Unidades).ThenInclude(u => u.Denominacion)
             .Include(e => e.Unidades).ThenInclude(u => u.NivelDenominacion)
             .Include(e => e.Unidades).ThenInclude(u => u.Agente!).ThenInclude(a => a.Rango)
-            .Include(e => e.Vehiculos)
-            .Include(e => e.Ciudadanos)
+            .Include(e => e.Vehiculos).ThenInclude(v => v.Tipos)
+            .Include(e => e.Ciudadanos).ThenInclude(c => c.Tipos)
             .Include(e => e.Evidencias)
             .FirstOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("El evento", request.EventoId);
@@ -236,7 +253,7 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
                 .ToList(),
             evento.Vehiculos
                 .OrderBy(v => v.Id)
-                .Select(v => catalogo.Describir(v.Id, v.Datos))
+                .Select(v => catalogo.Describir(v.Id, v.Datos, v.Tipos.Select(t => t.TipoEventoId).Order().ToList()))
                 .ToList(),
             evento.Ciudadanos
                 .OrderBy(c => c.Id)
@@ -249,7 +266,8 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
                     c.Persona.Sexo,
                     c.Persona.Telefono,
                     c.Persona.NacionalidadId is { } n ? nacionalidades.GetValueOrDefault(n) : null,
-                    c.EventoVehiculoId))
+                    c.EventoVehiculoId,
+                    c.Tipos.Select(t => t.TipoEventoId).Order().ToList()))
                 .ToList(),
             evento.Evidencias
                 .OrderBy(e => e.Id)

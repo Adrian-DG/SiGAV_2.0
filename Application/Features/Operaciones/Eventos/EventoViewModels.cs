@@ -4,8 +4,9 @@ namespace Application.Features.Operaciones.Eventos;
 
 /// <summary>
 /// Fila del listado. Los nombres coinciden con EventoListItem de la app móvil
-/// (Mobile/src/features/events/types.ts); Agente y Tramo son para front desk (la app los ignora).
-/// Agente: el que operaba la unidad principal. Las fechas van en UTC (con "Z").
+/// (Mobile/src/features/events/types.ts); de Agente en adelante son para front desk (la app los ignora).
+/// Agente/UnidadId/AgenteId: la unidad principal y quien la operaba. TotalPersonas/TotalVehiculos:
+/// todos los del evento (el principal incluido). Las fechas van en UTC (con "Z").
 /// </summary>
 public record EventoListItemViewModel(
     int Id,
@@ -19,7 +20,11 @@ public record EventoListItemViewModel(
     string UnidadFicha,
     string UnidadDenominacion,
     string? Agente,
-    string? Tramo);
+    string? Tramo,
+    int TotalPersonas,
+    int TotalVehiculos,
+    int? UnidadId,
+    int? AgenteId);
 
 public record EventoDetalleViewModel(
     int Id,
@@ -70,9 +75,14 @@ public record EventoCiudadanoViewModel(
     string? Telefono,
     string? Nacionalidad,
     /// <summary>Id del vehículo del evento (Vehiculos) en que iba; null = sin vehículo.</summary>
-    int? VehiculoId);
+    int? VehiculoId,
+    /// <summary>Tipos atendidos a la persona (Tipos[].Id del evento); vacío = ninguno propio.</summary>
+    IReadOnlyList<int> TipoEventoIds);
 
-/// <summary>Marca/modelo/color: el nombre del catálogo o, si no estaba en el catálogo, el texto libre.</summary>
+/// <summary>
+/// Marca/modelo/color: el nombre del catálogo o, si no estaba en el catálogo, el texto libre.
+/// TipoEventoIds: tipos atendidos al vehículo (Tipos[].Id del evento).
+/// </summary>
 public record EventoVehiculoViewModel(
     int Id,
     string? Placa,
@@ -80,7 +90,8 @@ public record EventoVehiculoViewModel(
     string? Marca,
     string? Modelo,
     string? Color,
-    string Descripcion);
+    string Descripcion,
+    IReadOnlyList<int> TipoEventoIds);
 
 /// <summary>
 /// El archivo se descarga de GET /api/eventos/{eventoId}/evidencias/{id}/archivo (la clave interna del

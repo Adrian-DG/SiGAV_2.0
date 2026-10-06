@@ -65,7 +65,11 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     public IReadOnlyCollection<EventoCiudadanoInfo> Ciudadanos => _ciudadanos.AsReadOnly();
     public IReadOnlyCollection<EventoEvidencia> Evidencias => _evidencias.AsReadOnly();
 
-    /// <summary>Tipos atendidos (un evento puede tener varios, como en SiGAV 1.0). Nunca vacío.</summary>
+    /// <summary>
+    /// Tipos atendidos (un evento puede tener varios, como en SiGAV 1.0). Nunca vacío. Incluye los de
+    /// cada vehículo y persona (<see cref="EventoVehiculoInfo.Tipos"/>, <see cref="EventoCiudadanoInfo.Tipos"/>),
+    /// que siempre son un subconjunto de estos.
+    /// </summary>
     public IReadOnlyCollection<EventoTipoEvento> Tipos => _tipos.AsReadOnly();
 
     public EventoUnidadInfo UnidadPrincipal => _unidades.Single(u => u.Rol == RolUnidadEventoEnum.Principal);
@@ -183,6 +187,7 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     /// <summary>
     /// Deja exactamente los tipos indicados (sin duplicados). Conserva los que ya tenía y solo
     /// agrega o quita la diferencia, así la persistencia no borra y reinserta las mismas filas.
+    /// No puede quitar un tipo asignado a algún vehículo o persona del evento.
     /// </summary>
     public void ReemplazarTipos(IEnumerable<int> tipoEventoIds)
     {
@@ -191,6 +196,11 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
         var ids = (tipoEventoIds ?? []).Distinct().ToList();
         if (ids.Count == 0) throw new DomainException("El evento debe tener al menos un tipo de evento.");
         if (ids.Any(id => id <= 0)) throw new DomainException("Hay tipos de evento no válidos.");
+
+        var enUso = _vehiculos.SelectMany(v => v.Tipos).Select(t => t.TipoEventoId)
+            .Concat(_ciudadanos.SelectMany(c => c.Tipos).Select(t => t.TipoEventoId));
+        if (enUso.Any(id => !ids.Contains(id)))
+            throw new DomainException("No se puede quitar un tipo de evento asignado a un vehículo o persona del evento.");
 
         _tipos.RemoveAll(t => !ids.Contains(t.TipoEventoId));
         foreach (var id in ids.Where(id => _tipos.All(t => t.TipoEventoId != id)))
@@ -222,9 +232,13 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     /// <summary>
     /// Agrega un vehículo involucrado. Devuelve la participación para asociarle personas con
     /// <see cref="AgregarCiudadano"/>. <paramref name="vehiculoHistorico"/> vincula el maestro
-    /// cuando la placa ya es conocida.
+    /// cuando la placa ya es conocida; <paramref name="tipoEventoIds"/> son los tipos atendidos a
+    /// este vehículo, de entre los del evento.
     /// </summary>
-    public EventoVehiculoInfo AgregarVehiculo(DatosVehiculo datos, Vehiculo? vehiculoHistorico = null)
+    public EventoVehiculoInfo AgregarVehiculo(
+        DatosVehiculo datos,
+        Vehiculo? vehiculoHistorico = null,
+        IEnumerable<int>? tipoEventoIds = null)
     {
         AsegurarActivo();
         ArgumentNullException.ThrowIfNull(datos);
@@ -233,7 +247,7 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
         if (datos.Placa is { } placa && _vehiculos.Any(v => v.Datos.Placa == placa))
             throw new DomainException($"El vehículo con placa '{placa}' ya está registrado en el evento.");
 
-        var vehiculo = EventoVehiculoInfo.Crear(datos, vehiculoHistorico);
+        var vehiculo = EventoVehiculoInfo.Crear(datos, vehiculoHistorico, TiposDelEvento(tipoEventoIds, "del vehículo"));
         _vehiculos.Add(vehiculo);
         return vehiculo;
     }
@@ -241,13 +255,15 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     /// <summary>
     /// Agrega una persona involucrada. Conductor y pasajero van en un <paramref name="vehiculo"/>
     /// de este evento (máximo un conductor por vehículo); un peatón, en ninguno.
-    /// <paramref name="ciudadano"/> vincula el maestro cuando la persona ya existe.
+    /// <paramref name="ciudadano"/> vincula el maestro cuando la persona ya existe;
+    /// <paramref name="tipoEventoIds"/> son los tipos atendidos a esta persona, de entre los del evento.
     /// </summary>
     public void AgregarCiudadano(
         RolCiudadanoEnum rol,
         DatosPersona persona,
         EventoVehiculoInfo? vehiculo = null,
-        Ciudadano? ciudadano = null)
+        Ciudadano? ciudadano = null,
+        IEnumerable<int>? tipoEventoIds = null)
     {
         AsegurarActivo();
         ArgumentNullException.ThrowIfNull(persona);
@@ -267,7 +283,7 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
                 throw new DomainException($"El vehículo {vehiculo.Datos.Placa ?? "sin placa"} ya tiene un conductor.");
         }
 
-        _ciudadanos.Add(EventoCiudadanoInfo.Crear(rol, persona, vehiculo, ciudadano));
+        _ciudadanos.Add(EventoCiudadanoInfo.Crear(rol, persona, vehiculo, ciudadano, TiposDelEvento(tipoEventoIds, "de la persona")));
     }
 
     /// <summary>
@@ -305,6 +321,15 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     }
 
     // ---------------------------------------------------------------- Reglas internas
+
+    /// <summary>Tipos de un vehículo o persona, sin duplicados: deben ser tipos de este evento.</summary>
+    private List<int> TiposDelEvento(IEnumerable<int>? tipoEventoIds, string de)
+    {
+        var ids = (tipoEventoIds ?? []).Distinct().ToList();
+        if (ids.Any(id => _tipos.All(t => t.TipoEventoId != id)))
+            throw new DomainException($"Los tipos {de} deben estar entre los tipos del evento.");
+        return ids;
+    }
 
     private void AsegurarActivo()
     {
