@@ -13,6 +13,7 @@ public sealed record DatosPersona
     public const int IdentificacionMaxLength = 20; // cédula o pasaporte
     public const int NombreMaxLength = 50;
     public const int TelefonoMaxLength = 20;
+    public const int EdadMaxima = 120;
 
     public string? Identificacion { get; private init; }
     public string? Nombre { get; private init; }
@@ -21,15 +22,26 @@ public sealed record DatosPersona
     public string? Telefono { get; private init; }
     public int? NacionalidadId { get; private init; }
 
+    /// <summary>Edad en años al momento del evento (declarada o estimada por el agente).</summary>
+    public int? Edad { get; private init; }
+
     public bool EsDesconocida => Identificacion is null && Nombre is null && Apellido is null;
 
     // Requerido por EF Core
     private DatosPersona() { }
 
-    public DatosPersona(string? identificacion, string? nombre, string? apellido, SexoEnum sexo, string? telefono, int? nacionalidadId)
+    public DatosPersona(
+        string? identificacion,
+        string? nombre,
+        string? apellido,
+        SexoEnum sexo,
+        string? telefono,
+        int? nacionalidadId,
+        int? edad = null)
     {
         if (!Enum.IsDefined(sexo)) throw new DomainException("El sexo no es válido.");
         if (nacionalidadId is <= 0) throw new DomainException("La nacionalidad no es válida.");
+        if (edad is < 0 or > EdadMaxima) throw new DomainException($"La edad debe estar entre 0 y {EdadMaxima} años.");
 
         Identificacion = NormalizarIdentificacion(identificacion);
         Nombre = Normalizar(nombre, NombreMaxLength, "nombre");
@@ -37,6 +49,7 @@ public sealed record DatosPersona
         Telefono = Normalizar(telefono, TelefonoMaxLength, "teléfono");
         Sexo = sexo;
         NacionalidadId = nacionalidadId;
+        Edad = edad;
     }
 
     public static DatosPersona Desconocida(SexoEnum sexo = SexoEnum.NONE) => new(null, null, null, sexo, null, null);

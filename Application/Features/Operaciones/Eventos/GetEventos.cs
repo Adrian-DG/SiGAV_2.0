@@ -267,7 +267,8 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
                     c.Persona.Telefono,
                     c.Persona.NacionalidadId is { } n ? nacionalidades.GetValueOrDefault(n) : null,
                     c.EventoVehiculoId,
-                    c.Tipos.Select(t => t.TipoEventoId).Order().ToList()))
+                    c.Tipos.Select(t => t.TipoEventoId).Order().ToList(),
+                    c.Persona.Edad))
                 .ToList(),
             evento.Evidencias
                 .OrderBy(e => e.Id)

@@ -258,7 +258,7 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     /// <paramref name="ciudadano"/> vincula el maestro cuando la persona ya existe;
     /// <paramref name="tipoEventoIds"/> son los tipos atendidos a esta persona, de entre los del evento.
     /// </summary>
-    public void AgregarCiudadano(
+    public EventoCiudadanoInfo AgregarCiudadano(
         RolCiudadanoEnum rol,
         DatosPersona persona,
         EventoVehiculoInfo? vehiculo = null,
@@ -283,7 +283,9 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
                 throw new DomainException($"El vehículo {vehiculo.Datos.Placa ?? "sin placa"} ya tiene un conductor.");
         }
 
-        _ciudadanos.Add(EventoCiudadanoInfo.Crear(rol, persona, vehiculo, ciudadano, TiposDelEvento(tipoEventoIds, "de la persona")));
+        var participacion = EventoCiudadanoInfo.Crear(rol, persona, vehiculo, ciudadano, TiposDelEvento(tipoEventoIds, "de la persona"));
+        _ciudadanos.Add(participacion);
+        return participacion;
     }
 
     /// <summary>

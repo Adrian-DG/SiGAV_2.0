@@ -77,7 +77,9 @@ public record EventoCiudadanoViewModel(
     /// <summary>Id del vehículo del evento (Vehiculos) en que iba; null = sin vehículo.</summary>
     int? VehiculoId,
     /// <summary>Tipos atendidos a la persona (Tipos[].Id del evento); vacío = ninguno propio.</summary>
-    IReadOnlyList<int> TipoEventoIds);
+    IReadOnlyList<int> TipoEventoIds,
+    /// <summary>Edad en años al momento del evento.</summary>
+    int? Edad);
 
 /// <summary>
 /// Marca/modelo/color: el nombre del catálogo o, si no estaba en el catálogo, el texto libre.
@@ -106,4 +108,8 @@ public record EventoEvidenciaViewModel(
     int? VehiculoId,
     DateTime Registrada);
 
-public record RegistrarEventoResult(int Id, bool EsDuplicado);
+/// <summary>
+/// VehiculoIds/CiudadanoIds: Ids que asignó la API a cada vehículo y persona, en el mismo orden del
+/// request. La app los usa para asociar evidencias (foto de placa, de cédula) a cada uno.
+/// </summary>
+public record RegistrarEventoResult(int Id, bool EsDuplicado, IReadOnlyList<int> VehiculoIds, IReadOnlyList<int> CiudadanoIds);

@@ -8,6 +8,7 @@ using Domain.Repositories;
 using Domain.ValueObjects;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Operaciones.Eventos;
 
@@ -44,7 +45,8 @@ public record CiudadanoEventoRequest(
     string? Telefono = null,
     int? NacionalidadId = null,
     string? VehiculoClave = null,
-    IReadOnlyList<int>? TipoEventoIds = null);
+    IReadOnlyList<int>? TipoEventoIds = null,
+    int? Edad = null);
 
 /// <summary>
 /// Registra un evento. Es idempotente por <see cref="RequestId"/>: un reenvío (cola offline de la app)
@@ -149,6 +151,13 @@ public class RegistrarEventoCommandValidator : AbstractValidator<RegistrarEvento
             .Must((cmd, c) => TiposDelEvento(cmd, c.TipoEventoIds))
             .WithMessage("Los tipos de una persona deben estar entre los tipos del evento.");
 
+        RuleForEach(x => x.Ciudadanos).ChildRules(c =>
+        {
+            c.RuleFor(x => x.Edad)
+                .InclusiveBetween(0, DatosPersona.EdadMaxima)
+                .WithMessage($"La edad debe estar entre 0 y {DatosPersona.EdadMaxima} años.");
+        });
+
         // ---- Personas: en qué vehículo iban
         RuleForEach(x => x.Ciudadanos)
             .Must((cmd, c) => c.VehiculoClave is null || (cmd.Vehiculos ?? []).Any(v => v.Clave == c.VehiculoClave))
@@ -216,6 +225,7 @@ public class RegistrarEventoCommandValidator : AbstractValidator<RegistrarEvento
 
 // Handler
 public class RegistrarEventoCommandHandler(
+    IReadDbContext db,
     IEventoRepository eventos,
     IUnidadRepository unidades,
     IAgenteRepository agentes,
@@ -229,7 +239,7 @@ public class RegistrarEventoCommandHandler(
         // Reenvío de algo ya registrado: se devuelve el mismo evento
         if (request.RequestId is { } requestId
             && await eventos.GetIdByRequestIdAsync(requestId, cancellationToken) is { } existente)
-            return new RegistrarEventoResult(existente, EsDuplicado: true);
+            return await DuplicadoAsync(existente, cancellationToken);
 
         var ahoraUtc = timeProvider.GetUtcNow().UtcDateTime;
         var esWeb = EventoAcceso.EsWeb(currentUser);
@@ -264,6 +274,8 @@ public class RegistrarEventoCommandHandler(
 
         // Vehículos primero: las personas se asocian a ellos por su clave
         var vehiculoPorClave = new Dictionary<string, EventoVehiculoInfo>(StringComparer.Ordinal);
+        var vehiculosCreados = new List<EventoVehiculoInfo>();
+        var ciudadanosCreados = new List<EventoCiudadanoInfo>();
         foreach (var v in request.Vehiculos ?? [])
         {
             var datos = new DatosVehiculo(v.Placa, v.TipoVehiculoId, v.MarcaId, v.ModeloId, v.ColorId, v.MarcaTexto, v.ModeloTexto, v.ColorTexto);
@@ -272,17 +284,18 @@ public class RegistrarEventoCommandHandler(
                 ? await historico.GetVehiculoAsync(placa, cancellationToken)
                 : null;
             vehiculoPorClave[v.Clave] = evento.AgregarVehiculo(datos, vehiculoHistorico, v.TipoEventoIds);
+            vehiculosCreados.Add(vehiculoPorClave[v.Clave]);
         }
 
         foreach (var c in request.Ciudadanos ?? [])
         {
-            var persona = new DatosPersona(c.Identificacion, c.Nombre, c.Apellido, c.Sexo, c.Telefono, c.NacionalidadId);
+            var persona = new DatosPersona(c.Identificacion, c.Nombre, c.Apellido, c.Sexo, c.Telefono, c.NacionalidadId, c.Edad);
             var ciudadano = persona.Identificacion is { } identificacion
                 ? await historico.GetCiudadanoAsync(identificacion, cancellationToken)
                 : null;
             var vehiculo = c.VehiculoClave is { } clave ? vehiculoPorClave[clave] : null;
 
-            evento.AgregarCiudadano(c.Rol, persona, vehiculo, ciudadano, c.TipoEventoIds);
+            ciudadanosCreados.Add(evento.AgregarCiudadano(c.Rol, persona, vehiculo, ciudadano, c.TipoEventoIds));
         }
 
         // Reportado ya atendido (p. ej. desde la cola offline): se aplican llegada y cierre
@@ -302,9 +315,24 @@ public class RegistrarEventoCommandHandler(
             // Dos envíos simultáneos con la misma clave: el otro ganó la carrera
             var ganador = await eventos.GetIdByRequestIdAsync(rid, cancellationToken);
             if (ganador is null) throw;
-            return new RegistrarEventoResult(ganador.Value, EsDuplicado: true);
+            return await DuplicadoAsync(ganador.Value, cancellationToken);
         }
 
-        return new RegistrarEventoResult(evento.Id, EsDuplicado: false);
+        return new RegistrarEventoResult(
+            evento.Id,
+            EsDuplicado: false,
+            vehiculosCreados.Select(v => v.Id).ToList(),
+            ciudadanosCreados.Select(c => c.Id).ToList());
+    }
+
+    /// <summary>
+    /// Reenvío: el mismo request ya se registró, así que vehículos y personas están en el orden en
+    /// que se insertaron (el de aquel request), que es el orden de sus Ids.
+    /// </summary>
+    private async Task<RegistrarEventoResult> DuplicadoAsync(int eventoId, CancellationToken cancellationToken)
+    {
+        var vehiculoIds = await db.EventoVehiculos.Where(v => v.EventoId == eventoId).OrderBy(v => v.Id).Select(v => v.Id).ToListAsync(cancellationToken);
+        var ciudadanoIds = await db.EventoCiudadanos.Where(c => c.EventoId == eventoId).OrderBy(c => c.Id).Select(c => c.Id).ToListAsync(cancellationToken);
+        return new RegistrarEventoResult(eventoId, EsDuplicado: true, vehiculoIds, ciudadanoIds);
     }
 }
