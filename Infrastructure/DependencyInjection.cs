@@ -7,6 +7,7 @@ using Application.Contracts.Authentication;
 using Domain.Repositories;
 using Infrastructure.Authentication;
 using Infrastructure.Helpers;
+using Infrastructure.HojasCalculo;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +60,9 @@ public static class DependencyInjection
         services.AddScoped<IAgenteRepository, AgenteRepository>();
         services.AddScoped<IEventoRepository, EventoRepository>();
         services.AddScoped<IHistoricoRepository, HistoricoRepository>();
+
+        // Cargas masivas desde Excel y sus plantillas
+        services.AddSingleton<IHojaCalculo, HojaCalculoXlsx>();
 
         // Archivos de las evidencias (fuera de la base de datos)
         services.AddAlmacenamiento(configuration, environment);

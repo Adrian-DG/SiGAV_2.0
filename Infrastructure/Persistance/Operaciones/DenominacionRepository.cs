@@ -29,5 +29,17 @@ public class DenominacionRepository(SiGAVContext context) : IDenominacionReposit
         return candidatas.Any(n => string.Equals(n, nombre, StringComparison.CurrentCultureIgnoreCase));
     }
 
+    /// <summary>Misma comparación que <see cref="ExisteNombreAsync"/> (en .NET, acotada por largo).</summary>
+    public async Task<List<Denominacion>> GetByNombresAsync(IReadOnlyCollection<string> nombres, CancellationToken cancellationToken = default)
+    {
+        var largos = nombres.Select(n => n.Length).Distinct().ToList();
+        var candidatas = await context.Denominaciones
+            .Where(d => largos.Contains(d.Nombre.Length))
+            .ToListAsync(cancellationToken);
+        return candidatas
+            .Where(d => nombres.Any(n => string.Equals(n, d.Nombre, StringComparison.CurrentCultureIgnoreCase)))
+            .ToList();
+    }
+
     public void Add(Denominacion denominacion) => context.Denominaciones.Add(denominacion);
 }
