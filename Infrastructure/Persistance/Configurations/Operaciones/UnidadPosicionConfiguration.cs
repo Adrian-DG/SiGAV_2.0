@@ -35,6 +35,9 @@ internal sealed class UnidadPosicionConfiguration : IEntityTypeConfiguration<Uni
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Calculada a partir de AgenteOcupadoEnDispositivo y ComponenteOcupadoEnDispositivo
+        builder.Ignore(p => p.Ocupacion);
+
         builder.HasIndex(p => p.AgenteId);
         builder.HasIndex(p => p.FechaHoraRecibidaUtc);
     }

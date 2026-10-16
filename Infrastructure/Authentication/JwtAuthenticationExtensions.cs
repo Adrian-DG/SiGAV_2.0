@@ -11,6 +11,9 @@ namespace Infrastructure.Authentication;
 
 public static class JwtAuthenticationExtensions
 {
+    /// <summary>Prefijo de los hubs de SignalR (ver Presentation/Hubs).</summary>
+    public const string RutaHubs = "/hubs";
+
     /// <summary>
     /// Un único esquema JwtBearer valida los dos tipos de token (misma llave y emisor,
     /// audiencias distintas). Las políticas exigen el tipo de sesión y la audiencia que
@@ -50,6 +53,16 @@ public static class JwtAuthenticationExtensions
 
                 bearer.Events = new JwtBearerEvents
                 {
+                    // SignalR (WebSockets/SSE) no puede enviar el header Authorization: el token llega
+                    // en access_token, y solo se acepta así en las rutas de los hubs
+                    OnMessageReceived = context =>
+                    {
+                        var token = context.Request.Query["access_token"];
+                        if (!string.IsNullOrEmpty(token) && context.HttpContext.Request.Path.StartsWithSegments(RutaHubs))
+                            context.Token = token;
+                        return Task.CompletedTask;
+                    },
+
                     // Sesión móvil de un agente desautorizado o desactivado: deja de valer al momento
                     OnTokenValidated = SesionMovilValidator.ValidarAsync,
 

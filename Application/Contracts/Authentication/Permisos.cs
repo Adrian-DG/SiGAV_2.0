@@ -8,6 +8,8 @@ namespace Application.Contracts.Authentication;
 public static class Permisos
 {
     public const string EventosVer = "eventos.ver";
+    public const string EventosAsignar = "eventos.asignar";
+    public const string UnidadesNotificar = "unidades.notificar";
     public const string AgentesVer = "agentes.ver";
     public const string UnidadesVer = "unidades.ver";
     public const string UsuariosGestionar = "usuarios.gestionar";
@@ -16,6 +18,8 @@ public static class Permisos
     public static readonly IReadOnlyList<PermisoInfo> Todos =
     [
         new(EventosVer, "Eventos", "Consultar asistencias y accidentes reportados por las unidades."),
+        new(EventosAsignar, "Asignación de eventos", "Crear eventos desde el call center y asignarlos a unidades disponibles."),
+        new(UnidadesNotificar, "Notificaciones", "Enviar mensajes a las unidades en campo, a todas las conectadas o a las elegidas."),
         new(AgentesVer, "Agentes", "Consultar el personal operativo y su autorización."),
         new(UnidadesVer, "Unidades y denominaciones", "Consultar unidades, denominaciones y tramos."),
         new(UsuariosGestionar, "Usuarios y permisos", "Asignar permisos a los usuarios del front desk."),

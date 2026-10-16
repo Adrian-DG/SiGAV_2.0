@@ -10,7 +10,9 @@ namespace Application.Features.Operaciones.Posiciones;
 
 /// <summary>
 /// Posición actual de la unidad, enviada por la app móvil cada ~30 s mientras hay sesión.
-/// La unidad y el agente salen del token, nunca del cuerpo.
+/// La unidad y el agente salen del token, nunca del cuerpo. <see cref="AgentesOcupados"/>: agentes de la
+/// sesión (el agente o su componente) que atienden un evento que la app aún tiene en el dispositivo;
+/// null en versiones de la app que no lo envían.
 /// </summary>
 public record ReportarPosicionCommand(
     decimal Latitud,
@@ -18,7 +20,8 @@ public record ReportarPosicionCommand(
     double? PrecisionMetros,
     double? Rumbo,
     double? VelocidadKmh,
-    DateTime FechaHoraGpsUtc) : IRequest<Unit>;
+    DateTime FechaHoraGpsUtc,
+    IReadOnlyList<int>? AgentesOcupados = null) : IRequest<Unit>;
 
 // Validator
 public class ReportarPosicionCommandValidator : AbstractValidator<ReportarPosicionCommand>
@@ -36,6 +39,8 @@ public class ReportarPosicionCommandValidator : AbstractValidator<ReportarPosici
         RuleFor(x => x.VelocidadKmh).InclusiveBetween(0, 400).When(x => x.VelocidadKmh is not null)
             .WithMessage("La velocidad no es válida.");
         RuleFor(x => x.FechaHoraGpsUtc).NotEmpty().WithMessage("La fecha de la lectura es requerida.");
+        RuleFor(x => x.AgentesOcupados).Must(a => a is null || a.Count <= 2)
+            .WithMessage("Una unidad tiene a lo sumo dos agentes.");
     }
 }
 
@@ -67,10 +72,16 @@ public class ReportarPosicionCommandHandler(
             request.VelocidadKmh,
             DateTime.SpecifyKind(request.FechaHoraGpsUtc.ToUniversalTime(), DateTimeKind.Utc));
 
+        // Otros ids (p. ej. de un componente de una sesión anterior) se ignoran
+        var componenteId = currentUser.ComponenteId;
+        OcupacionAgentes? ocupacion = request.AgentesOcupados is { } ocupados
+            ? new OcupacionAgentes(ocupados.Contains(agenteId), componenteId is { } c && ocupados.Contains(c))
+            : null;
+
         var posicion = await posiciones.GetByUnidadIdAsync(unidadId, cancellationToken);
         if (posicion is null)
         {
-            posiciones.Add(UnidadPosicion.Crear(unidadId, agenteId, currentUser.ComponenteId, lectura, ahoraUtc));
+            posiciones.Add(UnidadPosicion.Crear(unidadId, agenteId, componenteId, lectura, ocupacion, ahoraUtc));
         }
         else
         {
@@ -81,7 +92,7 @@ public class ReportarPosicionCommandHandler(
             // Una sola sesión por unidad: el agente que la tomó primero la conserva mientras siga enviando
             if (posicion.OcupadaPorOtroAgente(agenteId, ahoraUtc))
                 throw new ConflictException($"La unidad {unidad.Ficha} está siendo operada por otro agente.");
-            if (!posicion.Registrar(agenteId, currentUser.ComponenteId, lectura, ahoraUtc)) return Unit.Value;
+            if (!posicion.Registrar(agenteId, componenteId, lectura, ocupacion, ahoraUtc)) return Unit.Value;
         }
 
         try

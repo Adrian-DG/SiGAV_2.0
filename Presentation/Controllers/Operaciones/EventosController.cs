@@ -30,6 +30,12 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
     public async Task<IActionResult> Filtros(CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new GetFiltrosEventosQuery(), cancellationToken));
 
+    /// <summary>App: eventos pendientes o en curso de la unidad de la sesión (los asigna el call center).</summary>
+    [Authorize(Policy = SesionPolicies.Movil)]
+    [HttpGet("asignados")]
+    public async Task<IActionResult> Asignados(CancellationToken cancellationToken)
+        => Ok(await Mediator.Send(new GetEventosAsignadosQuery(), cancellationToken));
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get([FromRoute] int id, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new GetEventoQuery(id), cancellationToken));

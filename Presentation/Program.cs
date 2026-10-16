@@ -1,7 +1,9 @@
 using Application;
+using Application.Contracts.Notificaciones;
 using Microsoft.AspNetCore.HttpOverrides;
 using Infrastructure;
 using Infrastructure.Persistance.Seeding;
+using Presentation.Hubs;
 using Presentation.Middleware;
 using Presentation.OpenApi;
 using Scalar.AspNetCore;
@@ -31,6 +33,13 @@ builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddControllers();
+
+// Notificaciones en tiempo real a las unidades (SignalR). El registro de conexiones es en memoria:
+// con varias instancias de la API haría falta un backplane.
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<ConexionesUnidades>();
+builder.Services.AddSingleton<IConexionesUnidades>(sp => sp.GetRequiredService<ConexionesUnidades>());
+builder.Services.AddSingleton<INotificadorUnidades, NotificadorUnidades>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
 // https://localhost:{7148/5282}/openapi/v1.json
@@ -97,5 +106,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificacionesHub>(NotificacionesHub.Ruta);
 
 await app.RunAsync();

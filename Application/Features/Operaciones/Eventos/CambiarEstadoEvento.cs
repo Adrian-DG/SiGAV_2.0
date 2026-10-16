@@ -1,6 +1,8 @@
 using Application.Common;
 using Application.Contracts;
+using Application.Contracts.Notificaciones;
 using Application.Exceptions;
+using Domain.Enums;
 using Domain.Repositories;
 using FluentValidation;
 using MediatR;
@@ -69,7 +71,9 @@ public record AnularEventoCommand(int EventoId) : IRequest;
 public class AnularEventoCommandHandler(
     IEventoRepository eventos,
     ICurrentUserService currentUser,
-    IUnitOfWork uow) : IRequestHandler<AnularEventoCommand, Unit>
+    INotificadorUnidades notificador,
+    IUnitOfWork uow,
+    TimeProvider timeProvider) : IRequestHandler<AnularEventoCommand, Unit>
 {
     public async Task<Unit> Handle(AnularEventoCommand request, CancellationToken cancellationToken)
     {
@@ -79,9 +83,32 @@ public class AnularEventoCommandHandler(
         var evento = await eventos.GetByIdAsync(request.EventoId, cancellationToken)
             ?? throw new NotFoundException("El evento", request.EventoId);
 
+        // Solo los que la unidad aún tiene abiertos en la app (los asignados sin completar)
+        var avisar = evento.IsActive && evento.Estado != EstadoEventoEnum.Completado;
         evento.Anular();
 
         await uow.SaveChangesAsync(cancellationToken);
+
+        if (avisar)
+        {
+            try
+            {
+                await notificador.NotificarUnidadesAsync(
+                    evento.Unidades.Select(u => u.UnidadId).ToList(),
+                    new NotificacionUnidad(
+                        TiposNotificacion.EventoAnulado,
+                        $"Evento No. {evento.Id} anulado",
+                        "El centro de operaciones anuló el evento: ya no debe atenderlo.",
+                        timeProvider.GetUtcNow().UtcDateTime,
+                        evento.Id),
+                    cancellationToken);
+            }
+            catch (Exception) when (!cancellationToken.IsCancellationRequested)
+            {
+                // La anulación ya quedó guardada; la app deja de verlo al refrescar sus eventos asignados
+            }
+        }
+
         return Unit.Value;
     }
 }

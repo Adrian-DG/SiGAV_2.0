@@ -31,6 +31,15 @@ public class UnidadPosicion
     public int? ComponenteId { get; private set; }
     public virtual Agente? Componente { get; private set; }
 
+    /// <summary>
+    /// El agente de la sesión atiende un evento que la app aún tiene en el dispositivo (en curso, sin
+    /// enviar): el servidor no lo conoce hasta que se cierra y se envía, así que lo reporta la app.
+    /// </summary>
+    public bool AgenteOcupadoEnDispositivo { get; private set; }
+
+    /// <summary>Igual que <see cref="AgenteOcupadoEnDispositivo"/>, para el componente.</summary>
+    public bool ComponenteOcupadoEnDispositivo { get; private set; }
+
     public Coordenada Ubicacion { get; private set; } = null!;
 
     /// <summary>Radio de incertidumbre reportado por el GPS, en metros.</summary>
@@ -59,30 +68,36 @@ public class UnidadPosicion
     // Requerido por EF Core
     private UnidadPosicion() { }
 
-    public static UnidadPosicion Crear(int unidadId, int agenteId, int? componenteId, LecturaGps lectura, DateTime ahoraUtc)
+    /// <summary><paramref name="ocupacion"/>: la que reportó la app; null (una versión que no la envía) = libres.</summary>
+    public static UnidadPosicion Crear(int unidadId, int agenteId, int? componenteId, LecturaGps lectura, OcupacionAgentes? ocupacion, DateTime ahoraUtc)
     {
         var posicion = new UnidadPosicion { UnidadId = unidadId };
-        posicion.Aplicar(agenteId, componenteId, lectura, ahoraUtc);
+        posicion.Aplicar(agenteId, componenteId, lectura, ocupacion ?? OcupacionAgentes.Libres, ahoraUtc);
         return posicion;
     }
 
     /// <summary>
-    /// Registra una lectura nueva. Devuelve false (sin cambios) si es más antigua que la guardada
-    /// (llegó tarde o desordenada) o si llega antes de <see cref="IntervaloMinimo"/> del mismo agente.
+    /// Registra una lectura nueva. Si es más antigua que la guardada (llegó tarde o desordenada) o
+    /// llega antes de <see cref="IntervaloMinimo"/> del mismo agente, solo se toma la ocupación (es el
+    /// estado actual de la app, sin importar la lectura). Devuelve false si no cambió nada.
+    /// <paramref name="ocupacion"/> null (una versión de la app que no la envía): se conserva la de la
+    /// misma tripulación; con otra tripulación, libres.
     /// </summary>
-    public bool Registrar(int agenteId, int? componenteId, LecturaGps lectura, DateTime ahoraUtc)
+    public bool Registrar(int agenteId, int? componenteId, LecturaGps lectura, OcupacionAgentes? ocupacion, DateTime ahoraUtc)
     {
         Validar(lectura, ahoraUtc);
         if (OcupadaPorOtroAgente(agenteId, ahoraUtc))
             throw new DomainException("La unidad está siendo operada por otro agente.");
 
         var mismoAgente = AgenteId == agenteId && ComponenteId == componenteId && SesionActiva;
-        if (mismoAgente && lectura.FechaHoraUtc <= FechaHoraGpsUtc) return false;
-        if (mismoAgente && ahoraUtc - FechaHoraRecibidaUtc < IntervaloMinimo) return false;
+        if (mismoAgente && (lectura.FechaHoraUtc <= FechaHoraGpsUtc || ahoraUtc - FechaHoraRecibidaUtc < IntervaloMinimo))
+            return ocupacion is { } nueva && CambiarOcupacion(nueva);
 
-        Aplicar(agenteId, componenteId, lectura, ahoraUtc);
+        Aplicar(agenteId, componenteId, lectura, ocupacion ?? (mismoAgente ? Ocupacion : OcupacionAgentes.Libres), ahoraUtc);
         return true;
     }
+
+    public OcupacionAgentes Ocupacion => new(AgenteOcupadoEnDispositivo, ComponenteOcupadoEnDispositivo);
 
     public void CerrarSesion(DateTime ahoraUtc)
     {
@@ -121,7 +136,18 @@ public class UnidadPosicion
         if (lectura.FechaHoraUtc > ahoraUtc + ToleranciaReloj) throw new DomainException("La fecha de la lectura GPS no puede estar en el futuro.");
     }
 
-    private void Aplicar(int agenteId, int? componenteId, LecturaGps lectura, DateTime ahoraUtc)
+    private bool CambiarOcupacion(OcupacionAgentes ocupacion)
+    {
+        // Sin componente no hay a quién marcar
+        var nueva = ocupacion with { Componente = ComponenteId is not null && ocupacion.Componente };
+        if (nueva == Ocupacion) return false;
+
+        AgenteOcupadoEnDispositivo = nueva.Agente;
+        ComponenteOcupadoEnDispositivo = nueva.Componente;
+        return true;
+    }
+
+    private void Aplicar(int agenteId, int? componenteId, LecturaGps lectura, OcupacionAgentes ocupacion, DateTime ahoraUtc)
     {
         Validar(lectura, ahoraUtc);
         AgenteId = agenteId;
@@ -134,7 +160,17 @@ public class UnidadPosicion
         FechaHoraGpsUtc = lectura.FechaHoraUtc;
         FechaHoraRecibidaUtc = ahoraUtc;
         SesionActiva = true;
+        CambiarOcupacion(ocupacion);
     }
+}
+
+/// <summary>
+/// Qué agentes de la unidad atienden un evento que la app tiene en el dispositivo (en curso, aún sin
+/// enviar). <see cref="Componente"/> solo aplica si la sesión tiene componente.
+/// </summary>
+public readonly record struct OcupacionAgentes(bool Agente, bool Componente)
+{
+    public static readonly OcupacionAgentes Libres = new(false, false);
 }
 
 /// <summary>Una lectura del GPS del dispositivo.</summary>
