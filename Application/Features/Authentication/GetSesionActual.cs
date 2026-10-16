@@ -14,7 +14,9 @@ public record SesionViewModel(
     IReadOnlyCollection<string> Permisos,
     int? AgenteId,
     int? UnidadId,
-    string? Ficha);
+    string? Ficha,
+    int? ComponenteId,
+    string? ComponenteNombre);
 
 // Handler
 public class GetSesionActualQueryHandler(ICurrentUserService currentUser) : IRequestHandler<GetSesionActualQuery, SesionViewModel>
@@ -31,6 +33,8 @@ public class GetSesionActualQueryHandler(ICurrentUserService currentUser) : IReq
             currentUser.Permisos,
             currentUser.AgenteId,
             currentUser.UnidadId,
-            currentUser.Ficha));
+            currentUser.Ficha,
+            currentUser.ComponenteId,
+            currentUser.ComponenteNombre));
     }
 }

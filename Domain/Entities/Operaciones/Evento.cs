@@ -217,6 +217,22 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
         participacion.CambiarRol(RolUnidadEventoEnum.Apoyo);
     }
 
+    /// <summary>
+    /// Cambia el agente que atiende el evento por parte de la unidad (p. ej. el componente se queda
+    /// en el lugar mientras el otro agente va a otro evento). Un evento completado ya no cambia.
+    /// </summary>
+    public void CambiarAgenteUnidad(int unidadId, int agenteId)
+    {
+        AsegurarActivo();
+        if (Estado == EstadoEventoEnum.Completado)
+            throw new DomainException("No se puede cambiar el agente de un evento completado.");
+
+        var participacion = _unidades.FirstOrDefault(u => u.UnidadId == unidadId)
+            ?? throw new DomainException("La unidad no participa en este evento.");
+
+        participacion.CambiarAgente(agenteId);
+    }
+
     // ---------------------------------------------------------------- Vehículos y personas
 
     /// <summary>

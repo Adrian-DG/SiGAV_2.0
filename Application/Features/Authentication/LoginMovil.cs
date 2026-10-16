@@ -6,8 +6,9 @@ using MediatR;
 
 namespace Application.Features.Authentication;
 
-// Command: inicio de sesión de un agente con la unidad que va a operar (app móvil)
-public record LoginMovilCommand(string Cedula, string Ficha) : IRequest<AuthenticatedResponse>;
+// Command: inicio de sesión de un agente con la unidad que va a operar (app móvil).
+// CedulaComponente (opcional): segundo agente que opera la unidad con él.
+public record LoginMovilCommand(string Cedula, string Ficha, string? CedulaComponente = null) : IRequest<AuthenticatedResponse>;
 
 // Validator
 public class LoginMovilCommandValidator : AbstractValidator<LoginMovilCommand>
@@ -18,6 +19,12 @@ public class LoginMovilCommandValidator : AbstractValidator<LoginMovilCommand>
             .NotEmpty().WithMessage("La cédula es requerida.")
             .Must(c => (c ?? string.Empty).Count(char.IsLetterOrDigit) == 11).WithMessage("La cédula debe tener 11 caracteres (sin guiones).");
         RuleFor(x => x.Ficha).NotEmpty().WithMessage("La ficha es requerida.");
+
+        RuleFor(x => x.CedulaComponente)
+            .Must(c => c!.Count(char.IsLetterOrDigit) == 11).WithMessage("La cédula del componente debe tener 11 caracteres (sin guiones).")
+            .Must((cmd, c) => LoginMovilCommandHandler.Normalizar(c!) != LoginMovilCommandHandler.Normalizar(cmd.Cedula ?? string.Empty))
+            .WithMessage("El componente debe ser un agente distinto al que inicia sesión.")
+            .When(x => !string.IsNullOrWhiteSpace(x.CedulaComponente));
     }
 }
 
@@ -31,7 +38,7 @@ public class LoginMovilCommandHandler(
 {
     public async Task<AuthenticatedResponse> Handle(LoginMovilCommand request, CancellationToken cancellationToken)
     {
-        var cedula = new string(request.Cedula.Where(char.IsLetterOrDigit).ToArray());
+        var cedula = Normalizar(request.Cedula);
         var agente = await agentes.GetActivoByIdentificacionAsync(cedula, cancellationToken);
         var unidad = await unidades.GetByFichaAsync(request.Ficha.Trim(), cancellationToken);
 
@@ -40,6 +47,22 @@ public class LoginMovilCommandHandler(
         // activo y autorizado por front desk.
         if (agente is null || !agente.PuedeIniciarSesion || unidad is null || !unidad.IsActive || !unidad.EstaDisponible || unidad.DenominacionId is null)
             throw new UnauthorizedException("La cédula o la ficha no son válidas, o la unidad no está disponible.");
+
+        // El componente cumple las mismas reglas que el agente: activo y autorizado por front desk
+        ComponenteIdentity? componente = null;
+        if (!string.IsNullOrWhiteSpace(request.CedulaComponente))
+        {
+            var agenteComponente = await agentes.GetActivoByIdentificacionAsync(Normalizar(request.CedulaComponente), cancellationToken);
+            if (agenteComponente is null || !agenteComponente.PuedeIniciarSesion)
+                throw new UnauthorizedException("La cédula del componente no es válida o el agente no está autorizado.");
+
+            componente = new ComponenteIdentity(
+                agenteComponente.Id,
+                agenteComponente.Identificacion,
+                agenteComponente.SiglasInstitucion,
+                agenteComponente.GetRango ?? string.Empty,
+                agenteComponente.NombreCompleto);
+        }
 
         // Una sola sesión por unidad: si otro agente la está operando (sigue enviando su posición)
         // no se permite entrar hasta que cierre sesión, front desk la libere o pase a desconectada.
@@ -54,6 +77,9 @@ public class LoginMovilCommandHandler(
             agente.GetRango ?? string.Empty,
             agente.NombreCompleto,
             unidad.Id,
-            unidad.Ficha));
+            unidad.Ficha,
+            componente));
     }
+
+    internal static string Normalizar(string cedula) => new(cedula.Where(char.IsLetterOrDigit).ToArray());
 }

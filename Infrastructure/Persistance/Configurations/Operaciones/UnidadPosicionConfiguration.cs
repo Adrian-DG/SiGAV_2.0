@@ -29,6 +29,12 @@ internal sealed class UnidadPosicionConfiguration : IEntityTypeConfiguration<Uni
             .HasForeignKey(p => p.AgenteId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(p => p.Componente)
+            .WithMany()
+            .HasForeignKey(p => p.ComponenteId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(p => p.AgenteId);
         builder.HasIndex(p => p.FechaHoraRecibidaUtc);
     }

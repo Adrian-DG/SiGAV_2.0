@@ -46,6 +46,15 @@ public class JwtBearerHelper(IOptions<JwtOptions> options, TimeProvider timeProv
             new(SesionClaims.Ficha, identity.Ficha),
         };
 
+        if (identity.Componente is { } componente)
+        {
+            claims.Add(new(SesionClaims.ComponenteId, componente.AgenteId.ToString(CultureInfo.InvariantCulture)));
+            claims.Add(new(SesionClaims.ComponenteIdentificacion, componente.Identificacion));
+            claims.Add(new(SesionClaims.ComponenteNombre, componente.NombreCompleto));
+            claims.Add(new(SesionClaims.ComponenteRango, componente.Rango));
+            claims.Add(new(SesionClaims.ComponenteInstitucion, componente.Institucion));
+        }
+
         return BuildToken(claims, _options.Movil);
     }
 

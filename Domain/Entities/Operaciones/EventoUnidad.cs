@@ -53,4 +53,13 @@ public class EventoUnidadInfo
     }
 
     internal void CambiarRol(RolUnidadEventoEnum rol) => Rol = rol;
+
+    internal void CambiarAgente(int agenteId)
+    {
+        if (agenteId <= 0) throw new DomainException("El agente de la unidad es requerido.");
+
+        // Si cambia el agente, la navegación cargada deja de corresponder
+        if (Agente?.Id != agenteId) Agente = null;
+        AgenteId = agenteId;
+    }
 }

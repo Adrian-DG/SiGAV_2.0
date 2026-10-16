@@ -27,6 +27,10 @@ public class UnidadPosicion
     public int AgenteId { get; private set; }
     public virtual Agente Agente { get; private set; } = null!;
 
+    /// <summary>Segundo agente (componente) de la sesión que envió la última posición, si lo hay.</summary>
+    public int? ComponenteId { get; private set; }
+    public virtual Agente? Componente { get; private set; }
+
     public Coordenada Ubicacion { get; private set; } = null!;
 
     /// <summary>Radio de incertidumbre reportado por el GPS, en metros.</summary>
@@ -55,10 +59,10 @@ public class UnidadPosicion
     // Requerido por EF Core
     private UnidadPosicion() { }
 
-    public static UnidadPosicion Crear(int unidadId, int agenteId, LecturaGps lectura, DateTime ahoraUtc)
+    public static UnidadPosicion Crear(int unidadId, int agenteId, int? componenteId, LecturaGps lectura, DateTime ahoraUtc)
     {
         var posicion = new UnidadPosicion { UnidadId = unidadId };
-        posicion.Aplicar(agenteId, lectura, ahoraUtc);
+        posicion.Aplicar(agenteId, componenteId, lectura, ahoraUtc);
         return posicion;
     }
 
@@ -66,17 +70,17 @@ public class UnidadPosicion
     /// Registra una lectura nueva. Devuelve false (sin cambios) si es más antigua que la guardada
     /// (llegó tarde o desordenada) o si llega antes de <see cref="IntervaloMinimo"/> del mismo agente.
     /// </summary>
-    public bool Registrar(int agenteId, LecturaGps lectura, DateTime ahoraUtc)
+    public bool Registrar(int agenteId, int? componenteId, LecturaGps lectura, DateTime ahoraUtc)
     {
         Validar(lectura, ahoraUtc);
         if (OcupadaPorOtroAgente(agenteId, ahoraUtc))
             throw new DomainException("La unidad está siendo operada por otro agente.");
 
-        var mismoAgente = AgenteId == agenteId && SesionActiva;
+        var mismoAgente = AgenteId == agenteId && ComponenteId == componenteId && SesionActiva;
         if (mismoAgente && lectura.FechaHoraUtc <= FechaHoraGpsUtc) return false;
         if (mismoAgente && ahoraUtc - FechaHoraRecibidaUtc < IntervaloMinimo) return false;
 
-        Aplicar(agenteId, lectura, ahoraUtc);
+        Aplicar(agenteId, componenteId, lectura, ahoraUtc);
         return true;
     }
 
@@ -117,10 +121,12 @@ public class UnidadPosicion
         if (lectura.FechaHoraUtc > ahoraUtc + ToleranciaReloj) throw new DomainException("La fecha de la lectura GPS no puede estar en el futuro.");
     }
 
-    private void Aplicar(int agenteId, LecturaGps lectura, DateTime ahoraUtc)
+    private void Aplicar(int agenteId, int? componenteId, LecturaGps lectura, DateTime ahoraUtc)
     {
         Validar(lectura, ahoraUtc);
         AgenteId = agenteId;
+        if (Componente?.Id != componenteId) Componente = null;
+        ComponenteId = componenteId;
         Ubicacion = lectura.Ubicacion;
         PrecisionMetros = lectura.PrecisionMetros;
         Rumbo = lectura.Rumbo;

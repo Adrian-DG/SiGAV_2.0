@@ -3,6 +3,7 @@ using Application.Contracts.Authentication;
 using Application.Exceptions;
 using Domain.Entities.Operaciones;
 using Domain.Enums;
+using Domain.Repositories;
 
 namespace Application.Features.Operaciones.Eventos;
 
@@ -30,6 +31,32 @@ internal static class EventoAcceso
     {
         if (UnidadDeAlcance(currentUser) is { } unidadId && !evento.Unidades.Any(u => u.UnidadId == unidadId))
             throw new NotFoundException("El evento", evento.Id);
+    }
+
+    /// <summary>
+    /// Agente de la sesión móvil que atiende el evento: el indicado, si es el agente de la sesión o
+    /// su componente; sin indicar, el agente de la sesión. Que el componente siga activo y
+    /// autorizado lo comprueba <see cref="AsegurarAgenteVigenteAsync"/>.
+    /// </summary>
+    public static int AgenteDeLaSesion(ICurrentUserService currentUser, int? solicitado)
+    {
+        var agenteId = currentUser.AgenteId ?? throw new ForbiddenException("La sesión no tiene un agente asociado.");
+        if (solicitado is null || solicitado == agenteId) return agenteId;
+        if (solicitado == currentUser.ComponenteId) return solicitado.Value;
+
+        throw new ForbiddenException("El agente indicado no opera la unidad de la sesión.");
+    }
+
+    /// <summary>
+    /// El token no se invalida si front desk desactiva o desautoriza al componente (solo se revisa
+    /// al agente de la sesión en cada petición): se comprueba aquí antes de asignarle un evento.
+    /// </summary>
+    public static async Task AsegurarAgenteVigenteAsync(IAgenteRepository agentes, ICurrentUserService currentUser, int agenteId, CancellationToken cancellationToken)
+    {
+        if (agenteId == currentUser.AgenteId) return;
+
+        if (await agentes.GetByIdAsync(agenteId, cancellationToken) is not { PuedeIniciarSesion: true })
+            throw new ForbiddenException("El componente ya no está autorizado para operar. Comuníquese con front desk.");
     }
 
     public static void AsegurarPuedeOperar(Evento evento, ICurrentUserService currentUser)

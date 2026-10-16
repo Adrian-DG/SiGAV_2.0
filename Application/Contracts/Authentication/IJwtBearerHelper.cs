@@ -31,4 +31,16 @@ public record MovilUserIdentity(
     string Rango,
     string NombreCompleto,
     int UnidadId,
-    string Ficha);
+    string Ficha,
+    ComponenteIdentity? Componente = null);
+
+/// <summary>
+/// Segundo agente que opera la unidad junto al que inició sesión. Permite que uno se quede en un
+/// evento mientras el otro va a otro: cada evento indica cuál de los dos lo atiende.
+/// </summary>
+public record ComponenteIdentity(
+    int AgenteId,
+    string Identificacion,
+    string Institucion,
+    string Rango,
+    string NombreCompleto);

@@ -70,7 +70,7 @@ public class ReportarPosicionCommandHandler(
         var posicion = await posiciones.GetByUnidadIdAsync(unidadId, cancellationToken);
         if (posicion is null)
         {
-            posiciones.Add(UnidadPosicion.Crear(unidadId, agenteId, lectura, ahoraUtc));
+            posiciones.Add(UnidadPosicion.Crear(unidadId, agenteId, currentUser.ComponenteId, lectura, ahoraUtc));
         }
         else
         {
@@ -81,7 +81,7 @@ public class ReportarPosicionCommandHandler(
             // Una sola sesión por unidad: el agente que la tomó primero la conserva mientras siga enviando
             if (posicion.OcupadaPorOtroAgente(agenteId, ahoraUtc))
                 throw new ConflictException($"La unidad {unidad.Ficha} está siendo operada por otro agente.");
-            if (!posicion.Registrar(agenteId, lectura, ahoraUtc)) return Unit.Value;
+            if (!posicion.Registrar(agenteId, currentUser.ComponenteId, lectura, ahoraUtc)) return Unit.Value;
         }
 
         try

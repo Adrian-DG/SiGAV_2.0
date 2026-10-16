@@ -85,3 +85,50 @@ public class AnularEventoCommandHandler(
         return Unit.Value;
     }
 }
+
+// Command: cambia el agente que atiende el evento por parte de una unidad (p. ej. el componente se
+// queda en el lugar mientras el otro agente va a otro evento). Desde la app la unidad es la de la
+// sesión y el agente debe ser el de la sesión o su componente; front desk indica la unidad.
+public record CambiarAgenteEventoCommand(int EventoId, int AgenteId, int? UnidadId = null) : IRequest;
+
+public class CambiarAgenteEventoCommandValidator : AbstractValidator<CambiarAgenteEventoCommand>
+{
+    public CambiarAgenteEventoCommandValidator()
+    {
+        RuleFor(x => x.AgenteId).GreaterThan(0).WithMessage("Indique el agente que atiende el evento.");
+        RuleFor(x => x.UnidadId).GreaterThan(0).When(x => x.UnidadId.HasValue).WithMessage("La unidad no es válida.");
+    }
+}
+
+public class CambiarAgenteEventoCommandHandler(
+    IEventoRepository eventos,
+    IAgenteRepository agentes,
+    ICurrentUserService currentUser,
+    IUnitOfWork uow) : IRequestHandler<CambiarAgenteEventoCommand, Unit>
+{
+    public async Task<Unit> Handle(CambiarAgenteEventoCommand request, CancellationToken cancellationToken)
+    {
+        var evento = await eventos.GetByIdAsync(request.EventoId, cancellationToken)
+            ?? throw new NotFoundException("El evento", request.EventoId);
+        EventoAcceso.AsegurarParticipa(evento, currentUser);
+
+        int unidadId;
+        if (EventoAcceso.EsWeb(currentUser))
+        {
+            unidadId = request.UnidadId ?? evento.UnidadPrincipal.UnidadId;
+            if (await agentes.GetByIdAsync(request.AgenteId, cancellationToken) is not { IsActive: true })
+                throw new NotFoundException("El agente", request.AgenteId);
+        }
+        else
+        {
+            unidadId = EventoAcceso.UnidadDeAlcance(currentUser)!.Value;
+            var agenteId = EventoAcceso.AgenteDeLaSesion(currentUser, request.AgenteId);
+            await EventoAcceso.AsegurarAgenteVigenteAsync(agentes, currentUser, agenteId, cancellationToken);
+        }
+
+        evento.CambiarAgenteUnidad(unidadId, request.AgenteId);
+
+        await uow.SaveChangesAsync(cancellationToken);
+        return Unit.Value;
+    }
+}

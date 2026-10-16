@@ -62,6 +62,17 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
         return NoContent();
     }
 
+    /// <summary>
+    /// Cambia el agente que atiende el evento por parte de una unidad. App: su unidad, y el agente debe
+    /// ser el de la sesión o su componente. Front desk: unidadId (sin indicar, la principal).
+    /// </summary>
+    [HttpPatch("{id:int}/agente")]
+    public async Task<IActionResult> CambiarAgente([FromRoute] int id, [FromBody] CambiarAgenteRequest request, CancellationToken cancellationToken)
+    {
+        await Mediator.Send(new CambiarAgenteEventoCommand(id, request.AgenteId, request.UnidadId), cancellationToken);
+        return NoContent();
+    }
+
     [Authorize(Policy = SesionPolicies.Web)]
     [HttpPatch("{id:int}/anular")]
     public async Task<IActionResult> Anular([FromRoute] int id, CancellationToken cancellationToken)
@@ -117,4 +128,6 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
     public record IniciarRequest(DateTime? FechaHoraLlegadaUtc);
 
     public record CompletarRequest(int TipoCierreId, DateTime? FechaHoraCompletadoUtc);
+
+    public record CambiarAgenteRequest(int AgenteId, int? UnidadId);
 }

@@ -26,6 +26,13 @@ public static class SesionClaims
     // Sesión móvil (unidad en campo)
     public const string UnidadId = "unidadId";
     public const string Ficha = "ficha";
+
+    // Componente: segundo agente que opera la unidad (opcional)
+    public const string ComponenteId = "componenteId";
+    public const string ComponenteIdentificacion = "componenteCedula";
+    public const string ComponenteNombre = "componenteNombre";
+    public const string ComponenteRango = "componenteRango";
+    public const string ComponenteInstitucion = "componenteInstitucion";
 }
 
 public static class TiposSesion

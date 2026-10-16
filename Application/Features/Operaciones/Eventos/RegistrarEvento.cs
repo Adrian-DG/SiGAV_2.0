@@ -43,8 +43,8 @@ public record CiudadanoEventoRequest(
 /// <summary>
 /// Registra un evento. Es idempotente por <see cref="RequestId"/>: un reenvío (cola offline de la app)
 /// devuelve el evento ya registrado con EsDuplicado = true, sin crear otro.
-/// Desde la app, la unidad y el agente salen de la sesión (UnidadId/AgenteId del cuerpo se ignoran),
-/// el tramo por defecto es el de la denominación de la unidad
+/// Desde la app, la unidad sale de la sesión (UnidadId del cuerpo se ignora) y AgenteId solo puede ser
+/// el agente de la sesión o su componente (sin indicar, el de la sesión); el tramo por defecto es el de la denominación de la unidad
 /// y el canal es siempre AgenteCampo. Puede enviarse ya atendido o completado (llegada y cierre).
 /// </summary>
 public record RegistrarEventoCommand(
@@ -219,13 +219,15 @@ public class RegistrarEventoCommandHandler(
         var (unidadId, agenteId, canal) = esWeb
             ? (request.UnidadId!.Value, request.AgenteId!.Value, request.CanalReporte ?? CanalReporteEnum.CallCenter)
             : (currentUser.UnidadId ?? throw new ForbiddenException("La sesión no tiene una unidad asociada."),
-               currentUser.AgenteId ?? throw new ForbiddenException("La sesión no tiene un agente asociado."),
+               EventoAcceso.AgenteDeLaSesion(currentUser, request.AgenteId),
                CanalReporteEnum.AgenteCampo);
 
         var unidad = await unidades.GetConDenominacionAsync(unidadId, cancellationToken)
             ?? throw new NotFoundException("La unidad", unidadId);
         if (esWeb && await agentes.GetByIdAsync(agenteId, cancellationToken) is not { IsActive: true })
             throw new NotFoundException("El agente", agenteId);
+        if (!esWeb)
+            await EventoAcceso.AsegurarAgenteVigenteAsync(agentes, currentUser, agenteId, cancellationToken);
 
         // Evento de campo: si la app no indica el tramo, es el de la denominación actual de la unidad
         var tramoId = request.TramoId ?? (esWeb ? null : unidad.Denominacion?.TramoId);

@@ -21,6 +21,11 @@ public interface ICurrentUserService
 
     string? Ficha { get; }
 
+    /// <summary>Segundo agente de la unidad (componente), o null si el agente opera solo.</summary>
+    int? ComponenteId { get; }
+
+    string? ComponenteNombre { get; }
+
     /// <summary>Cuándo se emitió el token (claim iat, precisión de segundos), o null si es anónima.</summary>
     DateTime? SesionEmitidaUtc { get; }
     string? Nombre { get; }
