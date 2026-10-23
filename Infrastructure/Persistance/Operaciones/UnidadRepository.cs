@@ -23,5 +23,16 @@ public class UnidadRepository(SiGAVContext context) : IUnidadRepository
     public Task<List<Unidad>> GetActivasConDenominacionAsync(int denominacionId, CancellationToken cancellationToken = default)
         => context.Unidades.Where(u => u.DenominacionId == denominacionId && u.IsActive).ToListAsync(cancellationToken);
 
+    public Task<List<Unidad>> GetByFichasAsync(IReadOnlyCollection<string> fichas, CancellationToken cancellationToken = default)
+    {
+        var mayusculas = fichas.Select(f => f.ToUpperInvariant()).Distinct().ToList();
+        return context.Unidades.Where(u => mayusculas.Contains(u.Ficha.ToUpper())).ToListAsync(cancellationToken);
+    }
+
+    public Task<List<Unidad>> GetActivasConDenominacionesAsync(IReadOnlyCollection<int> denominacionIds, CancellationToken cancellationToken = default)
+        => context.Unidades
+            .Where(u => u.IsActive && u.DenominacionId != null && denominacionIds.Contains(u.DenominacionId.Value))
+            .ToListAsync(cancellationToken);
+
     public void Add(Unidad unidad) => context.Unidades.Add(unidad);
 }

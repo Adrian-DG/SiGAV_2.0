@@ -1,6 +1,7 @@
 using Application.Features.Operaciones.Historial;
 using Application.Features.Operaciones.Posiciones;
 using Application.Features.Operaciones.Unidades;
+using Application.Contracts;
 using Application.Contracts.Authentication;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -60,6 +61,29 @@ public class UnidadesController(IMediator mediator) : GenericController(mediator
     [HttpPost("asignar-denominacion")]
     public async Task<IActionResult> AsignarDenominacion([FromBody] AsignarDenominacionCommand command, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(command, cancellationToken));
+
+    /// <summary>
+    /// Carga masiva desde Excel (.xlsx) con columnas Ficha, Placa, Denominación, Tramo y Nivel. Crea las
+    /// unidades y denominaciones que no existan y asigna/reasigna. Con aplicar=false solo devuelve la
+    /// vista previa; con aplicar=true guarda todo, o nada si alguna fila tiene errores.
+    /// </summary>
+    [Authorize(Policy = SesionPolicies.Web)]
+    [HttpPost("importar")]
+    [RequestSizeLimit(LimiteImportacion)]
+    [RequestFormLimits(MultipartBodyLengthLimit = LimiteImportacion)]
+    public async Task<IActionResult> Importar([FromForm] ImportarRequest request, CancellationToken cancellationToken)
+    {
+        await using var contenido = request.Archivo?.OpenReadStream();
+        return Ok(await Mediator.Send(
+            new ImportarUnidadesDenominacionCommand(contenido!, request.Archivo?.FileName, request.Aplicar, request.Motivo),
+            cancellationToken));
+    }
+
+    /// <summary>Plantilla de la carga masiva, con los tramos y niveles válidos.</summary>
+    [Authorize(Policy = SesionPolicies.Web)]
+    [HttpGet("importar/plantilla")]
+    public async Task<IActionResult> GetPlantillaImportacion(CancellationToken cancellationToken)
+        => File(await Mediator.Send(new GetPlantillaImportacionUnidadesQuery(), cancellationToken), IHojaCalculo.ContentType, "plantilla-unidades-denominaciones.xlsx");
 
     /// <summary>Crea una unidad; sin denominacionId queda sin denominación (No disponible).</summary>
     [Authorize(Policy = SesionPolicies.Web)]
@@ -121,4 +145,8 @@ public class UnidadesController(IMediator mediator) : GenericController(mediator
         await Mediator.Send(new DesactivarUnidadCommand(id), cancellationToken);
         return NoContent();
     }
+
+    private const long LimiteImportacion = 5 * 1024 * 1024;
+
+    public record ImportarRequest(IFormFile? Archivo, bool Aplicar, string? Motivo);
 }
