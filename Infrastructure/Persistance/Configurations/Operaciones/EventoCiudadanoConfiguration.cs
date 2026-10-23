@@ -25,6 +25,7 @@ internal sealed class EventoCiudadanoConfiguration : IEntityTypeConfiguration<Ev
             persona.Property(p => p.Nombre).HasColumnName("Nombre").HasMaxLength(DatosPersona.NombreMaxLength);
             persona.Property(p => p.Apellido).HasColumnName("Apellido").HasMaxLength(DatosPersona.NombreMaxLength);
             persona.Property(p => p.Sexo).HasColumnName("Sexo");
+            persona.Property(p => p.Edad).HasColumnName("Edad");
             persona.Property(p => p.Telefono).HasColumnName("Telefono").HasMaxLength(DatosPersona.TelefonoMaxLength);
             persona.Property(p => p.NacionalidadId).HasColumnName("NacionalidadId");
             persona.HasIndex(p => p.Identificacion);

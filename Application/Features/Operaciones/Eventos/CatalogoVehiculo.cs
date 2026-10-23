@@ -30,7 +30,7 @@ internal sealed record CatalogoVehiculo(
     }
 
     /// <summary>Nombre de catálogo o, si el dato no estaba en el catálogo, el texto libre.</summary>
-    public EventoVehiculoViewModel Describir(int id, DatosVehiculo v)
+    public EventoVehiculoViewModel Describir(int id, DatosVehiculo v, IReadOnlyList<int> tipoEventoIds)
     {
         var tipo = v.TipoVehiculoId is { } t ? Tipos.GetValueOrDefault(t) : null;
         var marca = v.MarcaId is { } m ? Marcas.GetValueOrDefault(m) : v.MarcaTexto;
@@ -41,6 +41,6 @@ internal sealed record CatalogoVehiculo(
         var partes = new[] { marcaModelo.Length > 0 ? marcaModelo : tipo, color, v.Placa ?? "Sin placa" }
             .Where(s => !string.IsNullOrWhiteSpace(s));
 
-        return new EventoVehiculoViewModel(id, v.Placa, tipo, marca, modelo, color, string.Join(" · ", partes));
+        return new EventoVehiculoViewModel(id, v.Placa, tipo, marca, modelo, color, string.Join(" · ", partes), tipoEventoIds);
     }
 }
