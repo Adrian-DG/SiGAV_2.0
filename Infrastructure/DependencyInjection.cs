@@ -18,6 +18,7 @@ using Infrastructure.Persistance.Historico;
 using Infrastructure.Persistance.Interceptors;
 using Infrastructure.Persistance.Operaciones;
 using Infrastructure.Persistance.Seeding;
+using Infrastructure.Reportes;
 using Infrastructure.Services;
 
 namespace Infrastructure;
@@ -64,6 +65,9 @@ public static class DependencyInjection
 
         // Cargas masivas desde Excel y sus plantillas
         services.AddSingleton<IHojaCalculo, HojaCalculoXlsx>();
+
+        // Formulario de asistencia de un evento en PDF (QuestPDF)
+        services.AddSingleton<IReporteAsistencia, ReporteAsistenciaPdf>();
 
         // Archivos de las evidencias (fuera de la base de datos)
         services.AddAlmacenamiento(configuration, environment);

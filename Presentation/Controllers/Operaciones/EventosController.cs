@@ -1,3 +1,4 @@
+using Application.Contracts;
 using Application.Contracts.Authentication;
 using Application.Features.Operaciones.Eventos;
 using Domain.Enums;
@@ -48,6 +49,16 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get([FromRoute] int id, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new GetEventoQuery(id), cancellationToken));
+
+    /// <summary>Formulario de asistencia (APVI-FOR-003) del evento, en PDF para imprimir o archivar.</summary>
+    [HttpGet("{id:int}/reporte")]
+    public async Task<IActionResult> Reporte([FromRoute] int id, CancellationToken cancellationToken)
+    {
+        var reporte = await Mediator.Send(new GetReporteEventoQuery(id), cancellationToken);
+        // inline: el navegador lo abre en su visor; el nombre se usa al guardarlo
+        Response.Headers.ContentDisposition = $"inline; filename=\"{reporte.NombreArchivo}\"";
+        return File(reporte.Contenido, IReporteAsistencia.ContentType);
+    }
 
     /// <summary>
     /// Registra un evento. Idempotente por requestId: un reenvío devuelve 200 con el evento existente
