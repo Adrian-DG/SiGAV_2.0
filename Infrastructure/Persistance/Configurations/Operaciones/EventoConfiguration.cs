@@ -54,5 +54,6 @@ internal sealed class EventoConfiguration : IEntityTypeConfiguration<Evento>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Ignore(e => e.UnidadPrincipal);
+        builder.Ignore(e => e.TipoEventoIds);
     }
 }

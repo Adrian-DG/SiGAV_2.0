@@ -1,5 +1,6 @@
 using Application.Contracts;
 using Application.Exceptions;
+using Domain.Entities.Historico;
 using Domain.Enums;
 using Domain.ValueObjects;
 using FluentValidation;
@@ -8,19 +9,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Historico;
 
-/// <summary>De dónde salió el dato para autocompletar.</summary>
+/// <summary>De dónde salieron los datos del histórico para autocompletar.</summary>
 public static class OrigenDato
 {
-    /// <summary>El último evento en que se registró esa cédula/placa (lo más reciente).</summary>
+    /// <summary>Actualizados por el último evento en que se registró esa cédula/placa.</summary>
     public const string Evento = "evento";
 
-    /// <summary>Maestro histórico (p. ej. importado de SiGAV 1.0), si nunca se registró en un evento.</summary>
+    /// <summary>Importados (p. ej. de SiGAV 1.0): nunca se registró en un evento.</summary>
     public const string Maestro = "maestro";
 }
 
 /// <summary>
-/// Edad: la registrada en el último evento más los años transcurridos desde entonces (estimada; el
-/// maestro no guarda fecha de nacimiento). UltimoRegistro: fecha de ese evento (null si viene del maestro).
+/// Edad: estimada a hoy con la edad registrada en el último evento. UltimoRegistro: fecha de ese
+/// evento (null si los datos son solo importados).
 /// </summary>
 public record CiudadanoConocidoViewModel(
     string Identificacion,
@@ -67,8 +68,7 @@ public class GetCiudadanoConocidoQueryValidator : AbstractValidator<GetCiudadano
 }
 
 /// <summary>
-/// Lo más reciente gana: la persona tal como se registró en su último evento; lo que ese registro
-/// no trae (p. ej. el nombre de alguien registrado solo con cédula) se completa con el maestro.
+/// La persona tal como está en el histórico, que cada evento mantiene al día (lo más reciente gana).
 /// </summary>
 public class GetCiudadanoConocidoQueryHandler(IReadDbContext db, TimeProvider timeProvider)
     : IRequestHandler<GetCiudadanoConocidoQuery, CiudadanoConocidoViewModel>
@@ -77,53 +77,22 @@ public class GetCiudadanoConocidoQueryHandler(IReadDbContext db, TimeProvider ti
     {
         var identificacion = DatosPersona.NormalizarIdentificacion(request.Identificacion)!;
 
-        var evento = await db.EventoCiudadanos
-            .Where(c => c.Persona.Identificacion == identificacion && c.Evento!.IsActive)
-            .OrderByDescending(c => c.Evento!.FechaHoraReporteUtc)
-            .ThenByDescending(c => c.Id)
-            .Select(c => new
-            {
-                c.Persona.Nombre,
-                c.Persona.Apellido,
-                c.Persona.Sexo,
-                c.Persona.Telefono,
-                c.Persona.NacionalidadId,
-                c.Persona.Edad,
-                Fecha = c.Evento!.FechaHoraReporteUtc
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var maestro = await db.Ciudadanos
+        var ciudadano = await db.Ciudadanos
             .Where(c => c.Identificacion == identificacion && c.IsActive)
-            .Select(c => new { c.Nombre, c.Apellido, c.Sexo, c.NacionalidadId })
-            .FirstOrDefaultAsync(cancellationToken);
+            .Select(c => new { c.Nombre, c.Apellido, c.Sexo, c.Telefono, c.NacionalidadId, c.FechaNacimientoEstimada, c.UltimoEventoUtc })
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new NotFoundException("La persona", identificacion);
 
-        if (evento is not null)
-            return new CiudadanoConocidoViewModel(
-                identificacion,
-                evento.Nombre ?? maestro?.Nombre,
-                evento.Apellido ?? maestro?.Apellido,
-                evento.Sexo != SexoEnum.NONE ? evento.Sexo : maestro?.Sexo ?? SexoEnum.NONE,
-                evento.Telefono,
-                evento.NacionalidadId ?? maestro?.NacionalidadId,
-                OrigenDato.Evento,
-                evento.Fecha,
-                EdadActual(evento.Edad, evento.Fecha));
-
-        if (maestro is not null)
-            return new CiudadanoConocidoViewModel(
-                identificacion, maestro.Nombre, maestro.Apellido, maestro.Sexo, null, maestro.NacionalidadId, OrigenDato.Maestro, null);
-
-        throw new NotFoundException("La persona", identificacion);
-    }
-
-    /// <summary>La edad registrada más los años cumplidos desde aquel evento.</summary>
-    private int? EdadActual(int? edad, DateTime fechaUtc)
-    {
-        if (edad is not { } e) return null;
-        var ahora = timeProvider.GetUtcNow().UtcDateTime;
-        var anios = ahora.Year - fechaUtc.Year - (ahora.DayOfYear < fechaUtc.DayOfYear ? 1 : 0);
-        return Math.Min(e + Math.Max(anios, 0), DatosPersona.EdadMaxima);
+        return new CiudadanoConocidoViewModel(
+            identificacion,
+            ciudadano.Nombre,
+            ciudadano.Apellido,
+            ciudadano.Sexo,
+            ciudadano.Telefono,
+            ciudadano.NacionalidadId,
+            ciudadano.UltimoEventoUtc is null ? OrigenDato.Maestro : OrigenDato.Evento,
+            ciudadano.UltimoEventoUtc,
+            Ciudadano.EdadAl(ciudadano.FechaNacimientoEstimada, timeProvider.GetUtcNow().UtcDateTime));
     }
 }
 
@@ -147,34 +116,26 @@ public class GetVehiculoConocidoQueryValidator : AbstractValidator<GetVehiculoCo
     }
 }
 
-/// <summary>El vehículo tal como se registró en su último evento; si nunca se registró, el maestro.</summary>
+/// <summary>El vehículo tal como está en el histórico, que cada evento mantiene al día (lo más reciente gana).</summary>
 public class GetVehiculoConocidoQueryHandler(IReadDbContext db) : IRequestHandler<GetVehiculoConocidoQuery, VehiculoConocidoViewModel>
 {
     public async Task<VehiculoConocidoViewModel> Handle(GetVehiculoConocidoQuery request, CancellationToken cancellationToken)
     {
         var placa = DatosVehiculo.NormalizarPlaca(request.Placa)!;
 
-        var evento = await db.EventoVehiculos
-            .Where(v => v.Datos.Placa == placa && v.Evento!.IsActive)
-            .OrderByDescending(v => v.Evento!.FechaHoraReporteUtc)
-            .ThenByDescending(v => v.Id)
+        return await db.Vehiculos
+            .Where(v => v.Placa == placa && v.IsActive)
             .Select(v => new VehiculoConocidoViewModel(
                 placa,
-                v.Datos.TipoVehiculoId,
-                v.Datos.MarcaId,
-                v.Datos.ModeloId,
-                v.Datos.ColorId,
-                v.Datos.MarcaTexto,
-                v.Datos.ModeloTexto,
-                v.Datos.ColorTexto,
-                OrigenDato.Evento,
-                v.Evento!.FechaHoraReporteUtc))
-            .FirstOrDefaultAsync(cancellationToken);
-        if (evento is not null) return evento;
-
-        return await db.Vehiculos
-            .Where(x => x.Placa == placa && x.IsActive)
-            .Select(x => new VehiculoConocidoViewModel(placa, x.TipoId, x.Modelo != null ? x.Modelo.MarcaId : null, x.ModeloId, x.ColorId))
+                v.TipoVehiculoId,
+                v.MarcaId,
+                v.ModeloId,
+                v.ColorId,
+                v.MarcaTexto,
+                v.ModeloTexto,
+                v.ColorTexto,
+                v.UltimoEventoUtc == null ? OrigenDato.Maestro : OrigenDato.Evento,
+                v.UltimoEventoUtc))
             .FirstOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("El vehículo", placa);
     }

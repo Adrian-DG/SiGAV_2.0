@@ -37,15 +37,16 @@ internal sealed class HistoricoDemoSeeder(SiGAVContext context) : ISeeder
             var tipos = await context.TipoVehiculos.ToDictionaryAsync(t => t.Nombre, t => t.Id, cancellationToken);
             var colores = await context.Colores.ToDictionaryAsync(c => c.Nombre, c => c.Id, cancellationToken);
             var modelos = await context.Modelos
-                .Select(m => new { m.Id, m.Nombre, Marca = m.Marca!.Nombre })
-                .ToDictionaryAsync(m => (m.Marca, m.Nombre), m => m.Id, cancellationToken);
+                .Select(m => new { m.Id, m.MarcaId, m.Nombre, Marca = m.Marca!.Nombre })
+                .ToDictionaryAsync(m => (m.Marca, m.Nombre), cancellationToken);
 
             context.Vehiculos.AddRange(DemoData.Vehiculos.Select(v => new Vehiculo
             {
                 Placa = DatosVehiculo.NormalizarPlaca(v.Placa)!,
-                TipoId = tipos[v.Tipo],
+                TipoVehiculoId = tipos[v.Tipo],
                 ColorId = colores[v.Color],
-                ModeloId = modelos[(v.Marca, v.Modelo)],
+                MarcaId = modelos[(v.Marca, v.Modelo)].MarcaId,
+                ModeloId = modelos[(v.Marca, v.Modelo)].Id,
                 Fabricacion = v.Fabricacion,
                 IsActive = true
             }));

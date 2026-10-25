@@ -122,7 +122,7 @@ public class GetEventosQueryHandler(IReadDbContext db, ICurrentUserService curre
         var items = pagina.Items.Select(f => new EventoListItemViewModel(
                 f.Id,
                 f.Estado,
-                f.Tipos.Select(t => t.Nombre).OrderBy(n => n).ToList(),
+                f.Tipos.Select(t => t.Nombre).Distinct().OrderBy(n => n).ToList(),
                 f.Tipos.Select(t => t.Categoria).Distinct().Order().ToList(),
                 NombrePersona(f.Persona),
                 f.Vehiculo is null ? null : catalogo.Describir(0, f.Vehiculo, []).Descripcion,
@@ -236,6 +236,7 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
             evento.FechaHoraLlegadaUtc,
             evento.FechaHoraCompletadoUtc,
             evento.Tipos
+                .DistinctBy(t => t.TipoEventoId)
                 .Select(t => new EventoTipoViewModel(t.TipoEventoId, t.TipoEvento?.Nombre ?? string.Empty, t.TipoEvento?.Categoria ?? default))
                 .OrderBy(t => t.Nombre)
                 .ToList(),

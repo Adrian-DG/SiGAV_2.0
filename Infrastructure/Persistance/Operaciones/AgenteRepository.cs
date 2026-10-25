@@ -19,5 +19,11 @@ public class AgenteRepository(SiGAVContext context) : IAgenteRepository
     public Task<bool> ExisteIdentificacionAsync(string identificacion, int? excluirAgenteId = null, CancellationToken cancellationToken = default)
         => context.Agentes.AnyAsync(a => a.Identificacion == identificacion && (excluirAgenteId == null || a.Id != excluirAgenteId), cancellationToken);
 
+    public Task<List<Agente>> GetByIdentificacionesAsync(IReadOnlyCollection<string> identificaciones, CancellationToken cancellationToken = default)
+    {
+        var mayusculas = identificaciones.Select(i => i.ToUpperInvariant()).Distinct().ToList();
+        return context.Agentes.Where(a => mayusculas.Contains(a.Identificacion.ToUpper())).ToListAsync(cancellationToken);
+    }
+
     public void Add(Agente agente) => context.Agentes.Add(agente);
 }

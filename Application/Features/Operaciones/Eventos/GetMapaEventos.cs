@@ -76,7 +76,7 @@ public class GetMapaEventosQueryHandler(IReadDbContext db, TimeProvider timeProv
                 f.Latitud,
                 f.Longitud,
                 f.Tipos.Select(t => t.Categoria).Distinct().Order().ToList(),
-                f.Tipos.Select(t => t.Nombre).Order().ToList(),
+                f.Tipos.Select(t => t.Nombre).Distinct().Order().ToList(),
                 f.FechaHoraReporteUtc,
                 f.Ficha))
             .ToList();

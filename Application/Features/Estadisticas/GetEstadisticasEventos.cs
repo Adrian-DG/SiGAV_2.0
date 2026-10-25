@@ -78,6 +78,8 @@ public class GetEstadisticasEventosQueryHandler(
                 from et in tipos.DefaultIfEmpty()
                 select new Fila(eu.EventoId, eu.UnidadId, eu.DenominacionId, eu.Denominacion!.TramoId, (int?)et!.TipoEventoId))
             .ToListAsync(cancellationToken);
+        // Un tipo puede tener varias filas en el evento (general y por vehículo o persona)
+        filas = filas.Distinct().ToList();
 
         if (filas.Count == 0)
             return new EstadisticasEventosViewModel(alcanceViewModel, desde, hasta, ResumenVacio, []);

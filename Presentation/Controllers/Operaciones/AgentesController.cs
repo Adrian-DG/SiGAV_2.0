@@ -1,3 +1,4 @@
+using Application.Contracts;
 using Application.Contracts.Authentication;
 using Application.Features.Operaciones.Agentes;
 using Domain.Enums;
@@ -43,6 +44,28 @@ public class AgentesController(IMediator mediator) : GenericController(mediator)
         return StatusCode(StatusCodes.Status201Created, new { id });
     }
 
+    /// <summary>
+    /// Carga masiva desde Excel (.xlsx) con columnas Cédula, Nombre, Apellido, Sexo, Institución, Rango,
+    /// Área operativa, Especialidad y Acceso total. Crea los agentes que no existan (autorizados) y
+    /// actualiza los demás. Con aplicar=false solo devuelve la vista previa; con aplicar=true guarda
+    /// todo, o nada si alguna fila tiene errores.
+    /// </summary>
+    [Authorize(Policy = SesionPolicies.Web)]
+    [HttpPost("importar")]
+    [RequestSizeLimit(LimiteImportacion)]
+    [RequestFormLimits(MultipartBodyLengthLimit = LimiteImportacion)]
+    public async Task<IActionResult> Importar([FromForm] ImportarRequest request, CancellationToken cancellationToken)
+    {
+        await using var contenido = request.Archivo?.OpenReadStream();
+        return Ok(await Mediator.Send(new ImportarAgentesCommand(contenido!, request.Aplicar), cancellationToken));
+    }
+
+    /// <summary>Plantilla de la carga masiva, con los rangos, instituciones y áreas válidos.</summary>
+    [Authorize(Policy = SesionPolicies.Web)]
+    [HttpGet("importar/plantilla")]
+    public async Task<IActionResult> GetPlantillaImportacion(CancellationToken cancellationToken)
+        => File(await Mediator.Send(new GetPlantillaImportacionAgentesQuery(), cancellationToken), IHojaCalculo.ContentType, "plantilla-agentes.xlsx");
+
     /// <summary>Auto-registro desde la app: el agente queda pendiente de autorización por front desk.</summary>
     [AllowAnonymous]
     [HttpPost("registro")]
@@ -78,4 +101,8 @@ public class AgentesController(IMediator mediator) : GenericController(mediator)
     }
 
     public record CambiarAutorizacionRequest(bool Autorizado);
+
+    private const long LimiteImportacion = 5 * 1024 * 1024;
+
+    public record ImportarRequest(IFormFile? Archivo, bool Aplicar);
 }

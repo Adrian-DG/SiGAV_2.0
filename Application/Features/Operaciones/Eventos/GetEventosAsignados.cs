@@ -63,7 +63,7 @@ public class GetEventosAsignadosQueryHandler(IReadDbContext db, ICurrentUserServ
         return filas
             .Select(f => new EventoAsignadoViewModel(
                 f.Id, f.Estado, f.CanalReporte,
-                f.Tipos.Select(t => t.Nombre).OrderBy(n => n).ToList(),
+                f.Tipos.Select(t => t.Nombre).Distinct().OrderBy(n => n).ToList(),
                 f.Tipos.Select(t => t.Categoria).Distinct().Order().ToList(),
                 f.Latitud, f.Longitud, f.Direccion, f.Municipio, f.Tramo, f.Comentario,
                 f.FechaHoraReporteUtc, f.FechaHoraLlegadaUtc, f.Rol, f.AgenteId))

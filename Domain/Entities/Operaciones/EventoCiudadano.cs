@@ -28,13 +28,14 @@ public class EventoCiudadanoInfo
     public int? CiudadanoId { get; private set; }
     public virtual Ciudadano? Ciudadano { get; private set; }
 
-    private readonly List<EventoCiudadanoTipoEvento> _tipos = new();
+    private readonly List<EventoTipoEvento> _tipos = new();
 
     /// <summary>
     /// Tipos atendidos a esta persona (p. ej. Seguridad a un peatón). Puede estar vacío: quien iba en
-    /// un vehículo suele quedar cubierto por los tipos del vehículo.
+    /// un vehículo suele quedar cubierto por los tipos del vehículo. Son filas de <see cref="Evento.Tipos"/>:
+    /// se agregan con <see cref="Evento.AgregarCiudadano"/>.
     /// </summary>
-    public IReadOnlyCollection<EventoCiudadanoTipoEvento> Tipos => _tipos.AsReadOnly();
+    public IReadOnlyCollection<EventoTipoEvento> Tipos => _tipos.AsReadOnly();
 
     // Requerido por EF Core
     private EventoCiudadanoInfo() { }
@@ -50,8 +51,7 @@ public class EventoCiudadanoInfo
         RolCiudadanoEnum rol,
         DatosPersona persona,
         EventoVehiculoInfo? vehiculo,
-        Ciudadano? ciudadano,
-        IReadOnlyCollection<int> tipoEventoIds)
+        Ciudadano? ciudadano)
     {
         if (!Enum.IsDefined(rol)) throw new DomainException("El rol del ciudadano no es válido.");
         if (vehiculo is null && RequiereVehiculo(rol))
@@ -59,7 +59,7 @@ public class EventoCiudadanoInfo
         if (vehiculo is not null && !AdmiteVehiculo(rol))
             throw new DomainException("Un peatón no puede estar asociado a un vehículo.");
 
-        var participacion = new EventoCiudadanoInfo
+        return new EventoCiudadanoInfo
         {
             Rol = rol,
             // Copia propia: cada participación debe tener su instancia (el mismo DatosPersona
@@ -69,9 +69,9 @@ public class EventoCiudadanoInfo
             Ciudadano = ciudadano,
             CiudadanoId = ciudadano is { Id: > 0 } ? ciudadano.Id : null
         };
-        participacion._tipos.AddRange(tipoEventoIds.Select(id => new EventoCiudadanoTipoEvento(id)));
-        return participacion;
     }
+
+    internal void AgregarTipo(EventoTipoEvento tipo) => _tipos.Add(tipo);
 
     private static string Descripcion(RolCiudadanoEnum rol) => rol == RolCiudadanoEnum.Conductor ? "conductor" : "pasajero";
 }

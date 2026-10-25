@@ -2,6 +2,7 @@ using Application.Contracts;
 using Application.Common;
 using Application.Exceptions;
 using Application.Features.Catalogos;
+using Domain.Entities.Historico;
 using Domain.Entities.Operaciones;
 using Domain.Enums;
 using Domain.Repositories;
@@ -55,6 +56,8 @@ public record CiudadanoEventoRequest(
 /// el agente de la sesión o su componente (sin indicar, el de la sesión); el tramo por defecto es el de la denominación de la unidad
 /// y el canal es siempre AgenteCampo. Puede enviarse ya atendido o completado (llegada y cierre).
 /// <see cref="TipoEventoIds"/> son todos los tipos del evento: incluyen los de cada vehículo y persona.
+/// Cada persona identificada y cada vehículo con placa se guarda en el histórico si no existe, o lo
+/// actualiza si ya existe (lo más reciente gana), para autocompletar en eventos futuros.
 /// </summary>
 public record RegistrarEventoCommand(
     Guid? RequestId,
@@ -281,10 +284,7 @@ public class RegistrarEventoCommandHandler(
         foreach (var v in request.Vehiculos ?? [])
         {
             var datos = new DatosVehiculo(v.Placa, v.TipoVehiculoId, v.MarcaId, v.ModeloId, v.ColorId, v.MarcaTexto, v.ModeloTexto, v.ColorTexto);
-            // Vínculo con el maestro histórico cuando la placa ya existe en él
-            var vehiculoHistorico = datos.Placa is { } placa
-                ? await historico.GetVehiculoAsync(placa, cancellationToken)
-                : null;
+            var vehiculoHistorico = await VehiculoHistoricoAsync(datos, evento.FechaHoraReporteUtc, cancellationToken);
             vehiculoPorClave[v.Clave] = evento.AgregarVehiculo(datos, vehiculoHistorico, v.TipoEventoIds);
             vehiculosCreados.Add(vehiculoPorClave[v.Clave]);
         }
@@ -292,9 +292,7 @@ public class RegistrarEventoCommandHandler(
         foreach (var c in request.Ciudadanos ?? [])
         {
             var persona = new DatosPersona(c.Identificacion, c.Nombre, c.Apellido, c.Sexo, c.Telefono, c.NacionalidadId, c.Edad);
-            var ciudadano = persona.Identificacion is { } identificacion
-                ? await historico.GetCiudadanoAsync(identificacion, cancellationToken)
-                : null;
+            var ciudadano = await CiudadanoHistoricoAsync(persona, evento.FechaHoraReporteUtc, cancellationToken);
             var vehiculo = c.VehiculoClave is { } clave ? vehiculoPorClave[clave] : null;
 
             ciudadanosCreados.Add(evento.AgregarCiudadano(c.Rol, persona, vehiculo, ciudadano, c.TipoEventoIds));
@@ -325,6 +323,44 @@ public class RegistrarEventoCommandHandler(
             EsDuplicado: false,
             vehiculosCreados.Select(v => v.Id).ToList(),
             ciudadanosCreados.Select(c => c.Id).ToList());
+    }
+
+    /// <summary>
+    /// Persona del histórico para vincular a la participación: se crea si la identificación no existe
+    /// y se actualiza si existe. Sin identificación no hay a quién guardar; uno desactivado no se toca
+    /// ni se vincula.
+    /// </summary>
+    private async Task<Ciudadano?> CiudadanoHistoricoAsync(DatosPersona persona, DateTime fechaEventoUtc, CancellationToken cancellationToken)
+    {
+        if (persona.Identificacion is not { } identificacion) return null;
+
+        if (await historico.GetCiudadanoAsync(identificacion, cancellationToken) is not { } ciudadano)
+        {
+            ciudadano = Ciudadano.Registrar(persona, fechaEventoUtc);
+            historico.Add(ciudadano);
+            return ciudadano;
+        }
+
+        if (!ciudadano.IsActive) return null;
+        ciudadano.Actualizar(persona, fechaEventoUtc);
+        return ciudadano;
+    }
+
+    /// <summary>Igual que <see cref="CiudadanoHistoricoAsync"/>, por placa.</summary>
+    private async Task<Vehiculo?> VehiculoHistoricoAsync(DatosVehiculo datos, DateTime fechaEventoUtc, CancellationToken cancellationToken)
+    {
+        if (datos.Placa is not { } placa) return null;
+
+        if (await historico.GetVehiculoAsync(placa, cancellationToken) is not { } vehiculo)
+        {
+            vehiculo = Vehiculo.Registrar(datos, fechaEventoUtc);
+            historico.Add(vehiculo);
+            return vehiculo;
+        }
+
+        if (!vehiculo.IsActive) return null;
+        vehiculo.Actualizar(datos, fechaEventoUtc);
+        return vehiculo;
     }
 
     /// <summary>

@@ -54,7 +54,8 @@ public class HojaCalculoXlsx : IHojaCalculo
 
             return filas;
         }
-        catch (Exception ex) when (ex is InvalidDataException or XmlException or IOException)
+        // ArgumentOutOfRangeException: ZipArchive con archivos de menos de 22 bytes (no caben ni el fin del zip)
+        catch (Exception ex) when (ex is InvalidDataException or XmlException or IOException or ArgumentOutOfRangeException)
         {
             throw new InvalidDataException("El archivo no es un libro de Excel (.xlsx) válido.", ex);
         }
