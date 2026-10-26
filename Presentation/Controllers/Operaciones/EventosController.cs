@@ -73,6 +73,16 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
             : CreatedAtAction(nameof(Get), new { id = resultado.Id }, resultado);
     }
 
+    /// <summary>
+    /// App: envía un evento asignado por el call center, completado en campo (mismo cuerpo que el
+    /// registro): reemplaza sus datos, vehículos y personas y, con fecha de cierre, lo completa. Solo la
+    /// unidad principal y mientras no esté completado. Idempotente por requestId (reenvío: esDuplicado).
+    /// </summary>
+    [Authorize(Policy = SesionPolicies.Movil)]
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Actualizar([FromRoute] int id, [FromBody] RegistrarEventoCommand datos, CancellationToken cancellationToken)
+        => Ok(await Mediator.Send(new ActualizarEventoCommand(id, datos), cancellationToken));
+
     /// <summary>La unidad llegó al lugar (Pendiente → En curso). Sin fecha se usa la hora actual.</summary>
     [HttpPatch("{id:int}/iniciar")]
     public async Task<IActionResult> Iniciar([FromRoute] int id, [FromBody] IniciarRequest? request, CancellationToken cancellationToken)

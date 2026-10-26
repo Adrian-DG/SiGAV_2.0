@@ -20,6 +20,16 @@ public class EventoRepository(SiGAVContext context) : IEventoRepository
             .AsSplitQuery()
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
+    public Task<Evento?> GetParaActualizarAsync(int id, CancellationToken cancellationToken = default)
+        => context.Eventos
+            .Include(e => e.Unidades)
+            .Include(e => e.Tipos)
+            .Include(e => e.Ciudadanos).ThenInclude(c => c.Tipos)
+            .Include(e => e.Vehiculos).ThenInclude(v => v.Tipos)
+            .Include(e => e.Evidencias)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+
     public Task<int?> GetIdByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default)
         => context.Eventos
             .Where(e => e.RequestId == requestId)

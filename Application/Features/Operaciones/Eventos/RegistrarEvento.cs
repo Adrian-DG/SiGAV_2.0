@@ -2,7 +2,6 @@ using Application.Contracts;
 using Application.Common;
 using Application.Exceptions;
 using Application.Features.Catalogos;
-using Domain.Entities.Historico;
 using Domain.Entities.Operaciones;
 using Domain.Enums;
 using Domain.Repositories;
@@ -242,7 +241,7 @@ public class RegistrarEventoCommandHandler(
         // Reenvío de algo ya registrado: se devuelve el mismo evento
         if (request.RequestId is { } requestId
             && await eventos.GetIdByRequestIdAsync(requestId, cancellationToken) is { } existente)
-            return await DuplicadoAsync(existente, cancellationToken);
+            return await DuplicadoAsync(existente, request, cancellationToken);
 
         var ahoraUtc = timeProvider.GetUtcNow().UtcDateTime;
         var esWeb = EventoAcceso.EsWeb(currentUser);
@@ -278,25 +277,8 @@ public class RegistrarEventoCommandHandler(
             ahoraUtc);
 
         // Vehículos primero: las personas se asocian a ellos por su clave
-        var vehiculoPorClave = new Dictionary<string, EventoVehiculoInfo>(StringComparer.Ordinal);
-        var vehiculosCreados = new List<EventoVehiculoInfo>();
-        var ciudadanosCreados = new List<EventoCiudadanoInfo>();
-        foreach (var v in request.Vehiculos ?? [])
-        {
-            var datos = new DatosVehiculo(v.Placa, v.TipoVehiculoId, v.MarcaId, v.ModeloId, v.ColorId, v.MarcaTexto, v.ModeloTexto, v.ColorTexto);
-            var vehiculoHistorico = await VehiculoHistoricoAsync(datos, evento.FechaHoraReporteUtc, cancellationToken);
-            vehiculoPorClave[v.Clave] = evento.AgregarVehiculo(datos, vehiculoHistorico, v.TipoEventoIds);
-            vehiculosCreados.Add(vehiculoPorClave[v.Clave]);
-        }
-
-        foreach (var c in request.Ciudadanos ?? [])
-        {
-            var persona = new DatosPersona(c.Identificacion, c.Nombre, c.Apellido, c.Sexo, c.Telefono, c.NacionalidadId, c.Edad);
-            var ciudadano = await CiudadanoHistoricoAsync(persona, evento.FechaHoraReporteUtc, cancellationToken);
-            var vehiculo = c.VehiculoClave is { } clave ? vehiculoPorClave[clave] : null;
-
-            ciudadanosCreados.Add(evento.AgregarCiudadano(c.Rol, persona, vehiculo, ciudadano, c.TipoEventoIds));
-        }
+        var (vehiculosCreados, ciudadanosCreados) =
+            await InvolucradosEvento.AgregarAsync(evento, request.Vehiculos, request.Ciudadanos, historico, cancellationToken);
 
         // Reportado ya atendido (p. ej. desde la cola offline): se aplican llegada y cierre
         if (request.FechaHoraLlegadaUtc is { } llegada)
@@ -315,7 +297,7 @@ public class RegistrarEventoCommandHandler(
             // Dos envíos simultáneos con la misma clave: el otro ganó la carrera
             var ganador = await eventos.GetIdByRequestIdAsync(rid, cancellationToken);
             if (ganador is null) throw;
-            return await DuplicadoAsync(ganador.Value, cancellationToken);
+            return await DuplicadoAsync(ganador.Value, request, cancellationToken);
         }
 
         return new RegistrarEventoResult(
@@ -325,52 +307,6 @@ public class RegistrarEventoCommandHandler(
             ciudadanosCreados.Select(c => c.Id).ToList());
     }
 
-    /// <summary>
-    /// Persona del histórico para vincular a la participación: se crea si la identificación no existe
-    /// y se actualiza si existe. Sin identificación no hay a quién guardar; uno desactivado no se toca
-    /// ni se vincula.
-    /// </summary>
-    private async Task<Ciudadano?> CiudadanoHistoricoAsync(DatosPersona persona, DateTime fechaEventoUtc, CancellationToken cancellationToken)
-    {
-        if (persona.Identificacion is not { } identificacion) return null;
-
-        if (await historico.GetCiudadanoAsync(identificacion, cancellationToken) is not { } ciudadano)
-        {
-            ciudadano = Ciudadano.Registrar(persona, fechaEventoUtc);
-            historico.Add(ciudadano);
-            return ciudadano;
-        }
-
-        if (!ciudadano.IsActive) return null;
-        ciudadano.Actualizar(persona, fechaEventoUtc);
-        return ciudadano;
-    }
-
-    /// <summary>Igual que <see cref="CiudadanoHistoricoAsync"/>, por placa.</summary>
-    private async Task<Vehiculo?> VehiculoHistoricoAsync(DatosVehiculo datos, DateTime fechaEventoUtc, CancellationToken cancellationToken)
-    {
-        if (datos.Placa is not { } placa) return null;
-
-        if (await historico.GetVehiculoAsync(placa, cancellationToken) is not { } vehiculo)
-        {
-            vehiculo = Vehiculo.Registrar(datos, fechaEventoUtc);
-            historico.Add(vehiculo);
-            return vehiculo;
-        }
-
-        if (!vehiculo.IsActive) return null;
-        vehiculo.Actualizar(datos, fechaEventoUtc);
-        return vehiculo;
-    }
-
-    /// <summary>
-    /// Reenvío: el mismo request ya se registró, así que vehículos y personas están en el orden en
-    /// que se insertaron (el de aquel request), que es el orden de sus Ids.
-    /// </summary>
-    private async Task<RegistrarEventoResult> DuplicadoAsync(int eventoId, CancellationToken cancellationToken)
-    {
-        var vehiculoIds = await db.EventoVehiculos.Where(v => v.EventoId == eventoId).OrderBy(v => v.Id).Select(v => v.Id).ToListAsync(cancellationToken);
-        var ciudadanoIds = await db.EventoCiudadanos.Where(c => c.EventoId == eventoId).OrderBy(c => c.Id).Select(c => c.Id).ToListAsync(cancellationToken);
-        return new RegistrarEventoResult(eventoId, EsDuplicado: true, vehiculoIds, ciudadanoIds);
-    }
+    private Task<RegistrarEventoResult> DuplicadoAsync(int eventoId, RegistrarEventoCommand request, CancellationToken cancellationToken)
+        => InvolucradosEvento.ResultadoExistenteAsync(db, eventoId, request.Vehiculos, request.Ciudadanos, cancellationToken);
 }

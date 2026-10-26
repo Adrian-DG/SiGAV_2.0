@@ -13,6 +13,12 @@ public interface IEventoRepository
     /// </summary>
     Task<Evento?> GetParaEvidenciasAsync(int id, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Evento con todo lo que se reemplaza al completarlo en campo: unidades, tipos, personas,
+    /// vehículos (con sus tipos) y evidencias.
+    /// </summary>
+    Task<Evento?> GetParaActualizarAsync(int id, CancellationToken cancellationToken = default);
+
     /// <summary>Id del evento registrado con esa clave de idempotencia, si existe.</summary>
     Task<int?> GetIdByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default);
 

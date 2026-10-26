@@ -188,6 +188,38 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
         Direccion = Normalizar(direccion, DireccionMaxLength, "dirección");
     }
 
+    /// <summary>
+    /// La unidad completa en campo un evento que le asignó el call center: se reemplazan ubicación,
+    /// dirección, comentario y tipos, y se quitan vehículos y personas para volver a agregarlos con
+    /// <see cref="AgregarVehiculo"/> y <see cref="AgregarCiudadano"/>. Las evidencias se conservan,
+    /// sin la persona o el vehículo que tenían. <paramref name="requestId"/> es la clave con que la
+    /// app reintenta el envío: queda como la del evento para reconocer el reenvío.
+    /// </summary>
+    public void ReemplazarDatos(
+        Guid requestId,
+        Coordenada ubicacion,
+        int municipioId,
+        int? tramoId,
+        string? direccion,
+        string? comentario,
+        IEnumerable<int> tipoEventoIds)
+    {
+        AsegurarActivo();
+        if (Estado == EstadoEventoEnum.Completado)
+            throw new DomainException("El evento ya fue completado y no puede modificarse.");
+        if (requestId == Guid.Empty) throw new DomainException("La clave de idempotencia (RequestId) no es válida.");
+
+        AsignarUbicacion(ubicacion, municipioId, tramoId, direccion);
+        Comentario = Normalizar(comentario, ComentarioMaxLength, "comentario");
+        RequestId = requestId;
+
+        foreach (var evidencia in _evidencias) evidencia.Desvincular();
+        _tipos.Clear();
+        _ciudadanos.Clear();
+        _vehiculos.Clear();
+        AgregarTiposGenerales(tipoEventoIds);
+    }
+
     /// <summary>Agrega una unidad de apoyo (o un apoyo solicitado, como la unidad alfa).</summary>
     public void AgregarUnidadApoyo(Unidad unidad, int agenteId, bool yaLlego = true)
     {
