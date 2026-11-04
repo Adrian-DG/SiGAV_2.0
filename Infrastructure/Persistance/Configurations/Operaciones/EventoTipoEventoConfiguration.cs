@@ -11,7 +11,7 @@ internal sealed class EventoTipoEventoConfiguration : IEntityTypeConfiguration<E
         // Lo recibe un vehículo, una persona o el evento en general (ambos null), nunca los dos
         builder.ToTable("evento_tipo_evento", Schemas.Operaciones, t => t.HasCheckConstraint(
             "CK_evento_tipo_evento_un_involucrado",
-            "\"EventoVehiculoId\" IS NULL OR \"EventoCiudadanoId\" IS NULL"));
+            "[EventoVehiculoId] IS NULL OR [EventoCiudadanoId] IS NULL"));
         builder.HasKey(et => et.Id);
         builder.Ignore(et => et.EsGeneral);
 
@@ -41,12 +41,12 @@ internal sealed class EventoTipoEventoConfiguration : IEntityTypeConfiguration<E
         // Una fila por tipo y por quién lo recibió
         builder.HasIndex(et => new { et.EventoId, et.TipoEventoId })
             .IsUnique()
-            .HasFilter("\"EventoVehiculoId\" IS NULL AND \"EventoCiudadanoId\" IS NULL");
+            .HasFilter("[EventoVehiculoId] IS NULL AND [EventoCiudadanoId] IS NULL");
         builder.HasIndex(et => new { et.EventoVehiculoId, et.TipoEventoId })
             .IsUnique()
-            .HasFilter("\"EventoVehiculoId\" IS NOT NULL");
+            .HasFilter("[EventoVehiculoId] IS NOT NULL");
         builder.HasIndex(et => new { et.EventoCiudadanoId, et.TipoEventoId })
             .IsUnique()
-            .HasFilter("\"EventoCiudadanoId\" IS NOT NULL");
+            .HasFilter("[EventoCiudadanoId] IS NOT NULL");
     }
 }

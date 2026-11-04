@@ -19,6 +19,9 @@ public interface IEventoRepository
     /// </summary>
     Task<Evento?> GetParaActualizarAsync(int id, CancellationToken cancellationToken = default);
 
+    /// <summary>Evento con sus personas (para elegir a quién contactar en la evaluación de calidad).</summary>
+    Task<Evento?> GetConPersonasAsync(int id, CancellationToken cancellationToken = default);
+
     /// <summary>Id del evento registrado con esa clave de idempotencia, si existe.</summary>
     Task<int?> GetIdByRequestIdAsync(Guid requestId, CancellationToken cancellationToken = default);
 

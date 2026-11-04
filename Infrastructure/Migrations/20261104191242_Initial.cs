@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -28,10 +28,10 @@ namespace Infrastructure.Migrations
                 schema: "misc",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -43,10 +43,10 @@ namespace Infrastructure.Migrations
                 schema: "misc",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -58,10 +58,10 @@ namespace Infrastructure.Migrations
                 schema: "misc",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -73,10 +73,10 @@ namespace Infrastructure.Migrations
                 schema: "misc",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -88,12 +88,12 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Jerarquia = table.Column<int>(type: "INTEGER", nullable: false),
-                    EsAmbulancia = table.Column<bool>(type: "INTEGER", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Jerarquia = table.Column<int>(type: "int", nullable: false),
+                    EsAmbulancia = table.Column<bool>(type: "bit", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -105,12 +105,12 @@ namespace Infrastructure.Migrations
                 schema: "accesos",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -122,13 +122,13 @@ namespace Infrastructure.Migrations
                 schema: "misc",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Prefijo = table.Column<string>(type: "TEXT", maxLength: 5, nullable: false),
-                    Patron = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Ejemplo = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Prefijo = table.Column<string>(type: "nvarchar(5)", maxLength: 5, nullable: false),
+                    Patron = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Ejemplo = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -140,10 +140,10 @@ namespace Infrastructure.Migrations
                 schema: "misc",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -155,11 +155,11 @@ namespace Infrastructure.Migrations
                 schema: "misc",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    NombreArmada = table.Column<string>(type: "TEXT", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    NombreArmada = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -171,11 +171,11 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Region = table.Column<int>(type: "INTEGER", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Region = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -187,10 +187,10 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -202,11 +202,11 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Categoria = table.Column<int>(type: "INTEGER", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Categoria = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -218,10 +218,10 @@ namespace Infrastructure.Migrations
                 schema: "misc",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -233,15 +233,17 @@ namespace Infrastructure.Migrations
                 schema: "historico",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    FotoIdentificacion = table.Column<string>(type: "TEXT", nullable: true),
-                    NacionalidadId = table.Column<int>(type: "INTEGER", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Identificacion = table.Column<string>(type: "TEXT", maxLength: 11, nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    Apellido = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    Sexo = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Identificacion = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Apellido = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Sexo = table.Column<int>(type: "int", nullable: false),
+                    Telefono = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    NacionalidadId = table.Column<int>(type: "int", nullable: true),
+                    FechaNacimientoEstimada = table.Column<DateOnly>(type: "date", nullable: true),
+                    UltimoEventoUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -251,19 +253,18 @@ namespace Infrastructure.Migrations
                         column: x => x.NacionalidadId,
                         principalSchema: "misc",
                         principalTable: "nacionalidades",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    RoleId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ClaimType = table.Column<string>(type: "TEXT", nullable: true),
-                    ClaimValue = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RoleId = table.Column<int>(type: "int", nullable: false),
+                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -282,11 +283,11 @@ namespace Infrastructure.Migrations
                 schema: "misc",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ProvinciaId = table.Column<int>(type: "INTEGER", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProvinciaId = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -305,23 +306,23 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Institucion = table.Column<int>(type: "INTEGER", nullable: false),
-                    RangoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    AreaOperativa = table.Column<int>(type: "INTEGER", nullable: false),
-                    AccesoTotal = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Especialidad = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
-                    Autorizado = table.Column<bool>(type: "INTEGER", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    CreatedBy = table.Column<int>(type: "INTEGER", nullable: false),
-                    UpdatedBy = table.Column<int>(type: "INTEGER", nullable: true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Identificacion = table.Column<string>(type: "TEXT", maxLength: 11, nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    Apellido = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    Sexo = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Institucion = table.Column<int>(type: "int", nullable: false),
+                    RangoId = table.Column<int>(type: "int", nullable: false),
+                    AreaOperativa = table.Column<int>(type: "int", nullable: false),
+                    AccesoTotal = table.Column<bool>(type: "bit", nullable: false),
+                    Especialidad = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Autorizado = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Identificacion = table.Column<string>(type: "nvarchar(11)", maxLength: 11, nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Apellido = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Sexo = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -340,29 +341,29 @@ namespace Infrastructure.Migrations
                 schema: "accesos",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Identificacion = table.Column<string>(type: "TEXT", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: true),
-                    Apellido = table.Column<string>(type: "TEXT", nullable: true),
-                    Sexo = table.Column<int>(type: "INTEGER", nullable: false),
-                    Institucion = table.Column<int>(type: "INTEGER", nullable: false),
-                    RangoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    DepartamentoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    UserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
-                    PasswordHash = table.Column<string>(type: "TEXT", nullable: true),
-                    SecurityStamp = table.Column<string>(type: "TEXT", nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "TEXT", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "TEXT", nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
-                    TwoFactorEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
-                    LockoutEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Identificacion = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Apellido = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Sexo = table.Column<int>(type: "int", nullable: false),
+                    Institucion = table.Column<int>(type: "int", nullable: false),
+                    RangoId = table.Column<int>(type: "int", nullable: false),
+                    DepartamentoId = table.Column<int>(type: "int", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -388,11 +389,11 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    RegionAsistenciaId = table.Column<int>(type: "INTEGER", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RegionAsistenciaId = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -411,12 +412,12 @@ namespace Infrastructure.Migrations
                 schema: "misc",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    MarcaId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TipoVehiculoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MarcaId = table.Column<int>(type: "int", nullable: false),
+                    TipoVehiculoId = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -442,8 +443,8 @@ namespace Infrastructure.Migrations
                 schema: "misc",
                 columns: table => new
                 {
-                    PrefijoPlacaId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TipoVehiculoId = table.Column<int>(type: "INTEGER", nullable: false)
+                    PrefijoPlacaId = table.Column<int>(type: "int", nullable: false),
+                    TipoVehiculoId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -468,11 +469,11 @@ namespace Infrastructure.Migrations
                 name: "AspNetUserClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ClaimType = table.Column<string>(type: "TEXT", nullable: true),
-                    ClaimValue = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -490,10 +491,10 @@ namespace Infrastructure.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "TEXT", nullable: false),
-                    ProviderKey = table.Column<string>(type: "TEXT", nullable: false),
-                    ProviderDisplayName = table.Column<string>(type: "TEXT", nullable: true),
-                    UserId = table.Column<int>(type: "INTEGER", nullable: false)
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -511,8 +512,8 @@ namespace Infrastructure.Migrations
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
-                    RoleId = table.Column<int>(type: "INTEGER", nullable: false)
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    RoleId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -537,10 +538,10 @@ namespace Infrastructure.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
-                    LoginProvider = table.Column<string>(type: "TEXT", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Value = table.Column<string>(type: "TEXT", nullable: true)
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -559,16 +560,16 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    TramoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    NivelDenominacionId = table.Column<int>(type: "INTEGER", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    CreatedBy = table.Column<int>(type: "INTEGER", nullable: false),
-                    UpdatedBy = table.Column<int>(type: "INTEGER", nullable: true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Nombre = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TramoId = table.Column<int>(type: "int", nullable: false),
+                    NivelDenominacionId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -594,26 +595,26 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    RequestId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    CanalReporte = table.Column<int>(type: "INTEGER", nullable: false),
-                    Estado = table.Column<int>(type: "INTEGER", nullable: false),
-                    TipoCierreId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Direccion = table.Column<string>(type: "TEXT", maxLength: 250, nullable: true),
-                    MunicipioId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TramoId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Comentario = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    FechaHoraReporteUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    FechaHoraLlegadaUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    FechaHoraCompletadoUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    CreatedBy = table.Column<int>(type: "INTEGER", nullable: false),
-                    UpdatedBy = table.Column<int>(type: "INTEGER", nullable: true),
-                    Latitud = table.Column<decimal>(type: "TEXT", precision: 9, scale: 6, nullable: false),
-                    Longitud = table.Column<decimal>(type: "TEXT", precision: 9, scale: 6, nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CanalReporte = table.Column<int>(type: "int", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false),
+                    TipoCierreId = table.Column<int>(type: "int", nullable: true),
+                    Direccion = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    MunicipioId = table.Column<int>(type: "int", nullable: false),
+                    TramoId = table.Column<int>(type: "int", nullable: true),
+                    Comentario = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    FechaHoraReporteUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaHoraLlegadaUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    FechaHoraCompletadoUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    Latitud = table.Column<decimal>(type: "decimal(9,6)", precision: 9, scale: 6, nullable: false),
+                    Longitud = table.Column<decimal>(type: "decimal(9,6)", precision: 9, scale: 6, nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -646,14 +647,19 @@ namespace Infrastructure.Migrations
                 schema: "historico",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    TipoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ColorId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ModeloId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Fabricacion = table.Column<int>(type: "INTEGER", nullable: true),
-                    Placa = table.Column<string>(type: "TEXT", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Placa = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    TipoVehiculoId = table.Column<int>(type: "int", nullable: true),
+                    MarcaId = table.Column<int>(type: "int", nullable: true),
+                    ModeloId = table.Column<int>(type: "int", nullable: true),
+                    ColorId = table.Column<int>(type: "int", nullable: true),
+                    MarcaTexto = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    ModeloTexto = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    ColorTexto = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Fabricacion = table.Column<int>(type: "int", nullable: true),
+                    UltimoEventoUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -663,8 +669,13 @@ namespace Infrastructure.Migrations
                         column: x => x.ColorId,
                         principalSchema: "misc",
                         principalTable: "colores",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_vehiculos_marcas_MarcaId",
+                        column: x => x.MarcaId,
+                        principalSchema: "misc",
+                        principalTable: "marcas",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_vehiculos_modelos_ModeloId",
                         column: x => x.ModeloId,
@@ -672,12 +683,11 @@ namespace Infrastructure.Migrations
                         principalTable: "modelos",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_vehiculos_tipo_vehiculos_TipoId",
-                        column: x => x.TipoId,
+                        name: "FK_vehiculos_tipo_vehiculos_TipoVehiculoId",
+                        column: x => x.TipoVehiculoId,
                         principalSchema: "misc",
                         principalTable: "tipo_vehiculos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -685,11 +695,11 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    DenominacionId = table.Column<int>(type: "INTEGER", nullable: false),
-                    RegionMacro = table.Column<int>(type: "INTEGER", nullable: true),
-                    RegionAsistenciaId = table.Column<int>(type: "INTEGER", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DenominacionId = table.Column<int>(type: "int", nullable: false),
+                    RegionMacro = table.Column<int>(type: "int", nullable: true),
+                    RegionAsistenciaId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -716,8 +726,8 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    DenominacionId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TramoId = table.Column<int>(type: "INTEGER", nullable: false)
+                    DenominacionId = table.Column<int>(type: "int", nullable: false),
+                    TramoId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -743,16 +753,16 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Numero = table.Column<string>(type: "TEXT", nullable: false),
-                    Codigo = table.Column<string>(type: "TEXT", nullable: false),
-                    DenominacionId = table.Column<int>(type: "INTEGER", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    CreatedBy = table.Column<int>(type: "INTEGER", nullable: false),
-                    UpdatedBy = table.Column<int>(type: "INTEGER", nullable: true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Numero = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Codigo = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    DenominacionId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -771,17 +781,17 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Ficha = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    Placa = table.Column<string>(type: "TEXT", maxLength: 10, nullable: true),
-                    EstaDisponible = table.Column<bool>(type: "INTEGER", nullable: false),
-                    DenominacionId = table.Column<int>(type: "INTEGER", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    CreatedBy = table.Column<int>(type: "INTEGER", nullable: false),
-                    UpdatedBy = table.Column<int>(type: "INTEGER", nullable: true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Ficha = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Placa = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
+                    EstaDisponible = table.Column<bool>(type: "bit", nullable: false),
+                    DenominacionId = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -796,49 +806,22 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "evento_tipo_evento",
-                schema: "operaciones",
-                columns: table => new
-                {
-                    EventoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TipoEventoId = table.Column<int>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_evento_tipo_evento", x => new { x.EventoId, x.TipoEventoId });
-                    table.ForeignKey(
-                        name: "FK_evento_tipo_evento_eventos_EventoId",
-                        column: x => x.EventoId,
-                        principalSchema: "operaciones",
-                        principalTable: "eventos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_evento_tipo_evento_tipo_eventos_TipoEventoId",
-                        column: x => x.TipoEventoId,
-                        principalSchema: "operaciones",
-                        principalTable: "tipo_eventos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "evento_vehiculo",
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    EventoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Placa = table.Column<string>(type: "TEXT", maxLength: 10, nullable: true),
-                    TipoVehiculoId = table.Column<int>(type: "INTEGER", nullable: true),
-                    MarcaId = table.Column<int>(type: "INTEGER", nullable: true),
-                    ModeloId = table.Column<int>(type: "INTEGER", nullable: true),
-                    ColorId = table.Column<int>(type: "INTEGER", nullable: true),
-                    MarcaTexto = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    ModeloTexto = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    ColorTexto = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    VehiculoHistoricoId = table.Column<int>(type: "INTEGER", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EventoId = table.Column<int>(type: "int", nullable: false),
+                    Placa = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
+                    TipoVehiculoId = table.Column<int>(type: "int", nullable: true),
+                    MarcaId = table.Column<int>(type: "int", nullable: true),
+                    ModeloId = table.Column<int>(type: "int", nullable: true),
+                    ColorId = table.Column<int>(type: "int", nullable: true),
+                    MarcaTexto = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    ModeloTexto = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    ColorTexto = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    VehiculoHistoricoId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -892,12 +875,12 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    EventoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    UnidadId = table.Column<int>(type: "INTEGER", nullable: false),
-                    DenominacionId = table.Column<int>(type: "INTEGER", nullable: false),
-                    NivelDenominacionId = table.Column<int>(type: "INTEGER", nullable: false),
-                    AgenteId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Rol = table.Column<int>(type: "INTEGER", nullable: false)
+                    EventoId = table.Column<int>(type: "int", nullable: false),
+                    UnidadId = table.Column<int>(type: "int", nullable: false),
+                    DenominacionId = table.Column<int>(type: "int", nullable: false),
+                    NivelDenominacionId = table.Column<int>(type: "int", nullable: false),
+                    AgenteId = table.Column<int>(type: "int", nullable: false),
+                    Rol = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -944,16 +927,16 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    UnidadId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TipoCambio = table.Column<int>(type: "INTEGER", nullable: false),
-                    DenominacionAnteriorId = table.Column<int>(type: "INTEGER", nullable: true),
-                    DenominacionNuevaId = table.Column<int>(type: "INTEGER", nullable: true),
-                    UnidadRelacionadaId = table.Column<int>(type: "INTEGER", nullable: true),
-                    FechaUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UsuarioId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Observacion = table.Column<string>(type: "TEXT", maxLength: 250, nullable: true)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UnidadId = table.Column<int>(type: "int", nullable: false),
+                    TipoCambio = table.Column<int>(type: "int", nullable: false),
+                    DenominacionAnteriorId = table.Column<int>(type: "int", nullable: true),
+                    DenominacionNuevaId = table.Column<int>(type: "int", nullable: true),
+                    UnidadRelacionadaId = table.Column<int>(type: "int", nullable: true),
+                    FechaUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UsuarioId = table.Column<int>(type: "int", nullable: false),
+                    Observacion = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -993,20 +976,20 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    UnidadId = table.Column<int>(type: "INTEGER", nullable: false),
-                    AgenteId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ComponenteId = table.Column<int>(type: "INTEGER", nullable: true),
-                    AgenteOcupadoEnDispositivo = table.Column<bool>(type: "INTEGER", nullable: false),
-                    ComponenteOcupadoEnDispositivo = table.Column<bool>(type: "INTEGER", nullable: false),
-                    PrecisionMetros = table.Column<double>(type: "REAL", nullable: true),
-                    Rumbo = table.Column<double>(type: "REAL", nullable: true),
-                    VelocidadKmh = table.Column<double>(type: "REAL", nullable: true),
-                    FechaHoraGpsUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    FechaHoraRecibidaUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    SesionActiva = table.Column<bool>(type: "INTEGER", nullable: false),
-                    SesionCerradaUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    Latitud = table.Column<decimal>(type: "TEXT", precision: 9, scale: 6, nullable: false),
-                    Longitud = table.Column<decimal>(type: "TEXT", precision: 9, scale: 6, nullable: false)
+                    UnidadId = table.Column<int>(type: "int", nullable: false),
+                    AgenteId = table.Column<int>(type: "int", nullable: false),
+                    ComponenteId = table.Column<int>(type: "int", nullable: true),
+                    AgenteOcupadoEnDispositivo = table.Column<bool>(type: "bit", nullable: false),
+                    ComponenteOcupadoEnDispositivo = table.Column<bool>(type: "bit", nullable: false),
+                    PrecisionMetros = table.Column<double>(type: "float", nullable: true),
+                    Rumbo = table.Column<double>(type: "float", nullable: true),
+                    VelocidadKmh = table.Column<double>(type: "float", nullable: true),
+                    FechaHoraGpsUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaHoraRecibidaUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    SesionActiva = table.Column<bool>(type: "bit", nullable: false),
+                    SesionCerradaUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Latitud = table.Column<decimal>(type: "decimal(9,6)", precision: 9, scale: 6, nullable: false),
+                    Longitud = table.Column<decimal>(type: "decimal(9,6)", precision: 9, scale: 6, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1039,19 +1022,19 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    EventoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Rol = table.Column<int>(type: "INTEGER", nullable: false),
-                    Identificacion = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    Nombre = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    Apellido = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    Sexo = table.Column<int>(type: "INTEGER", nullable: false),
-                    Telefono = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    NacionalidadId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Edad = table.Column<int>(type: "INTEGER", nullable: true),
-                    EventoVehiculoId = table.Column<int>(type: "INTEGER", nullable: true),
-                    CiudadanoId = table.Column<int>(type: "INTEGER", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EventoId = table.Column<int>(type: "int", nullable: false),
+                    Rol = table.Column<int>(type: "int", nullable: false),
+                    Identificacion = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Apellido = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Sexo = table.Column<int>(type: "int", nullable: false),
+                    Telefono = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    NacionalidadId = table.Column<int>(type: "int", nullable: true),
+                    Edad = table.Column<int>(type: "int", nullable: true),
+                    EventoVehiculoId = table.Column<int>(type: "int", nullable: true),
+                    CiudadanoId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1087,75 +1070,21 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "evento_vehiculo_tipo_evento",
-                schema: "operaciones",
-                columns: table => new
-                {
-                    EventoVehiculoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TipoEventoId = table.Column<int>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_evento_vehiculo_tipo_evento", x => new { x.EventoVehiculoId, x.TipoEventoId });
-                    table.ForeignKey(
-                        name: "FK_evento_vehiculo_tipo_evento_evento_vehiculo_EventoVehiculoId",
-                        column: x => x.EventoVehiculoId,
-                        principalSchema: "operaciones",
-                        principalTable: "evento_vehiculo",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_evento_vehiculo_tipo_evento_tipo_eventos_TipoEventoId",
-                        column: x => x.TipoEventoId,
-                        principalSchema: "operaciones",
-                        principalTable: "tipo_eventos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "evento_ciudadano_tipo_evento",
-                schema: "operaciones",
-                columns: table => new
-                {
-                    EventoCiudadanoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TipoEventoId = table.Column<int>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_evento_ciudadano_tipo_evento", x => new { x.EventoCiudadanoId, x.TipoEventoId });
-                    table.ForeignKey(
-                        name: "FK_evento_ciudadano_tipo_evento_evento_ciudadano_EventoCiudadanoId",
-                        column: x => x.EventoCiudadanoId,
-                        principalSchema: "operaciones",
-                        principalTable: "evento_ciudadano",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_evento_ciudadano_tipo_evento_tipo_eventos_TipoEventoId",
-                        column: x => x.TipoEventoId,
-                        principalSchema: "operaciones",
-                        principalTable: "tipo_eventos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "evento_evidencias",
                 schema: "operaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    EventoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    RequestId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    Tipo = table.Column<int>(type: "INTEGER", nullable: false),
-                    Ubicacion = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
-                    ContentType = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    TamanoBytes = table.Column<long>(type: "INTEGER", nullable: false),
-                    EventoCiudadanoId = table.Column<int>(type: "INTEGER", nullable: true),
-                    EventoVehiculoId = table.Column<int>(type: "INTEGER", nullable: true),
-                    RegistradaUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EventoId = table.Column<int>(type: "int", nullable: false),
+                    RequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Tipo = table.Column<int>(type: "int", nullable: false),
+                    Ubicacion = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    ContentType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    TamanoBytes = table.Column<long>(type: "bigint", nullable: false),
+                    EventoCiudadanoId = table.Column<int>(type: "int", nullable: true),
+                    EventoVehiculoId = table.Column<int>(type: "int", nullable: true),
+                    RegistradaUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1181,6 +1110,52 @@ namespace Infrastructure.Migrations
                         principalTable: "eventos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "evento_tipo_evento",
+                schema: "operaciones",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EventoId = table.Column<int>(type: "int", nullable: false),
+                    TipoEventoId = table.Column<int>(type: "int", nullable: false),
+                    EventoVehiculoId = table.Column<int>(type: "int", nullable: true),
+                    EventoCiudadanoId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_evento_tipo_evento", x => x.Id);
+                    table.CheckConstraint("CK_evento_tipo_evento_un_involucrado", "[EventoVehiculoId] IS NULL OR [EventoCiudadanoId] IS NULL");
+                    table.ForeignKey(
+                        name: "FK_evento_tipo_evento_evento_ciudadano_EventoCiudadanoId",
+                        column: x => x.EventoCiudadanoId,
+                        principalSchema: "operaciones",
+                        principalTable: "evento_ciudadano",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_evento_tipo_evento_evento_vehiculo_EventoVehiculoId",
+                        column: x => x.EventoVehiculoId,
+                        principalSchema: "operaciones",
+                        principalTable: "evento_vehiculo",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_evento_tipo_evento_eventos_EventoId",
+                        column: x => x.EventoId,
+                        principalSchema: "operaciones",
+                        principalTable: "eventos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_evento_tipo_evento_tipo_eventos_TipoEventoId",
+                        column: x => x.TipoEventoId,
+                        principalSchema: "operaciones",
+                        principalTable: "tipo_eventos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -1313,12 +1288,6 @@ namespace Infrastructure.Migrations
                 column: "NacionalidadId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_evento_ciudadano_tipo_evento_TipoEventoId",
-                schema: "operaciones",
-                table: "evento_ciudadano_tipo_evento",
-                column: "TipoEventoId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_evento_evidencias_EventoCiudadanoId",
                 schema: "operaciones",
                 table: "evento_evidencias",
@@ -1343,6 +1312,30 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 table: "evento_evidencias",
                 column: "EventoVehiculoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_evento_tipo_evento_EventoCiudadanoId_TipoEventoId",
+                schema: "operaciones",
+                table: "evento_tipo_evento",
+                columns: new[] { "EventoCiudadanoId", "TipoEventoId" },
+                unique: true,
+                filter: "[EventoCiudadanoId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_evento_tipo_evento_EventoId_TipoEventoId",
+                schema: "operaciones",
+                table: "evento_tipo_evento",
+                columns: new[] { "EventoId", "TipoEventoId" },
+                unique: true,
+                filter: "[EventoVehiculoId] IS NULL AND [EventoCiudadanoId] IS NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_evento_tipo_evento_EventoVehiculoId_TipoEventoId",
+                schema: "operaciones",
+                table: "evento_tipo_evento",
+                columns: new[] { "EventoVehiculoId", "TipoEventoId" },
+                unique: true,
+                filter: "[EventoVehiculoId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_evento_tipo_evento_TipoEventoId",
@@ -1423,12 +1416,6 @@ namespace Infrastructure.Migrations
                 schema: "operaciones",
                 table: "evento_vehiculo",
                 column: "VehiculoHistoricoId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_evento_vehiculo_tipo_evento_TipoEventoId",
-                schema: "operaciones",
-                table: "evento_vehiculo_tipo_evento",
-                column: "TipoEventoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_eventos_Estado",
@@ -1528,14 +1515,16 @@ namespace Infrastructure.Migrations
                 schema: "accesos",
                 table: "permisos",
                 column: "Name",
-                unique: true);
+                unique: true,
+                filter: "[Name] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
                 schema: "accesos",
                 table: "permisos",
                 column: "NormalizedName",
-                unique: true);
+                unique: true,
+                filter: "[NormalizedName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_prefijo_placa_tipo_vehiculo_TipoVehiculoId",
@@ -1604,7 +1593,8 @@ namespace Infrastructure.Migrations
                 schema: "accesos",
                 table: "usuarios",
                 columns: new[] { "Identificacion", "UserName" },
-                unique: true);
+                unique: true,
+                filter: "[UserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_usuarios_RangoId",
@@ -1617,13 +1607,20 @@ namespace Infrastructure.Migrations
                 schema: "accesos",
                 table: "usuarios",
                 column: "NormalizedUserName",
-                unique: true);
+                unique: true,
+                filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_vehiculos_ColorId",
                 schema: "historico",
                 table: "vehiculos",
                 column: "ColorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_vehiculos_MarcaId",
+                schema: "historico",
+                table: "vehiculos",
+                column: "MarcaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_vehiculos_ModeloId",
@@ -1639,10 +1636,10 @@ namespace Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_vehiculos_TipoId",
+                name: "IX_vehiculos_TipoVehiculoId",
                 schema: "historico",
                 table: "vehiculos",
-                column: "TipoId");
+                column: "TipoVehiculoId");
         }
 
         /// <inheritdoc />
@@ -1672,10 +1669,6 @@ namespace Infrastructure.Migrations
                 schema: "operaciones");
 
             migrationBuilder.DropTable(
-                name: "evento_ciudadano_tipo_evento",
-                schema: "operaciones");
-
-            migrationBuilder.DropTable(
                 name: "evento_evidencias",
                 schema: "operaciones");
 
@@ -1685,10 +1678,6 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "evento_unidad",
-                schema: "operaciones");
-
-            migrationBuilder.DropTable(
-                name: "evento_vehiculo_tipo_evento",
                 schema: "operaciones");
 
             migrationBuilder.DropTable(

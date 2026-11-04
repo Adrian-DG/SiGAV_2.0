@@ -17,8 +17,8 @@ public class DenominacionRepository(SiGAVContext context) : IDenominacionReposit
         => context.NivelesDenominacion.FirstOrDefaultAsync(n => n.Id == nivelDenominacionId && n.IsActive, cancellationToken);
 
     /// <summary>
-    /// Sin distinguir mayúsculas ("samaná móvil i" = "Samaná Móvil I"). Se compara en .NET: upper()
-    /// de SQLite solo convierte ASCII y no igualaría "á" con "Á". El largo acota las candidatas.
+    /// Sin distinguir mayúsculas ("samaná móvil i" = "Samaná Móvil I"). Se compara en .NET para no depender
+    /// de la intercalación (collation) de la base. El largo acota las candidatas.
     /// </summary>
     public async Task<bool> ExisteNombreAsync(string nombre, CancellationToken cancellationToken = default)
     {

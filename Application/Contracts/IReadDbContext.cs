@@ -1,3 +1,4 @@
+using Domain.Entities.Calidad;
 using Domain.Entities.Historico;
 using Domain.Entities.Misc;
 using Domain.Entities.Operaciones;
@@ -44,6 +45,10 @@ public interface IReadDbContext
     IQueryable<EventoUnidadInfo> EventoUnidades { get; }
     IQueryable<EventoCiudadanoInfo> EventoCiudadanos { get; }
     IQueryable<EventoVehiculoInfo> EventoVehiculos { get; }
+
+    // Calidad
+    IQueryable<Encuesta> Encuestas { get; }
+    IQueryable<EvaluacionCalidad> EvaluacionesCalidad { get; }
 
     /// <summary>Usuarios de la web (la entidad de Identity vive en Infrastructure).</summary>
     IQueryable<UsuarioLectura> Usuarios { get; }

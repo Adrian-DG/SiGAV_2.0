@@ -4,6 +4,7 @@ using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Domain.Entities.Calidad;
 using Domain.Entities.Misc;
 using Domain.Entities.Historico;
 using Domain.Entities.Operaciones;
@@ -45,8 +46,8 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     }
 
     /// <summary>
-    /// Todas las fechas con hora del modelo se guardan en UTC. Los proveedores (SQLite en
-    /// particular) las devuelven con Kind = Unspecified; aquí se marcan como UTC al leer para que
+    /// Todas las fechas con hora del modelo se guardan en UTC. Los proveedores (SQL Server
+    /// incluido) las devuelven con Kind = Unspecified; aquí se marcan como UTC al leer para que
     /// se serialicen con "Z" y no se interpreten como hora local.
     /// </summary>
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -118,6 +119,10 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     public DbSet<Tramo> Tramos { get; set; }
     public DbSet<RegionAsistencia> Regiones { get; set; }
 
+    // Calidad
+    public DbSet<Encuesta> Encuestas { get; set; }
+    public DbSet<EvaluacionCalidad> EvaluacionesCalidad { get; set; }
+
     #endregion
 
     #region Lectura (IReadDbContext)
@@ -150,6 +155,8 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     IQueryable<EventoUnidadInfo> IReadDbContext.EventoUnidades => EventoUnidades.AsNoTracking();
     IQueryable<EventoCiudadanoInfo> IReadDbContext.EventoCiudadanos => EventoCiudadanos.AsNoTracking();
     IQueryable<EventoVehiculoInfo> IReadDbContext.EventoVehiculos => EventoVehiculos.AsNoTracking();
+    IQueryable<Encuesta> IReadDbContext.Encuestas => Encuestas.AsNoTracking();
+    IQueryable<EvaluacionCalidad> IReadDbContext.EvaluacionesCalidad => EvaluacionesCalidad.AsNoTracking();
     IQueryable<UsuarioLectura> IReadDbContext.Usuarios => Users.AsNoTracking().Select(u => new UsuarioLectura { Id = u.Id, UserName = u.UserName });
 
     #endregion

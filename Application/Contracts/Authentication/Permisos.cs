@@ -13,6 +13,8 @@ public static class Permisos
     public const string AgentesVer = "agentes.ver";
     public const string UnidadesVer = "unidades.ver";
     public const string UsuariosGestionar = "usuarios.gestionar";
+    public const string CalidadEvaluar = "calidad.evaluar";
+    public const string CalidadEncuestas = "calidad.encuestas";
 
     /// <summary>Catálogo completo: se crea como roles al arrancar (PermisosSeeder) y genera una política por permiso.</summary>
     public static readonly IReadOnlyList<PermisoInfo> Todos =
@@ -23,6 +25,8 @@ public static class Permisos
         new(AgentesVer, "Agentes", "Consultar el personal operativo y su autorización."),
         new(UnidadesVer, "Unidades y denominaciones", "Consultar unidades, denominaciones y tramos."),
         new(UsuariosGestionar, "Usuarios y permisos", "Asignar permisos a los usuarios del front desk."),
+        new(CalidadEvaluar, "Calidad", "Contactar a los ciudadanos de los eventos completados, registrar la encuesta de calidad y exportar los resultados."),
+        new(CalidadEncuestas, "Encuestas de calidad", "Crear nuevas versiones de la encuesta de calidad y publicarlas."),
     ];
 
     public static bool Existe(string permiso) => Todos.Any(p => p.Nombre == permiso);

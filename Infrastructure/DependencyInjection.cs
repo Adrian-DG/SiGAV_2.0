@@ -1,3 +1,4 @@
+using Infrastructure.Persistance.Calidad;
 using Application.Contracts;
 using Infrastructure.Almacenamiento;
 using Microsoft.Extensions.Configuration;
@@ -37,7 +38,7 @@ public static class DependencyInjection
                 ? configuration.GetConnectionString("ProductionConnection")
                 : configuration.GetConnectionString("DevelopmentConnection");
 
-            opt.UsarSqlite(connectionString);
+            opt.UsarSqlServer(connectionString);
             opt.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
             opt.EnableDetailedErrors();
         });
@@ -62,6 +63,8 @@ public static class DependencyInjection
         services.AddScoped<IAgenteRepository, AgenteRepository>();
         services.AddScoped<IEventoRepository, EventoRepository>();
         services.AddScoped<IHistoricoRepository, HistoricoRepository>();
+        services.AddScoped<IEncuestaRepository, EncuestaRepository>();
+        services.AddScoped<IEvaluacionCalidadRepository, EvaluacionCalidadRepository>();
 
         // Cargas masivas desde Excel y sus plantillas
         services.AddSingleton<IHojaCalculo, HojaCalculoXlsx>();

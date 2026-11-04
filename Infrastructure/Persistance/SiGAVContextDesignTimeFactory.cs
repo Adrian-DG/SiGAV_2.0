@@ -1,4 +1,3 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
@@ -29,18 +28,9 @@ internal sealed class SiGAVContextDesignTimeFactory : IDesignTimeDbContextFactor
             ? configuration.GetConnectionString("ProductionConnection")
             : configuration.GetConnectionString("DevelopmentConnection");
 
-        // Una ruta relativa se resuelve desde Presentation: la misma base que usa la API al correr
-        if (!string.IsNullOrWhiteSpace(connectionString))
-        {
-            var sqlite = new SqliteConnectionStringBuilder(connectionString);
-            if (!Path.IsPathRooted(sqlite.DataSource) && sqlite.DataSource != ":memory:")
-                sqlite.DataSource = Path.Combine(presentation, sqlite.DataSource);
-            connectionString = sqlite.ToString();
-        }
-
         // Sin interceptores: la auditoría no aplica al generar o aplicar migraciones
         var options = new DbContextOptionsBuilder<SiGAVContext>();
-        options.UsarSqlite(connectionString);
+        options.UsarSqlServer(connectionString);
         return new SiGAVContext(options.Options);
     }
 

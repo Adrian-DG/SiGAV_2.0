@@ -7,4 +7,5 @@ internal static class Schemas
     public const string Misc = "misc";
     public const string Historico = "historico";
     public const string Operaciones = "operaciones";
+    public const string Calidad = "calidad";
 }
