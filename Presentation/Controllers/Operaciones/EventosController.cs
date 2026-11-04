@@ -91,6 +91,14 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
         return NoContent();
     }
 
+    /// <summary>La unidad de apoyo solicitada llegó al lugar (solo app; el estado del evento no cambia).</summary>
+    [HttpPatch("{id:int}/llegada-apoyo")]
+    public async Task<IActionResult> ConfirmarLlegadaApoyo([FromRoute] int id, CancellationToken cancellationToken)
+    {
+        await Mediator.Send(new ConfirmarLlegadaApoyoCommand(id), cancellationToken);
+        return NoContent();
+    }
+
     [HttpPatch("{id:int}/completar")]
     public async Task<IActionResult> Completar([FromRoute] int id, [FromBody] CompletarRequest request, CancellationToken cancellationToken)
     {

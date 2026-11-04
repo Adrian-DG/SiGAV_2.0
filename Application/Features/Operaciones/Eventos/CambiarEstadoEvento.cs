@@ -32,6 +32,33 @@ public class IniciarAtencionEventoCommandHandler(
     }
 }
 
+// Command (app): la unidad de apoyo que pidió el centro llegó al lugar (Apoyo solicitado → Apoyo).
+// No cambia el estado del evento: eso lo hace la unidad principal.
+public record ConfirmarLlegadaApoyoCommand(int EventoId) : IRequest;
+
+public class ConfirmarLlegadaApoyoCommandHandler(
+    IEventoRepository eventos,
+    ICurrentUserService currentUser,
+    IUnitOfWork uow) : IRequestHandler<ConfirmarLlegadaApoyoCommand, Unit>
+{
+    public async Task<Unit> Handle(ConfirmarLlegadaApoyoCommand request, CancellationToken cancellationToken)
+    {
+        var unidadId = EventoAcceso.UnidadDeAlcance(currentUser)
+            ?? throw new ForbiddenException("Solo la unidad de apoyo confirma su llegada desde la app.");
+
+        var evento = await eventos.GetByIdAsync(request.EventoId, cancellationToken)
+            ?? throw new NotFoundException("El evento", request.EventoId);
+        EventoAcceso.AsegurarParticipa(evento, currentUser);
+        if (evento.Estado == EstadoEventoEnum.Completado)
+            throw new ConflictException("El evento ya fue completado.");
+
+        evento.ConfirmarLlegadaApoyo(unidadId);
+
+        await uow.SaveChangesAsync(cancellationToken);
+        return Unit.Value;
+    }
+}
+
 // Command: cierre del evento. Sin fecha se usa la hora actual.
 public record CompletarEventoCommand(int EventoId, int TipoCierreId, DateTime? FechaHoraCompletadoUtc = null) : IRequest;
 
