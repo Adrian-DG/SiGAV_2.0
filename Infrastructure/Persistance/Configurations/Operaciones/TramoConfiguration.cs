@@ -11,8 +11,8 @@ internal sealed class TramoConfiguration : IEntityTypeConfiguration<Tramo>
         builder.ToTable("tramos", Schemas.Operaciones);
         builder.ConfigureBaseEntity();
 
-        builder.HasOne(t => t.RegionAsistencia)
+        builder.HasOne(t => t.Zona)
             .WithMany()
-            .HasForeignKey(t => t.RegionAsistenciaId);
+            .HasForeignKey(t => t.ZonaId);
     }
 }

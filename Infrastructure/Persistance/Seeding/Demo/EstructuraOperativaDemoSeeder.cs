@@ -44,7 +44,7 @@ internal sealed class EstructuraOperativaDemoSeeder(
         // DefinirAsignaciones necesita para validar la jerarquía.
         var niveles = await context.NivelesDenominacion.ToDictionaryAsync(n => n.Nombre, cancellationToken);
         var tramos = await context.Tramos.ToDictionaryAsync(t => t.Nombre, t => t.Id, cancellationToken);
-        var regiones = await context.Regiones.ToDictionaryAsync(r => r.Nombre, r => r.Id, cancellationToken);
+        var zonas = await context.Zonas.ToDictionaryAsync(z => z.Nombre, z => z.Id, cancellationToken);
 
         foreach (var demo in DemoData.Denominaciones)
         {
@@ -53,7 +53,7 @@ internal sealed class EstructuraOperativaDemoSeeder(
 
             denominacion.DefinirAsignaciones(
                 demo.RegionesMacro ?? [],
-                (demo.RegionesAsistencia ?? []).Select(r => regiones[r]),
+                (demo.Zonas ?? []).Select(z => zonas[z]),
                 (demo.TramosAdicionales ?? []).Select(t => tramos[t]));
 
             var unidad = Unidad.Crear(demo.Ficha, demo.Placa);

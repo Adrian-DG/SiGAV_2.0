@@ -30,7 +30,7 @@ public interface IReadDbContext
     IQueryable<Vehiculo> Vehiculos { get; }
 
     // Operaciones
-    IQueryable<RegionAsistencia> Regiones { get; }
+    IQueryable<Zona> Zonas { get; }
     IQueryable<Tramo> Tramos { get; }
     IQueryable<NivelDenominacion> NivelesDenominacion { get; }
     IQueryable<Denominacion> Denominaciones { get; }

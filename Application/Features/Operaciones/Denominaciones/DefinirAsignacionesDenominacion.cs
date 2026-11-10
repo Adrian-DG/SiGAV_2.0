@@ -9,13 +9,13 @@ using MediatR;
 namespace Application.Features.Operaciones.Denominaciones;
 
 // Command: reemplaza las regiones/tramos que supervisa una denominación de encargado.
-//  - Regional: RegionesMacro y/o RegionesAsistencia
+//  - Regional: RegionesMacro y/o Zonas (de cualquier región)
 //  - Tramo:    Tramos (su propio tramo siempre está incluido)
 //  - Unidad:   no admite asignaciones (enviar listas vacías para limpiar)
 public record DefinirAsignacionesDenominacionCommand(
     int DenominacionId,
     IReadOnlyList<RegionMacroEnum>? RegionesMacro,
-    IReadOnlyList<int>? RegionesAsistencia,
+    IReadOnlyList<int>? Zonas,
     IReadOnlyList<int>? Tramos) : IRequest;
 
 // Validator
@@ -30,10 +30,10 @@ public class DefinirAsignacionesDenominacionCommandValidator : AbstractValidator
         RuleForEach(x => x.RegionesMacro)
             .IsInEnum().WithMessage("Hay regiones macro no válidas.");
 
-        RuleFor(x => x.RegionesAsistencia)
-            .Must(r => r is null || r.Count <= MaxAsignaciones).WithMessage($"No se pueden asignar más de {MaxAsignaciones} regiones.")
-            .MustAsync((ids, ct) => db.Regiones.ExistenActivosAsync(ids, ct))
-            .WithMessage("Una o más regiones de asistencia no existen.");
+        RuleFor(x => x.Zonas)
+            .Must(r => r is null || r.Count <= MaxAsignaciones).WithMessage($"No se pueden asignar más de {MaxAsignaciones} zonas.")
+            .MustAsync((ids, ct) => db.Zonas.ExistenActivosAsync(ids, ct))
+            .WithMessage("Una o más zonas no existen.");
 
         RuleFor(x => x.Tramos)
             .Must(t => t is null || t.Count <= MaxAsignaciones).WithMessage($"No se pueden asignar más de {MaxAsignaciones} tramos.")
@@ -54,7 +54,7 @@ public class DefinirAsignacionesDenominacionCommandHandler(IDenominacionReposito
         // Las reglas de qué jerarquía admite qué asignación viven en el agregado
         denominacion.DefinirAsignaciones(
             request.RegionesMacro ?? [],
-            request.RegionesAsistencia ?? [],
+            request.Zonas ?? [],
             request.Tramos ?? []);
 
         await uow.SaveChangesAsync(cancellationToken);

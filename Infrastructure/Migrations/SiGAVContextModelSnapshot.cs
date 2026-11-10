@@ -18,7 +18,7 @@ namespace Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -762,27 +762,27 @@ namespace Infrastructure.Migrations
                     b.Property<int>("DenominacionId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("RegionAsistenciaId")
+                    b.Property<int?>("RegionMacro")
                         .HasColumnType("int");
 
-                    b.Property<int?>("RegionMacro")
+                    b.Property<int?>("ZonaId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RegionAsistenciaId");
-
-                    b.HasIndex("DenominacionId", "RegionAsistenciaId")
-                        .IsUnique()
-                        .HasFilter("[RegionAsistenciaId] IS NOT NULL");
+                    b.HasIndex("ZonaId");
 
                     b.HasIndex("DenominacionId", "RegionMacro")
                         .IsUnique()
                         .HasFilter("[RegionMacro] IS NOT NULL");
 
+                    b.HasIndex("DenominacionId", "ZonaId")
+                        .IsUnique()
+                        .HasFilter("[ZonaId] IS NOT NULL");
+
                     b.ToTable("denominacion_regiones", "operaciones", t =>
                         {
-                            t.HasCheckConstraint("CK_denominacion_regiones_macro_o_asistencia", "([RegionMacro] IS NOT NULL AND [RegionAsistenciaId] IS NULL) OR ([RegionMacro] IS NULL AND [RegionAsistenciaId] IS NOT NULL)");
+                            t.HasCheckConstraint("CK_denominacion_regiones_macro_o_zona", "([RegionMacro] IS NOT NULL AND [ZonaId] IS NULL) OR ([RegionMacro] IS NULL AND [ZonaId] IS NOT NULL)");
                         });
                 });
 
@@ -1197,29 +1197,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("niveles_denominacion", "operaciones");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Operaciones.RegionAsistencia", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Region")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("regiones_asistencia", "operaciones");
-                });
-
             modelBuilder.Entity("Domain.Entities.Operaciones.TipoCierre", b =>
                 {
                     b.Property<int>("Id")
@@ -1278,12 +1255,12 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RegionAsistenciaId")
+                    b.Property<int>("ZonaId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RegionAsistenciaId");
+                    b.HasIndex("ZonaId");
 
                     b.ToTable("tramos", "operaciones");
                 });
@@ -1398,6 +1375,29 @@ namespace Infrastructure.Migrations
                     b.HasIndex("FechaHoraRecibidaUtc");
 
                     b.ToTable("unidad_posicion", "operaciones");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Operaciones.Zona", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Region")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("zonas", "operaciones");
                 });
 
             modelBuilder.Entity("Infrastructure.Identity.AppPermission", b =>
@@ -1827,12 +1827,12 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.Operaciones.RegionAsistencia", "RegionAsistencia")
+                    b.HasOne("Domain.Entities.Operaciones.Zona", "Zona")
                         .WithMany()
-                        .HasForeignKey("RegionAsistenciaId")
+                        .HasForeignKey("ZonaId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("RegionAsistencia");
+                    b.Navigation("Zona");
                 });
 
             modelBuilder.Entity("Domain.Entities.Operaciones.DenominacionTramo", b =>
@@ -2201,13 +2201,13 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Operaciones.Tramo", b =>
                 {
-                    b.HasOne("Domain.Entities.Operaciones.RegionAsistencia", "RegionAsistencia")
+                    b.HasOne("Domain.Entities.Operaciones.Zona", "Zona")
                         .WithMany()
-                        .HasForeignKey("RegionAsistenciaId")
+                        .HasForeignKey("ZonaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("RegionAsistencia");
+                    b.Navigation("Zona");
                 });
 
             modelBuilder.Entity("Domain.Entities.Operaciones.Unidad", b =>

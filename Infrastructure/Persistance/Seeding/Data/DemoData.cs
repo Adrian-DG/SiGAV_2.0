@@ -16,16 +16,16 @@ internal static class DemoData
         string Ficha,
         string? Placa = null,
         RegionMacroEnum[]? RegionesMacro = null,
-        string[]? RegionesAsistencia = null,
+        string[]? Zonas = null,
         string[]? TramosAdicionales = null);
 
     public static readonly DenominacionDemo[] Denominaciones =
     [
-        // Regionales: una por región macro y otra por regiones de asistencia puntuales
+        // Regionales: una por región macro y otra por zonas puntuales
         new("Supervisor Norte", "Supervisor Regional", "Tramo Cibao Norte", "CA-0110", "EL00101",
             RegionesMacro: [RegionMacroEnum.NORTE]),
         new("Supervisor Este", "Supervisor Regional", "Tramo Carretero Punta Cana", "CA-0220", "EL00102",
-            RegionesAsistencia: ["Region Este", "Region Las Americas"]),
+            Zonas: ["Region Este", "Region Las Americas"]),
 
         // Encargados de tramo: su tramo más los adicionales
         new("Encargado Punta Cana", "Encargado de Tramo", "Tramo Carretero Punta Cana", "CA-0330", "EL00201",

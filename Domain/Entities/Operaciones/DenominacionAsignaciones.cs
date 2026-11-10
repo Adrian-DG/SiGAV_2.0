@@ -4,8 +4,7 @@ namespace Domain.Entities.Operaciones;
 
 /// <summary>
 /// Región supervisada por una denominación de jerarquía Regional. Es una región macro
-/// (cubre todas sus regiones de asistencia, incluso las que se creen después) o una región
-/// de asistencia puntual; nunca ambas.
+/// (cubre todas sus zonas, incluso las que se creen después) o una zona puntual; nunca ambas.
 /// </summary>
 public class DenominacionRegion
 {
@@ -15,14 +14,14 @@ public class DenominacionRegion
 
     public RegionMacroEnum? RegionMacro { get; private set; }
 
-    public int? RegionAsistenciaId { get; private set; }
-    public virtual RegionAsistencia? RegionAsistencia { get; private set; }
+    public int? ZonaId { get; private set; }
+    public virtual Zona? Zona { get; private set; }
 
     private DenominacionRegion() { }
 
     internal static DenominacionRegion DeMacro(RegionMacroEnum macro) => new() { RegionMacro = macro };
 
-    internal static DenominacionRegion DeAsistencia(int regionAsistenciaId) => new() { RegionAsistenciaId = regionAsistenciaId };
+    internal static DenominacionRegion DeZona(int zonaId) => new() { ZonaId = zonaId };
 }
 
 /// <summary>

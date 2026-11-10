@@ -27,8 +27,8 @@ public class GetDenominacionDetalleQueryHandler(IReadDbContext db)
                 Tramo = d.Tramo!.Nombre,
                 Macros = d.Regiones.Where(r => r.RegionMacro != null).Select(r => r.RegionMacro!.Value).ToList(),
                 Regiones = d.Regiones
-                    .Where(r => r.RegionAsistenciaId != null)
-                    .Select(r => new AsignacionViewModel(r.RegionAsistencia!.Id, r.RegionAsistencia.Nombre))
+                    .Where(r => r.ZonaId != null)
+                    .Select(r => new AsignacionViewModel(r.Zona!.Id, r.Zona.Nombre))
                     .ToList(),
                 Tramos = d.Tramos.Select(t => new AsignacionViewModel(t.Tramo!.Id, t.Tramo.Nombre)).ToList()
             })

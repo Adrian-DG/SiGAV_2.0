@@ -42,8 +42,8 @@ public class GetEstadisticasEventosQueryHandler(
 {
     private sealed record Fila(int EventoId, int UnidadId, int DenominacionId, int TramoId, int? TipoEventoId);
     private sealed record TipoInfo(string Nombre, CategoriaEventoEnum Categoria);
-    private sealed record TramoInfo(string Nombre, int RegionAsistenciaId);
-    private sealed record RegionInfo(string Nombre, RegionMacroEnum Macro);
+    private sealed record TramoInfo(string Nombre, int ZonaId);
+    private sealed record ZonaInfo(string Nombre, RegionMacroEnum Macro);
 
     private static readonly ResumenEventosViewModel ResumenVacio = new(0, [], []);
 
@@ -101,11 +101,11 @@ public class GetEstadisticasEventosQueryHandler(
             .ToDictionaryAsync(d => d.Id, d => d.Nombre, cancellationToken);
         var tramos = await db.Tramos
             .Where(t => tramoIds.Contains(t.Id))
-            .ToDictionaryAsync(t => t.Id, t => new TramoInfo(t.Nombre, t.RegionAsistenciaId), cancellationToken);
-        var regionIds = tramos.Values.Select(t => t.RegionAsistenciaId).Distinct().ToList();
-        var regiones = await db.Regiones
-            .Where(r => regionIds.Contains(r.Id))
-            .ToDictionaryAsync(r => r.Id, r => new RegionInfo(r.Nombre, r.Region), cancellationToken);
+            .ToDictionaryAsync(t => t.Id, t => new TramoInfo(t.Nombre, t.ZonaId), cancellationToken);
+        var zonaIds = tramos.Values.Select(t => t.ZonaId).Distinct().ToList();
+        var zonas = await db.Zonas
+            .Where(r => zonaIds.Contains(r.Id))
+            .ToDictionaryAsync(r => r.Id, r => new ZonaInfo(r.Nombre, r.Region), cancellationToken);
 
         ResumenEventosViewModel Resumir(IReadOnlyCollection<Fila> grupo)
         {
@@ -132,13 +132,13 @@ public class GetEstadisticasEventosQueryHandler(
         }
 
         var arbol = filas
-            .GroupBy(f => tramos.TryGetValue(f.TramoId, out var t) ? t.RegionAsistenciaId : 0)
-            .Select(porRegion =>
+            .GroupBy(f => tramos.TryGetValue(f.TramoId, out var t) ? t.ZonaId : 0)
+            .Select(porZona =>
             {
-                var region = regiones.GetValueOrDefault(porRegion.Key);
-                var filasRegion = porRegion.ToList();
+                var zona = zonas.GetValueOrDefault(porZona.Key);
+                var filasZona = porZona.ToList();
 
-                var tramosRegion = filasRegion
+                var tramosZona = filasZona
                     .GroupBy(f => f.TramoId)
                     .Select(porTramo =>
                     {
@@ -164,15 +164,15 @@ public class GetEstadisticasEventosQueryHandler(
                     .OrderBy(t => t.Tramo)
                     .ToList();
 
-                return new RegionEstadisticaViewModel(
-                    porRegion.Key,
-                    region?.Nombre ?? string.Empty,
-                    region?.Macro ?? default,
-                    Resumir(filasRegion),
-                    tramosRegion);
+                return new ZonaEstadisticaViewModel(
+                    porZona.Key,
+                    zona?.Nombre ?? string.Empty,
+                    zona?.Macro ?? default,
+                    Resumir(filasZona),
+                    tramosZona);
             })
             .OrderBy(r => r.RegionMacro)
-            .ThenBy(r => r.Region)
+            .ThenBy(r => r.Zona)
             .ToList();
 
         return new EstadisticasEventosViewModel(alcanceViewModel, desde, hasta, Resumir(filas), arbol);
@@ -214,10 +214,10 @@ public class GetEstadisticasEventosQueryHandler(
         {
             case JerarquiaEnum.Regional:
                 var macros = alcance.RegionesMacro.ToList();
-                var regiones = alcance.RegionesAsistencia.ToList();
+                var zonasAlcance = alcance.Zonas.ToList();
                 // Incluye tramos inactivos: sus eventos históricos siguen contando
                 return await db.Tramos
-                    .Where(t => regiones.Contains(t.RegionAsistenciaId) || macros.Contains(t.RegionAsistencia!.Region))
+                    .Where(t => zonasAlcance.Contains(t.ZonaId) || macros.Contains(t.Zona!.Region))
                     .Select(t => t.Id)
                     .ToListAsync(cancellationToken);
             case JerarquiaEnum.Tramo:
@@ -236,11 +236,11 @@ public class GetEstadisticasEventosQueryHandler(
                 .FirstOrDefaultAsync(cancellationToken)
             : null;
 
-        var regionIds = alcance.RegionesAsistencia.ToList();
-        var regiones = regionIds.Count == 0
+        var zonaIds = alcance.Zonas.ToList();
+        var zonas = zonaIds.Count == 0
             ? []
-            : await db.Regiones
-                .Where(r => regionIds.Contains(r.Id))
+            : await db.Zonas
+                .Where(r => zonaIds.Contains(r.Id))
                 .OrderBy(r => r.Nombre)
                 .Select(r => new AsignacionViewModel(r.Id, r.Nombre))
                 .ToListAsync(cancellationToken);
@@ -258,7 +258,7 @@ public class GetEstadisticasEventosQueryHandler(
             alcance.DenominacionId,
             denominacion,
             alcance.RegionesMacro.Order().ToList(),
-            regiones,
+            zonas,
             tramos);
     }
 }

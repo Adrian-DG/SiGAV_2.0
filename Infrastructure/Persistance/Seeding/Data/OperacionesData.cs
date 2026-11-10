@@ -3,16 +3,16 @@ using Domain.Enums;
 namespace Infrastructure.Persistance.Seeding.Data;
 
 /// <summary>
-/// Estructura operativa de SiGAV 1.0 (regiones de asistencia, tramos, tipos de unidad y de
+/// Estructura operativa de SiGAV 1.0 (zonas, antes regiones de asistencia; tramos, tipos de unidad y de
 /// asistencia), en el orden de sus Ids.
 /// </summary>
 internal static class OperacionesData
 {
     /// <summary>
-    /// El legacy no guardaba la región macro de cada región de asistencia; se asigna según la
+    /// El legacy no guardaba la región de cada zona (región de asistencia); se asigna según la
     /// región macro de las provincias que cubre.
     /// </summary>
-    public static readonly (string Nombre, RegionMacroEnum Macro)[] Regiones =
+    public static readonly (string Nombre, RegionMacroEnum Macro)[] Zonas =
     [
         ("Region Este", RegionMacroEnum.ESTE),
         ("Region Las Americas", RegionMacroEnum.ESTE),
@@ -25,8 +25,8 @@ internal static class OperacionesData
         ("Region Circunvalacion de Santo Domingo", RegionMacroEnum.ESTE)
     ];
 
-    /// <summary>(Tramo, región de asistencia).</summary>
-    public static readonly (string Nombre, string Region)[] Tramos =
+    /// <summary>(Tramo, zona).</summary>
+    public static readonly (string Nombre, string Zona)[] Tramos =
     [
         ("Tramo Carretero Miches", "Region Este"),
         ("Tramo Carretero Punta Cana", "Region Este"),

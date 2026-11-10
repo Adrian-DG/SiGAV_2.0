@@ -12,7 +12,7 @@ public sealed record AlcanceEstadistico
     public int? DenominacionId { get; private init; }
     public int? UnidadId { get; private init; }
     public IReadOnlyCollection<RegionMacroEnum> RegionesMacro { get; private init; } = [];
-    public IReadOnlyCollection<int> RegionesAsistencia { get; private init; } = [];
+    public IReadOnlyCollection<int> Zonas { get; private init; } = [];
     public IReadOnlyCollection<int> Tramos { get; private init; } = [];
 
     public bool EsGlobal => Jerarquia is null;
@@ -20,7 +20,7 @@ public sealed record AlcanceEstadistico
     /// <summary>Una denominación regional o de tramo sin asignaciones no ve nada.</summary>
     public bool EstaVacio => Jerarquia switch
     {
-        JerarquiaEnum.Regional => RegionesMacro.Count == 0 && RegionesAsistencia.Count == 0,
+        JerarquiaEnum.Regional => RegionesMacro.Count == 0 && Zonas.Count == 0,
         JerarquiaEnum.Tramo => Tramos.Count == 0,
         JerarquiaEnum.Unidad => UnidadId is null,
         _ => false
@@ -30,12 +30,12 @@ public sealed record AlcanceEstadistico
 
     public static AlcanceEstadistico Global() => new();
 
-    public static AlcanceEstadistico Regional(int denominacionId, IEnumerable<RegionMacroEnum> macros, IEnumerable<int> regionesAsistencia) => new()
+    public static AlcanceEstadistico Regional(int denominacionId, IEnumerable<RegionMacroEnum> macros, IEnumerable<int> zonas) => new()
     {
         Jerarquia = JerarquiaEnum.Regional,
         DenominacionId = denominacionId,
         RegionesMacro = macros.Distinct().ToArray(),
-        RegionesAsistencia = regionesAsistencia.Distinct().ToArray()
+        Zonas = zonas.Distinct().ToArray()
     };
 
     public static AlcanceEstadistico DeTramos(int denominacionId, IEnumerable<int> tramos) => new()

@@ -23,7 +23,7 @@ public record DenominacionDetalleViewModel(
     int TramoId,
     string Tramo,
     IReadOnlyList<RegionMacroEnum> RegionesMacro,
-    IReadOnlyList<AsignacionViewModel> RegionesAsistencia,
+    IReadOnlyList<AsignacionViewModel> Zonas,
     IReadOnlyList<AsignacionViewModel> TramosAsignados);
 
 public record AsignacionViewModel(int Id, string Nombre);

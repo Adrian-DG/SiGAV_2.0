@@ -117,7 +117,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     public DbSet<UnidadPosicion> UnidadPosiciones { get; set; }
     public DbSet<Flota> Flotas { get; set; }
     public DbSet<Tramo> Tramos { get; set; }
-    public DbSet<RegionAsistencia> Regiones { get; set; }
+    public DbSet<Zona> Zonas { get; set; }
 
     // Calidad
     public DbSet<Encuesta> Encuestas { get; set; }
@@ -140,7 +140,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     IQueryable<PrefijoPlaca> IReadDbContext.PrefijosPlaca => PrefijosPlaca.AsNoTracking();
     IQueryable<Ciudadano> IReadDbContext.Ciudadanos => Ciudadanos.AsNoTracking();
     IQueryable<Vehiculo> IReadDbContext.Vehiculos => Vehiculos.AsNoTracking();
-    IQueryable<RegionAsistencia> IReadDbContext.Regiones => Regiones.AsNoTracking();
+    IQueryable<Zona> IReadDbContext.Zonas => Zonas.AsNoTracking();
     IQueryable<Tramo> IReadDbContext.Tramos => Tramos.AsNoTracking();
     IQueryable<NivelDenominacion> IReadDbContext.NivelesDenominacion => NivelesDenominacion.AsNoTracking();
     IQueryable<Denominacion> IReadDbContext.Denominaciones => Denominaciones.AsNoTracking();

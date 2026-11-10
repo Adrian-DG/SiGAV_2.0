@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<IUnidadRepository, UnidadRepository>();
         services.AddScoped<IUnidadPosicionRepository, UnidadPosicionRepository>();
         services.AddScoped<IDenominacionRepository, DenominacionRepository>();
+        services.AddScoped<IZonaRepository, ZonaRepository>();
         services.AddScoped<IAgenteRepository, AgenteRepository>();
         services.AddScoped<IEventoRepository, EventoRepository>();
         services.AddScoped<IHistoricoRepository, HistoricoRepository>();

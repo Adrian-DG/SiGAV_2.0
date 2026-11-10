@@ -19,7 +19,8 @@ public record DenominacionOpcionViewModel(
 
 public record NivelOpcionViewModel(int Id, string Nombre, JerarquiaEnum Jerarquia);
 
-public record TramoOpcionViewModel(int Id, string Nombre);
+/// <param name="Zona">Zona del tramo (para distinguirlo en los selectores).</param>
+public record TramoOpcionViewModel(int Id, string Nombre, string Zona);
 
 public record OpcionesAsignacionViewModel(
     IReadOnlyList<UnidadOpcionViewModel> Unidades,
@@ -60,9 +61,9 @@ public class GetOpcionesAsignacionQueryHandler(IReadDbContext db) : IRequestHand
             .ToListAsync(cancellationToken);
 
         var tramos = await db.Tramos
-            .Where(t => t.IsActive)
+            .Where(t => t.IsActive && t.Zona!.IsActive)
             .OrderBy(t => t.Nombre)
-            .Select(t => new TramoOpcionViewModel(t.Id, t.Nombre))
+            .Select(t => new TramoOpcionViewModel(t.Id, t.Nombre, t.Zona!.Nombre))
             .ToListAsync(cancellationToken);
 
         var niveles = await db.NivelesDenominacion

@@ -5,7 +5,7 @@ namespace Domain.Enums;
 /// </summary>
 public enum JerarquiaEnum
 {
-    /// <summary>Encargado regional: todos los tramos de las regiones (macro o de asistencia) asignadas.</summary>
+    /// <summary>Encargado regional: todos los tramos de las regiones y zonas asignadas.</summary>
     Regional = 1,
 
     /// <summary>Encargado de tramo: su tramo y los tramos que tenga asignados.</summary>

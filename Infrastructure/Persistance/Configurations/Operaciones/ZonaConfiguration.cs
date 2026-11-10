@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Persistance.Configurations.Operaciones;
 
-internal sealed class RegionAsistenciaConfiguration : IEntityTypeConfiguration<RegionAsistencia>
+internal sealed class ZonaConfiguration : IEntityTypeConfiguration<Zona>
 {
-    public void Configure(EntityTypeBuilder<RegionAsistencia> builder)
+    public void Configure(EntityTypeBuilder<Zona> builder)
     {
-        builder.ToTable("regiones_asistencia", Schemas.Operaciones);
+        builder.ToTable("zonas", Schemas.Operaciones);
         builder.ConfigureBaseEntity();
     }
 }

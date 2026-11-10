@@ -11,7 +11,7 @@ public record EstadisticasEventosViewModel(
     DateOnly Desde,
     DateOnly Hasta,
     ResumenEventosViewModel Resumen,
-    IReadOnlyList<RegionEstadisticaViewModel> Regiones);
+    IReadOnlyList<ZonaEstadisticaViewModel> Zonas);
 
 /// <summary>Qué cubre la consulta. Jerarquia null = sin restricción (front desk).</summary>
 public record AlcanceViewModel(
@@ -19,7 +19,7 @@ public record AlcanceViewModel(
     int? DenominacionId,
     string? Denominacion,
     IReadOnlyList<RegionMacroEnum> RegionesMacro,
-    IReadOnlyList<AsignacionViewModel> RegionesAsistencia,
+    IReadOnlyList<AsignacionViewModel> Zonas,
     IReadOnlyList<AsignacionViewModel> Tramos);
 
 /// <summary>
@@ -35,9 +35,9 @@ public record CategoriaTotalViewModel(CategoriaEventoEnum Categoria, int Total);
 
 public record TipoEventoTotalViewModel(int TipoEventoId, string TipoEvento, CategoriaEventoEnum Categoria, int Total);
 
-public record RegionEstadisticaViewModel(
-    int RegionAsistenciaId,
-    string Region,
+public record ZonaEstadisticaViewModel(
+    int ZonaId,
+    string Zona,
     RegionMacroEnum RegionMacro,
     ResumenEventosViewModel Resumen,
     IReadOnlyList<TramoEstadisticaViewModel> Tramos);

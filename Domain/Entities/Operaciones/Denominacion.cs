@@ -72,26 +72,26 @@ public class Denominacion : NamedMetadata, IAuditableMetadata
     /// </summary>
     public void DefinirAsignaciones(
         IEnumerable<RegionMacroEnum> regionesMacro,
-        IEnumerable<int> regionesAsistencia,
+        IEnumerable<int> zonas,
         IEnumerable<int> tramos)
     {
         var jerarquia = ObtenerJerarquia();
         var macros = regionesMacro.Distinct().ToList();
-        var regiones = regionesAsistencia.Distinct().ToList();
+        var regiones = zonas.Distinct().ToList();
         var tramosAdicionales = tramos.Distinct().Where(t => t != TramoId).ToList();
 
         if (macros.Any(m => !Enum.IsDefined(m)))
             throw new DomainException("Hay regiones macro no válidas.");
 
         if (jerarquia != JerarquiaEnum.Regional && (macros.Count > 0 || regiones.Count > 0))
-            throw new DomainException($"La denominación '{Nombre}' no es de nivel regional; no puede tener regiones asignadas.");
+            throw new DomainException($"La denominación '{Nombre}' no es de nivel regional; no puede tener regiones ni zonas asignadas.");
 
         if (jerarquia != JerarquiaEnum.Tramo && tramosAdicionales.Count > 0)
             throw new DomainException($"La denominación '{Nombre}' no es de nivel tramo; no puede tener tramos asignados.");
 
         _regiones.Clear();
         _regiones.AddRange(macros.Select(DenominacionRegion.DeMacro));
-        _regiones.AddRange(regiones.Select(DenominacionRegion.DeAsistencia));
+        _regiones.AddRange(regiones.Select(DenominacionRegion.DeZona));
 
         _tramos.Clear();
         _tramos.AddRange(tramosAdicionales.Select(t => new DenominacionTramo(t)));
@@ -106,7 +106,7 @@ public class Denominacion : NamedMetadata, IAuditableMetadata
         JerarquiaEnum.Regional => AlcanceEstadistico.Regional(
             Id,
             _regiones.Where(r => r.RegionMacro.HasValue).Select(r => r.RegionMacro!.Value),
-            _regiones.Where(r => r.RegionAsistenciaId.HasValue).Select(r => r.RegionAsistenciaId!.Value)),
+            _regiones.Where(r => r.ZonaId.HasValue).Select(r => r.ZonaId!.Value)),
         JerarquiaEnum.Tramo => AlcanceEstadistico.DeTramos(Id, _tramos.Select(t => t.TramoId).Append(TramoId)),
         _ => AlcanceEstadistico.DeUnidad(Id, unidadId)
     };
