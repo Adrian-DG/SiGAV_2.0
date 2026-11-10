@@ -30,13 +30,31 @@ internal sealed class PermisosSeeder(SiGAVContext context, RoleManager<AppPermis
             }
             else
             {
-                Verificar(await roleManager.CreateAsync(new AppPermission { Name = permiso.Nombre, Description = permiso.Descripcion }), permiso.Nombre);
+                var nuevo = new AppPermission { Name = permiso.Nombre, Description = permiso.Descripcion };
+                Verificar(await roleManager.CreateAsync(nuevo), permiso.Nombre);
+                await OtorgarAUsuariosDeAsync(permiso.AlCrearOtorgarA, nuevo, existentes, cancellationToken);
             }
 
             cambios++;
         }
 
         return cambios;
+    }
+
+    /// <summary>Un permiso separado de otro: quienes tenían el original lo reciben (solo al crearlo).</summary>
+    private async Task OtorgarAUsuariosDeAsync(
+        string? origen, AppPermission nuevo, Dictionary<string, AppPermission> existentes, CancellationToken cancellationToken)
+    {
+        if (origen is null || !existentes.TryGetValue(origen, out var rolOrigen)) return;
+
+        var usuarios = await context.UserRoles
+            .Where(ur => ur.RoleId == rolOrigen.Id)
+            .Select(ur => ur.UserId)
+            .ToListAsync(cancellationToken);
+        if (usuarios.Count == 0) return;
+
+        context.UserRoles.AddRange(usuarios.Select(u => new IdentityUserRole<int> { UserId = u, RoleId = nuevo.Id }));
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     private static void Verificar(IdentityResult resultado, string permiso)

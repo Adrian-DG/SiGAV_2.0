@@ -11,6 +11,7 @@ public static class Permisos
     public const string EventosAsignar = "eventos.asignar";
     public const string UnidadesNotificar = "unidades.notificar";
     public const string AgentesVer = "agentes.ver";
+    public const string AgentesGestionar = "agentes.gestionar";
     public const string UnidadesVer = "unidades.ver";
     public const string UsuariosGestionar = "usuarios.gestionar";
     public const string CalidadEvaluar = "calidad.evaluar";
@@ -23,6 +24,7 @@ public static class Permisos
         new(EventosAsignar, "Asignación de eventos", "Crear eventos desde el call center y asignarlos a unidades disponibles."),
         new(UnidadesNotificar, "Notificaciones", "Enviar mensajes a las unidades en campo, a todas las conectadas o a las elegidas."),
         new(AgentesVer, "Agentes", "Consultar el personal operativo y su autorización."),
+        new(AgentesGestionar, "Gestión de agentes", "Dar de alta, editar, autorizar, desactivar e importar desde Excel al personal operativo.", AlCrearOtorgarA: AgentesVer),
         new(UnidadesVer, "Unidades y denominaciones", "Consultar unidades, denominaciones y tramos."),
         new(UsuariosGestionar, "Usuarios y permisos", "Asignar permisos a los usuarios del front desk."),
         new(CalidadEvaluar, "Calidad", "Contactar a los ciudadanos de los eventos completados, registrar la encuesta de calidad y exportar los resultados."),
@@ -32,4 +34,8 @@ public static class Permisos
     public static bool Existe(string permiso) => Todos.Any(p => p.Nombre == permiso);
 }
 
-public sealed record PermisoInfo(string Nombre, string Modulo, string Descripcion);
+/// <param name="AlCrearOtorgarA">
+/// Permiso cuyos usuarios reciben este la primera vez que se crea (al separar un permiso de otro, quienes
+/// ya podían hacerlo lo conservan hasta que un administrador lo quite).
+/// </param>
+public sealed record PermisoInfo(string Nombre, string Modulo, string Descripcion, string? AlCrearOtorgarA = null);

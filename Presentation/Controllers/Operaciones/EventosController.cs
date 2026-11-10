@@ -5,6 +5,7 @@ using Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Presentation.Authorization;
 
 namespace Presentation.Controllers.Operaciones;
 
@@ -50,7 +51,11 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
     public async Task<IActionResult> Get([FromRoute] int id, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new GetEventoQuery(id), cancellationToken));
 
-    /// <summary>Formulario de asistencia (APVI-FOR-003) del evento, en PDF para imprimir o archivar.</summary>
+    /// <summary>
+    /// Formulario de asistencia (APVI-FOR-003) del evento, en PDF para imprimir o archivar. Solo front
+    /// desk con permiso de eventos: incluye cédulas, teléfonos y firmas de los ciudadanos.
+    /// </summary>
+    [RequierePermiso(Permisos.EventosVer)]
     [HttpGet("{id:int}/reporte")]
     public async Task<IActionResult> Reporte([FromRoute] int id, CancellationToken cancellationToken)
     {
@@ -92,6 +97,7 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
     }
 
     /// <summary>La unidad de apoyo solicitada llegó al lugar (solo app; el estado del evento no cambia).</summary>
+    [Authorize(Policy = SesionPolicies.Movil)]
     [HttpPatch("{id:int}/llegada-apoyo")]
     public async Task<IActionResult> ConfirmarLlegadaApoyo([FromRoute] int id, CancellationToken cancellationToken)
     {

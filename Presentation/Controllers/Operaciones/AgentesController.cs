@@ -5,6 +5,7 @@ using Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Presentation.Authorization;
 
 namespace Presentation.Controllers.Operaciones;
 
@@ -15,11 +16,13 @@ public class AgentesController(IMediator mediator) : GenericController(mediator)
 {
     /// <summary>Listado paginado. Use <c>autorizado=false</c> para ver los registros pendientes.</summary>
     [Authorize(Policy = SesionPolicies.Web)]
+    [RequierePermiso(Permisos.AgentesVer)]
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] GetAgentesQuery query, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(query, cancellationToken));
 
     [Authorize(Policy = SesionPolicies.Web)]
+    [RequierePermiso(Permisos.AgentesVer)]
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get([FromRoute] int id, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new GetAgenteQuery(id), cancellationToken));
@@ -37,6 +40,7 @@ public class AgentesController(IMediator mediator) : GenericController(mediator)
 
     /// <summary>Alta desde front desk: el agente queda autorizado.</summary>
     [Authorize(Policy = SesionPolicies.Web)]
+    [RequierePermiso(Permisos.AgentesGestionar)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAgenteCommand command, CancellationToken cancellationToken)
     {
@@ -51,6 +55,7 @@ public class AgentesController(IMediator mediator) : GenericController(mediator)
     /// todo, o nada si alguna fila tiene errores.
     /// </summary>
     [Authorize(Policy = SesionPolicies.Web)]
+    [RequierePermiso(Permisos.AgentesGestionar)]
     [HttpPost("importar")]
     [RequestSizeLimit(LimiteImportacion)]
     [RequestFormLimits(MultipartBodyLengthLimit = LimiteImportacion)]
@@ -62,6 +67,7 @@ public class AgentesController(IMediator mediator) : GenericController(mediator)
 
     /// <summary>Plantilla de la carga masiva, con los rangos, instituciones y áreas válidos.</summary>
     [Authorize(Policy = SesionPolicies.Web)]
+    [RequierePermiso(Permisos.AgentesGestionar)]
     [HttpGet("importar/plantilla")]
     public async Task<IActionResult> GetPlantillaImportacion(CancellationToken cancellationToken)
         => File(await Mediator.Send(new GetPlantillaImportacionAgentesQuery(), cancellationToken), IHojaCalculo.ContentType, "plantilla-agentes.xlsx");
@@ -76,6 +82,7 @@ public class AgentesController(IMediator mediator) : GenericController(mediator)
     }
 
     [Authorize(Policy = SesionPolicies.Web)]
+    [RequierePermiso(Permisos.AgentesGestionar)]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdateAgenteCommand command, CancellationToken cancellationToken)
     {
@@ -85,6 +92,7 @@ public class AgentesController(IMediator mediator) : GenericController(mediator)
 
     /// <summary>Autoriza (<c>true</c>) o revoca (<c>false</c>) el acceso del agente a la app.</summary>
     [Authorize(Policy = SesionPolicies.Web)]
+    [RequierePermiso(Permisos.AgentesGestionar)]
     [HttpPatch("{id:int}/autorizacion")]
     public async Task<IActionResult> CambiarAutorizacion([FromRoute] int id, [FromBody] CambiarAutorizacionRequest request, CancellationToken cancellationToken)
     {
@@ -93,6 +101,7 @@ public class AgentesController(IMediator mediator) : GenericController(mediator)
     }
 
     [Authorize(Policy = SesionPolicies.Web)]
+    [RequierePermiso(Permisos.AgentesGestionar)]
     [HttpPatch("{id:int}/desactivar")]
     public async Task<IActionResult> Desactivar([FromRoute] int id, CancellationToken cancellationToken)
     {
