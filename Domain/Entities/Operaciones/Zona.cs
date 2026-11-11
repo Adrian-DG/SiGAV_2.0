@@ -26,6 +26,23 @@ public class Zona : NamedMetadata
         };
     }
 
+    /// <summary>
+    /// Tramo nuevo de esta zona. Sirve también para una zona aún sin guardar (alta de la zona con
+    /// sus tramos): el tramo se enlaza por la navegación y EF completa el ZonaId al guardar.
+    /// </summary>
+    public Tramo NuevoTramo(string nombre)
+    {
+        if (!IsActive) throw new DomainException("El tramo debe pertenecer a una zona activa.");
+
+        return new Tramo
+        {
+            Nombre = NormalizarNombre(nombre, "del tramo", Tramo.NombreMaxLength),
+            ZonaId = Id,
+            Zona = this,
+            IsActive = true
+        };
+    }
+
     /// <param name="de">"de la zona", "del tramo": completa los mensajes.</param>
     internal static string NormalizarNombre(string nombre, string de, int maximo)
     {

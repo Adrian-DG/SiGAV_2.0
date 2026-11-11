@@ -31,7 +31,7 @@ internal static class SiGAVContextOptions
                 "Falta la cadena de conexión (ConnectionStrings:DevelopmentConnection / ProductionConnection).");
 
         return options.UseSqlite(connectionString, b => b
-            .MigrationsAssembly(typeof(SiGAVContext).Assembly.GetName().Name))
-            .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+            .MigrationsAssembly(typeof(SiGAVContext).Assembly.GetName().Name)
+            .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
     }
 }

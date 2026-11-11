@@ -28,7 +28,10 @@ public class ZonasController(IMediator mediator) : GenericController(mediator)
     public async Task<IActionResult> Get([FromRoute] int id, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new GetZonaQuery(id), cancellationToken));
 
-    /// <summary>Crea una zona: nombre (único) y región. 409 si el nombre ya existe.</summary>
+    /// <summary>
+    /// Crea una zona: nombre (único), región y, opcionalmente, los nombres de sus tramos (únicos entre
+    /// todos los tramos). Se guarda todo junto. 409 si el nombre de la zona o de un tramo ya existe.
+    /// </summary>
     [RequierePermiso(Permisos.ZonasGestionar)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateZonaCommand command, CancellationToken cancellationToken)
