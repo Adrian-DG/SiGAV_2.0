@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+
 namespace Infrastructure.Persistance;
 
 /// <summary>
@@ -21,5 +22,16 @@ internal static class SiGAVContextOptions
             .MigrationsAssembly(typeof(SiGAVContext).Assembly.GetName().Name)
             // Colecciones en consultas separadas (evita el producto cartesiano de los Include)
             .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+    }
+
+    public static DbContextOptionsBuilder UsarSqlite(this DbContextOptionsBuilder options, string? connectionString)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException(
+                "Falta la cadena de conexión (ConnectionStrings:DevelopmentConnection / ProductionConnection).");
+
+        return options.UseSqlite(connectionString, b => b
+            .MigrationsAssembly(typeof(SiGAVContext).Assembly.GetName().Name))
+            .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
     }
 }

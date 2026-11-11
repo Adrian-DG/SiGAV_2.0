@@ -32,16 +32,30 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<AuditableEntityInterceptor>();
 
+
+        // services.AddDbContext<SiGAVContext>((sp, opt) =>
+        // {
+        //     var connectionString = environment.IsProduction()
+        //         ? configuration.GetConnectionString("ProductionConnection")
+        //         : configuration.GetConnectionString("DevelopmentConnection");
+
+        //     opt.UsarSqlServer(connectionString);
+        //     opt.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
+        //     opt.EnableDetailedErrors();
+        // });
+
         services.AddDbContext<SiGAVContext>((sp, opt) =>
         {
             var connectionString = environment.IsProduction()
                 ? configuration.GetConnectionString("ProductionConnection")
                 : configuration.GetConnectionString("DevelopmentConnection");
 
-            opt.UsarSqlServer(connectionString);
+            opt.UsarSqlite(connectionString);
             opt.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
             opt.EnableDetailedErrors();
         });
+    
+
         // Mismo contexto por request: escritura (IUnitOfWork + repositorios) y lectura (Queries)
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<SiGAVContext>());
         services.AddScoped<IReadDbContext>(sp => sp.GetRequiredService<SiGAVContext>());
