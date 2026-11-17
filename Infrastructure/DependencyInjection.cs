@@ -31,18 +31,9 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<AuditableEntityInterceptor>();
+        // Requiere IMonitorTiempoReal (lo registra Presentation, junto a los hubs de SignalR)
+        services.AddScoped<CambiosTiempoRealInterceptor>();
 
-
-        // services.AddDbContext<SiGAVContext>((sp, opt) =>
-        // {
-        //     var connectionString = environment.IsProduction()
-        //         ? configuration.GetConnectionString("ProductionConnection")
-        //         : configuration.GetConnectionString("DevelopmentConnection");
-
-        //     opt.UsarSqlServer(connectionString);
-        //     opt.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
-        //     opt.EnableDetailedErrors();
-        // });
 
         services.AddDbContext<SiGAVContext>((sp, opt) =>
         {
@@ -50,10 +41,23 @@ public static class DependencyInjection
                 ? configuration.GetConnectionString("ProductionConnection")
                 : configuration.GetConnectionString("DevelopmentConnection");
 
-            opt.UsarSqlite(connectionString);
-            opt.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
+            opt.UsarSqlServer(connectionString);
+            opt.AddInterceptors(
+                sp.GetRequiredService<AuditableEntityInterceptor>(),
+                sp.GetRequiredService<CambiosTiempoRealInterceptor>());
             opt.EnableDetailedErrors();
         });
+
+        //services.AddDbContext<SiGAVContext>((sp, opt) =>
+        //{
+        //    var connectionString = environment.IsProduction()
+        //        ? configuration.GetConnectionString("ProductionConnection")
+        //        : configuration.GetConnectionString("DevelopmentConnection");
+
+        //    opt.UsarSqlite(connectionString);
+        //    opt.AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>());
+        //    opt.EnableDetailedErrors();
+        //});
     
 
         // Mismo contexto por request: escritura (IUnitOfWork + repositorios) y lectura (Queries)

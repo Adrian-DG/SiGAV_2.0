@@ -40,6 +40,8 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<ConexionesUnidades>();
 builder.Services.AddSingleton<IConexionesUnidades>(sp => sp.GetRequiredService<ConexionesUnidades>());
 builder.Services.AddSingleton<INotificadorUnidades, NotificadorUnidades>();
+// Front desk en tiempo real: los cambios de eventos/unidades los detecta CambiosTiempoRealInterceptor
+builder.Services.AddSingleton<IMonitorTiempoReal, MonitorTiempoReal>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
 // https://localhost:{7148/5282}/openapi/v1.json
@@ -107,5 +109,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<NotificacionesHub>(NotificacionesHub.Ruta);
+app.MapHub<MonitoreoHub>(MonitoreoHub.Ruta);
 
 await app.RunAsync();
