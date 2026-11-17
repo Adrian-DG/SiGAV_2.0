@@ -11,7 +11,11 @@ public record EstadisticasEventosViewModel(
     DateOnly Desde,
     DateOnly Hasta,
     ResumenEventosViewModel Resumen,
-    IReadOnlyList<ZonaEstadisticaViewModel> Zonas);
+    IReadOnlyList<ZonaEstadisticaViewModel> Zonas,
+    MetasLlegadaViewModel Metas);
+
+/// <summary>Meta de llegada (minutos desde el reporte) según la categoría del evento.</summary>
+public record MetasLlegadaViewModel(int AccidenteMinutos, int AsistenciaMinutos);
 
 /// <summary>Qué cubre la consulta. Jerarquia null = sin restricción (front desk).</summary>
 public record AlcanceViewModel(
@@ -29,7 +33,29 @@ public record AlcanceViewModel(
 public record ResumenEventosViewModel(
     int TotalEventos,
     IReadOnlyList<CategoriaTotalViewModel> PorCategoria,
-    IReadOnlyList<TipoEventoTotalViewModel> PorTipo);
+    IReadOnlyList<TipoEventoTotalViewModel> PorTipo,
+    TiemposRespuestaViewModel Tiempos);
+
+/// <summary>
+/// Tiempos de respuesta en minutos (null si no hay eventos medibles).
+/// - Llegada: reporte → llegada de la unidad. Solo eventos despachados (no los que reporta el
+///   propio agente en campo, que ya está en el lugar).
+/// - Atención: llegada → completado.
+/// - Cumplimiento: llegadas dentro de la meta de su categoría sobre las medidas más los
+///   pendientes vencidos (sin llegada y con la meta ya superada), que también incumplen.
+/// </summary>
+public record TiemposRespuestaViewModel(
+    int LlegadasMedidas,
+    double? LlegadaPromedioMinutos,
+    double? LlegadaMedianaMinutos,
+    double? LlegadaP90Minutos,
+    int AtencionesMedidas,
+    double? AtencionPromedioMinutos,
+    double? AtencionMedianaMinutos,
+    int DentroDeMeta,
+    int FueraDeMeta,
+    int PendientesVencidos,
+    double? CumplimientoPorcentaje);
 
 public record CategoriaTotalViewModel(CategoriaEventoEnum Categoria, int Total);
 

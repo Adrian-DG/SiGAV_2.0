@@ -12,6 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddApplication();
+// Metas de llegada para los tiempos de respuesta (Estadisticas:MetasLlegada; por defecto 15/30 min)
+builder.Services.Configure<Application.Features.Estadisticas.MetasLlegadaOptions>(
+    builder.Configuration.GetSection(Application.Features.Estadisticas.MetasLlegadaOptions.SectionName));
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 
 // Detrás de un proxy (Dev Tunnels, IIS, nginx...): la URL pública llega en X-Forwarded-*.

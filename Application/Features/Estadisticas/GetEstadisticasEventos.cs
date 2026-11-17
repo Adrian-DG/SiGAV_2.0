@@ -8,6 +8,7 @@ using Domain.ValueObjects;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Application.Features.Estadisticas;
 
@@ -38,14 +39,15 @@ public class GetEstadisticasEventosQueryValidator : AbstractValidator<GetEstadis
 public class GetEstadisticasEventosQueryHandler(
     ICurrentUserService currentUser,
     IReadDbContext db,
-    TimeProvider timeProvider) : IRequestHandler<GetEstadisticasEventosQuery, EstadisticasEventosViewModel>
+    TimeProvider timeProvider,
+    IOptions<MetasLlegadaOptions> metasOptions) : IRequestHandler<GetEstadisticasEventosQuery, EstadisticasEventosViewModel>
 {
     private sealed record Fila(int EventoId, int UnidadId, int DenominacionId, int TramoId, int? TipoEventoId);
     private sealed record TipoInfo(string Nombre, CategoriaEventoEnum Categoria);
     private sealed record TramoInfo(string Nombre, int ZonaId);
     private sealed record ZonaInfo(string Nombre, RegionMacroEnum Macro);
 
-    private static readonly ResumenEventosViewModel ResumenVacio = new(0, [], []);
+    private static readonly ResumenEventosViewModel ResumenVacio = new(0, [], [], TiemposRespuesta.Vacio);
 
     public async Task<EstadisticasEventosViewModel> Handle(GetEstadisticasEventosQuery request, CancellationToken cancellationToken)
     {
@@ -58,9 +60,11 @@ public class GetEstadisticasEventosQueryHandler(
         var alcance = await ResolverAlcanceAsync(cancellationToken);
         var tramosAlcance = await ResolverTramosAsync(alcance, cancellationToken);
         var alcanceViewModel = await ConstruirAlcanceAsync(alcance, tramosAlcance, cancellationToken);
+        var metas = metasOptions.Value;
+        var metasViewModel = new MetasLlegadaViewModel(metas.AccidenteMinutos, metas.AsistenciaMinutos);
 
         if (alcance.EstaVacio || tramosAlcance is { Count: 0 })
-            return new EstadisticasEventosViewModel(alcanceViewModel, desde, hasta, ResumenVacio, []);
+            return new EstadisticasEventosViewModel(alcanceViewModel, desde, hasta, ResumenVacio, [], metasViewModel);
 
         // Por fecha del reporte (no la de guardado: la app sincroniza eventos offline tarde)
         var (desdeUtc, hastaExclusivoUtc) = ZonaHorariaOperativa.RangoUtc(desde, hasta);
@@ -82,7 +86,7 @@ public class GetEstadisticasEventosQueryHandler(
         filas = filas.Distinct().ToList();
 
         if (filas.Count == 0)
-            return new EstadisticasEventosViewModel(alcanceViewModel, desde, hasta, ResumenVacio, []);
+            return new EstadisticasEventosViewModel(alcanceViewModel, desde, hasta, ResumenVacio, [], metasViewModel);
 
         // Catálogos solo de lo que aparece en el resultado
         var tipoIds = filas.Where(f => f.TipoEventoId.HasValue).Select(f => f.TipoEventoId!.Value).Distinct().ToList();
@@ -107,6 +111,34 @@ public class GetEstadisticasEventosQueryHandler(
             .Where(r => zonaIds.Contains(r.Id))
             .ToDictionaryAsync(r => r.Id, r => new ZonaInfo(r.Nombre, r.Region), cancellationToken);
 
+        // Tiempos de cada evento (una fila por evento, aunque lo atendieran varias unidades)
+        var marcas = await participaciones
+            .Select(eu => new
+            {
+                eu.EventoId,
+                eu.Evento!.FechaHoraReporteUtc,
+                eu.Evento.FechaHoraLlegadaUtc,
+                eu.Evento.FechaHoraCompletadoUtc,
+                eu.Evento.CanalReporte
+            })
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        var conAccidente = filas
+            .Where(f => f.TipoEventoId is { } t && tiposInfo.TryGetValue(t, out var info) && info.Categoria == CategoriaEventoEnum.ACCIDENTE)
+            .Select(f => f.EventoId)
+            .ToHashSet();
+        var tiempos = marcas
+            .GroupBy(m => m.EventoId)
+            .Select(g => g.First())
+            .ToDictionary(m => m.EventoId, m => new TiempoEvento(
+                m.EventoId,
+                m.FechaHoraReporteUtc,
+                m.FechaHoraLlegadaUtc,
+                m.FechaHoraCompletadoUtc,
+                TiemposRespuesta.EsDespachado(m.CanalReporte),
+                metas.MetaPara(conAccidente.Contains(m.EventoId))));
+        var ahoraUtc = timeProvider.GetUtcNow().UtcDateTime;
+
         ResumenEventosViewModel Resumir(IReadOnlyCollection<Fila> grupo)
         {
             var conTipo = grupo.Where(f => f.TipoEventoId.HasValue && tiposInfo.ContainsKey(f.TipoEventoId.Value)).ToList();
@@ -128,7 +160,12 @@ public class GetEstadisticasEventosQueryHandler(
                 .ThenBy(t => t.TipoEvento)
                 .ToList();
 
-            return new ResumenEventosViewModel(grupo.Select(f => f.EventoId).Distinct().Count(), porCategoria, porTipo);
+            var eventoIds = grupo.Select(f => f.EventoId).Distinct().ToList();
+            var tiemposGrupo = TiemposRespuesta.Calcular(
+                eventoIds.Where(tiempos.ContainsKey).Select(id => tiempos[id]),
+                ahoraUtc);
+
+            return new ResumenEventosViewModel(eventoIds.Count, porCategoria, porTipo, tiemposGrupo);
         }
 
         var arbol = filas
@@ -175,7 +212,7 @@ public class GetEstadisticasEventosQueryHandler(
             .ThenBy(r => r.Zona)
             .ToList();
 
-        return new EstadisticasEventosViewModel(alcanceViewModel, desde, hasta, Resumir(filas), arbol);
+        return new EstadisticasEventosViewModel(alcanceViewModel, desde, hasta, Resumir(filas), arbol, metasViewModel);
     }
 
     private async Task<AlcanceEstadistico> ResolverAlcanceAsync(CancellationToken cancellationToken)
