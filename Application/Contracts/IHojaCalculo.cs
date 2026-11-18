@@ -6,8 +6,16 @@ public record FilaHoja(int Numero, IReadOnlyList<string> Celdas)
     public string Celda(int columna) => columna >= 0 && columna < Celdas.Count ? Celdas[columna] : string.Empty;
 }
 
-/// <summary>Hoja a escribir: la primera fila es el encabezado (en negrita).</summary>
-public record HojaNueva(string Nombre, IReadOnlyList<IReadOnlyList<string>> Filas);
+/// <summary>
+/// Hoja a escribir: la primera fila es el encabezado (en negrita). En <paramref name="ColumnasNumericas"/>
+/// (índices base 0) los enteros se escriben como número, para sumar o filtrar en Excel; el resto, como
+/// texto. Las filas de <paramref name="FilasNegrita"/> (índices base 0, p. ej. totales) van en negrita.
+/// </summary>
+public record HojaNueva(
+    string Nombre,
+    IReadOnlyList<IReadOnlyList<string>> Filas,
+    IReadOnlySet<int>? ColumnasNumericas = null,
+    IReadOnlySet<int>? FilasNegrita = null);
 
 /// <summary>
 /// Lectura y escritura de libros de Excel (.xlsx). Solo texto: lo necesario para las cargas

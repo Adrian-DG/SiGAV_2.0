@@ -72,6 +72,19 @@ public class AgentesController(IMediator mediator) : GenericController(mediator)
     public async Task<IActionResult> GetPlantillaImportacion(CancellationToken cancellationToken)
         => File(await Mediator.Send(new GetPlantillaImportacionAgentesQuery(), cancellationToken), IHojaCalculo.ContentType, "plantilla-agentes.xlsx");
 
+    /// <summary>
+    /// Excel de eventos atendidos por agente (asistencias, accidentes y total) en el rango de fechas
+    /// (yyyy-MM-dd). <c>mensual=true</c> agrega una hoja con el conteo por mes.
+    /// </summary>
+    [Authorize(Policy = SesionPolicies.Web)]
+    [RequierePermiso(Permisos.AgentesVer)]
+    [HttpGet("reporte-eventos")]
+    public async Task<IActionResult> ExportarEventos([FromQuery] ExportarEventosPorAgenteQuery query, CancellationToken cancellationToken)
+    {
+        var archivo = await Mediator.Send(query, cancellationToken);
+        return File(archivo.Contenido, IHojaCalculo.ContentType, archivo.Nombre);
+    }
+
     /// <summary>Auto-registro desde la app: el agente queda pendiente de autorización por front desk.</summary>
     [AllowAnonymous]
     [HttpPost("registro")]

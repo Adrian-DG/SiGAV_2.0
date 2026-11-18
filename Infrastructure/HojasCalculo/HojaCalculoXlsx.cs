@@ -125,8 +125,12 @@ public class HojaCalculoXlsx : IHojaCalculo
             for (var c = 0; c < fila.Count; c++)
             {
                 if (string.IsNullOrEmpty(fila[c])) continue;
-                var estilo = r == 0 ? " s=\"1\" " : " ";
-                sb.Append($"""<c r="{LetrasColumna(c)}{r + 1}"{estilo}t="inlineStr"><is><t xml:space="preserve">{Escapar(fila[c])}</t></is></c>""");
+                var estilo = r == 0 || hoja.FilasNegrita?.Contains(r) == true ? " s=\"1\"" : string.Empty;
+                if (r > 0 && hoja.ColumnasNumericas?.Contains(c) == true
+                    && long.TryParse(fila[c], NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var numero))
+                    sb.Append(CultureInfo.InvariantCulture, $"""<c r="{LetrasColumna(c)}{r + 1}"{estilo}><v>{numero}</v></c>""");
+                else
+                    sb.Append($"""<c r="{LetrasColumna(c)}{r + 1}"{estilo} t="inlineStr"><is><t xml:space="preserve">{Escapar(fila[c])}</t></is></c>""");
             }
             sb.Append("</row>");
         }
