@@ -91,6 +91,9 @@ public class CrearUsuarioCommandValidator : AbstractValidator<CrearUsuarioComman
             .Must(p => p!.Distinct().Count() == p!.Count)
             .When(x => x.Permisos is not null)
             .WithMessage("Hay permisos repetidos.");
+        RuleFor(x => x.Permisos)
+            .ValidarRequisitos()
+            .When(x => x.Permisos is not null);
     }
 }
 

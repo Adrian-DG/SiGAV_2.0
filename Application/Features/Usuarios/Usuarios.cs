@@ -57,7 +57,21 @@ public class AsignarPermisosUsuarioCommandValidator : AbstractValidator<AsignarP
             .Must(p => p.Distinct().Count() == p.Count)
             .When(x => x.Permisos is not null)
             .WithMessage("Hay permisos repetidos.");
+        RuleFor(x => x.Permisos)
+            .ValidarRequisitos()
+            .When(x => x.Permisos is not null);
     }
+}
+
+public static class PermisosValidatorExtensions
+{
+    /// <summary>Cada permiso viene con el que requiere (p. ej. "Gestionar agentes" con "Consultar agentes").</summary>
+    public static IRuleBuilderOptionsConditions<T, IReadOnlyList<string>?> ValidarRequisitos<T>(this IRuleBuilder<T, IReadOnlyList<string>?> regla)
+        => regla.Custom((permisos, contexto) =>
+        {
+            foreach (var p in Contracts.Authentication.Permisos.SinRequisito(permisos ?? []))
+                contexto.AddFailure($"El permiso '{p.Titulo}' requiere '{Contracts.Authentication.Permisos.Titulo(p.Requiere!)}'.");
+        });
 }
 
 public class AsignarPermisosUsuarioCommandHandler(IUsuariosRepository repository, ICurrentUserService currentUser)
