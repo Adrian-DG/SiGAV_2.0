@@ -17,12 +17,14 @@ public static class Permisos
     public const string UsuariosGestionar = "usuarios.gestionar";
     public const string CalidadEvaluar = "calidad.evaluar";
     public const string CalidadEncuestas = "calidad.encuestas";
+    public const string PrehospitalariaVer = "prehospitalaria.ver";
 
     // Módulos: agrupan los permisos en el front desk (Usuarios). El orden de Todos es el de pantalla.
     public const string ModuloEventos = "Eventos";
     public const string ModuloAgentes = "Agentes";
     public const string ModuloUnidades = "Unidades y zonas";
     public const string ModuloCalidad = "Calidad";
+    public const string ModuloPrehospitalaria = "Prehospitalaria";
     public const string ModuloAdministracion = "Administración";
 
     /// <summary>Catálogo completo: se crea como roles al arrancar (PermisosSeeder) y genera una política por permiso.</summary>
@@ -40,6 +42,8 @@ public static class Permisos
 
         new(CalidadEvaluar, ModuloCalidad, "Evaluar eventos", "Contactar a los ciudadanos de los eventos completados, registrar la encuesta de calidad y exportar los resultados."),
         new(CalidadEncuestas, ModuloCalidad, "Administrar encuestas", "Crear nuevas versiones de la encuesta de calidad y publicarlas."),
+
+        new(PrehospitalariaVer, ModuloPrehospitalaria, "Consultar atenciones prehospitalarias", "Ver los datos clínicos de los pacientes atendidos por las ambulancias (signos vitales, diagnóstico, traslado).", Requiere: EventosVer),
 
         new(UsuariosGestionar, ModuloAdministracion, "Usuarios y permisos", "Crear usuarios del front desk y asignarles permisos."),
     ];

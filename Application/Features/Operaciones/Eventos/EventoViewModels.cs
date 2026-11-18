@@ -79,7 +79,12 @@ public record EventoCiudadanoViewModel(
     /// <summary>Tipos atendidos a la persona (Tipos[].Id del evento); vacío = ninguno propio.</summary>
     IReadOnlyList<int> TipoEventoIds,
     /// <summary>Edad en años al momento del evento.</summary>
-    int? Edad);
+    int? Edad,
+    /// <summary>
+    /// Atención prehospitalaria (solo pacientes). null si no la hubo o si quien consulta no puede ver
+    /// datos clínicos (front desk sin el permiso prehospitalaria.ver).
+    /// </summary>
+    AtencionPrehospitalariaViewModel? Atencion = null);
 
 /// <summary>
 /// Marca/modelo/color: el nombre del catálogo o, si no estaba en el catálogo, el texto libre.

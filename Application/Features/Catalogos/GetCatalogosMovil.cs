@@ -10,6 +10,9 @@ public record MunicipioItemViewModel(int Id, string Nombre, int ProvinciaId);
 
 public record ModeloItemViewModel(int Id, string Nombre, int MarcaId, int TipoVehiculoId);
 
+/// <summary>Centro de salud para el traslado; ProvinciaId permite ofrecer primero los de la provincia del evento.</summary>
+public record HospitalItemViewModel(int Id, string Nombre, int? ProvinciaId);
+
 /// <summary>Todos los catálogos activos que la app guarda en el dispositivo para trabajar sin conexión.</summary>
 public record CatalogosMovilViewModel(
     IReadOnlyList<CatalogoItemViewModel> Provincias,
@@ -21,7 +24,8 @@ public record CatalogosMovilViewModel(
     IReadOnlyList<CatalogoItemViewModel> TiposVehiculo,
     IReadOnlyList<CatalogoItemViewModel> Marcas,
     IReadOnlyList<ModeloItemViewModel> Modelos,
-    IReadOnlyList<PrefijoPlacaItemViewModel> PrefijosPlaca);
+    IReadOnlyList<PrefijoPlacaItemViewModel> PrefijosPlaca,
+    IReadOnlyList<HospitalItemViewModel> Hospitales);
 
 /// <summary>
 /// <see cref="Version"/> identifica el contenido (hash). <see cref="Catalogos"/> es null cuando la
@@ -61,7 +65,9 @@ public class GetCatalogosMovilQueryHandler(IReadDbContext db) : IRequestHandler<
                 .Select(x => new CatalogoItemViewModel(x.Id, x.Nombre)).ToListAsync(cancellationToken),
             await db.Modelos.Where(x => x.IsActive).OrderBy(x => x.Id)
                 .Select(x => new ModeloItemViewModel(x.Id, x.Nombre, x.MarcaId, x.TipoVehiculoId)).ToListAsync(cancellationToken),
-            await ReglaPlaca.CargarAsync(db, cancellationToken));
+            await ReglaPlaca.CargarAsync(db, cancellationToken),
+            await db.Hospitales.Where(x => x.IsActive).OrderBy(x => x.Id)
+                .Select(x => new HospitalItemViewModel(x.Id, x.Nombre, x.ProvinciaId)).ToListAsync(cancellationToken));
 
         var version = CalcularVersion(catalogos);
         return string.Equals(version, request.VersionActual, StringComparison.Ordinal)

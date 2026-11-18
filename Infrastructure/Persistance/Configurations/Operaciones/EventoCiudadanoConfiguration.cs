@@ -44,6 +44,51 @@ internal sealed class EventoCiudadanoConfiguration : IEntityTypeConfiguration<Ev
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Atención prehospitalaria (0..1), en su propia tabla: la mayoría de las personas no la tiene
+        builder.OwnsOne(ec => ec.Atencion, atencion =>
+        {
+            atencion.ToTable("evento_atencion_prehospitalaria", Schemas.Operaciones);
+            atencion.WithOwner().HasForeignKey("EventoCiudadanoId");
+            atencion.Property<int>("EventoCiudadanoId");
+            atencion.HasKey("EventoCiudadanoId");
+
+            atencion.Property(a => a.NombreEventoEspecial).HasMaxLength(AtencionPrehospitalaria.TextoCortoMaxLength);
+            atencion.Property(a => a.RecibidoPor).HasMaxLength(AtencionPrehospitalaria.TextoCortoMaxLength);
+            atencion.Property(a => a.Antecedentes).HasMaxLength(AtencionPrehospitalaria.TextoLargoMaxLength);
+            atencion.Property(a => a.HallazgosPositivos).HasMaxLength(AtencionPrehospitalaria.TextoLargoMaxLength);
+            atencion.Property(a => a.DiagnosticoPresuntivo).HasMaxLength(AtencionPrehospitalaria.TextoLargoMaxLength);
+            atencion.Property(a => a.ProcedimientosRealizados).HasMaxLength(AtencionPrehospitalaria.TextoLargoMaxLength);
+            atencion.Property(a => a.InsumosUtilizados).HasMaxLength(AtencionPrehospitalaria.TextoLargoMaxLength);
+
+            atencion.HasOne(a => a.Hospital)
+                .WithMany()
+                .HasForeignKey(a => a.HospitalId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+            atencion.HasOne(a => a.Medico)
+                .WithMany()
+                .HasForeignKey(a => a.MedicoAgenteId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+            atencion.HasOne(a => a.Regulador)
+                .WithMany()
+                .HasForeignKey(a => a.ReguladorAgenteId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+            atencion.HasIndex(a => a.HospitalId);
+
+            atencion.OwnsMany(a => a.SignosVitales, toma =>
+            {
+                toma.ToTable("evento_signos_vitales", Schemas.Operaciones);
+                toma.WithOwner().HasForeignKey("EventoCiudadanoId");
+                toma.Property<int>("Id").ValueGeneratedOnAdd();
+                toma.HasKey("Id");
+                toma.Property(t => t.Temperatura).HasPrecision(4, 1);
+                toma.Ignore(t => t.GlasgowTotal);
+            });
+            atencion.Navigation(a => a.SignosVitales).HasField("_signosVitales");
+        });
+
         // Vínculo opcional con el maestro histórico
         builder.HasOne(ec => ec.Ciudadano)
             .WithMany()

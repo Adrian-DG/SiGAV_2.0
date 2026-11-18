@@ -35,6 +35,7 @@ public record VehiculoEventoRequest(
 /// <summary>
 /// <see cref="VehiculoClave"/>: <see cref="VehiculoEventoRequest.Clave"/> del vehículo en que iba (null = sin vehículo).
 /// <see cref="TipoEventoIds"/>: tipos atendidos a esta persona, de entre los del evento.
+/// <see cref="Atencion"/>: atención prehospitalaria (ambulancia); solo con rol Paciente.
 /// </summary>
 public record CiudadanoEventoRequest(
     RolCiudadanoEnum Rol,
@@ -46,7 +47,8 @@ public record CiudadanoEventoRequest(
     int? NacionalidadId = null,
     string? VehiculoClave = null,
     IReadOnlyList<int>? TipoEventoIds = null,
-    int? Edad = null);
+    int? Edad = null,
+    AtencionPrehospitalariaRequest? Atencion = null);
 
 /// <summary>
 /// Registra un evento. Es idempotente por <see cref="RequestId"/>: un reenvío (cola offline de la app)
@@ -86,7 +88,7 @@ public class RegistrarEventoCommandValidator : AbstractValidator<RegistrarEvento
     // Se cargan una vez por validación (el catálogo es pequeño)
     private IReadOnlyList<PrefijoPlacaItemViewModel>? _prefijos;
 
-    public RegistrarEventoCommandValidator(IReadDbContext db, ICurrentUserService currentUser)
+    public RegistrarEventoCommandValidator(IReadDbContext db, ICurrentUserService currentUser, TimeProvider timeProvider)
     {
         var esWeb = EventoAcceso.EsWeb(currentUser);
 
@@ -158,6 +160,14 @@ public class RegistrarEventoCommandValidator : AbstractValidator<RegistrarEvento
             c.RuleFor(x => x.Edad)
                 .InclusiveBetween(0, DatosPersona.EdadMaxima)
                 .WithMessage($"La edad debe estar entre 0 y {DatosPersona.EdadMaxima} años.");
+
+            // Atención prehospitalaria: solo a pacientes
+            c.RuleFor(x => x.Atencion)
+                .Null().WithMessage("La atención prehospitalaria solo se registra a personas con rol Paciente.")
+                .When(x => x.Rol != RolCiudadanoEnum.Paciente);
+            c.RuleFor(x => x.Atencion!)
+                .SetValidator(new AtencionPrehospitalariaRequestValidator(db, timeProvider))
+                .When(x => x.Atencion is not null);
         });
 
         // ---- Personas: en qué vehículo iban

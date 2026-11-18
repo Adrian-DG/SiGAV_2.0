@@ -91,6 +91,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     public DbSet<Provincia> Provincias { get; set; }
     public DbSet<Municipio> Municipios { get; set; }
     public DbSet<Nacionalidad> Nacionalidades { get; set; }
+    public DbSet<Hospital> Hospitales { get; set; }
     public DbSet<Rango> Rangos { get; set; }
     public DbSet<Departamento> Departamentos { get; set; }
     
@@ -131,6 +132,7 @@ public class SiGAVContext(DbContextOptions<SiGAVContext> options) : IdentityDbCo
     IQueryable<Provincia> IReadDbContext.Provincias => Provincias.AsNoTracking();
     IQueryable<Municipio> IReadDbContext.Municipios => Municipios.AsNoTracking();
     IQueryable<Nacionalidad> IReadDbContext.Nacionalidades => Nacionalidades.AsNoTracking();
+    IQueryable<Hospital> IReadDbContext.Hospitales => Hospitales.AsNoTracking();
     IQueryable<Rango> IReadDbContext.Rangos => Rangos.AsNoTracking();
     IQueryable<Departamento> IReadDbContext.Departamentos => Departamentos.AsNoTracking();
     IQueryable<TipoVehiculo> IReadDbContext.TiposVehiculo => TipoVehiculos.AsNoTracking();

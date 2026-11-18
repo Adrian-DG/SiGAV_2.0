@@ -287,14 +287,16 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     /// Agrega una persona involucrada. Conductor y pasajero van en un <paramref name="vehiculo"/>
     /// de este evento (máximo un conductor por vehículo); un peatón, en ninguno.
     /// <paramref name="ciudadano"/> vincula el maestro cuando la persona ya existe;
-    /// <paramref name="tipoEventoIds"/> son los tipos atendidos a esta persona, de entre los del evento.
+    /// <paramref name="tipoEventoIds"/> son los tipos atendidos a esta persona, de entre los del evento;
+    /// <paramref name="atencion"/>, la atención prehospitalaria (solo con rol Paciente).
     /// </summary>
     public EventoCiudadanoInfo AgregarCiudadano(
         RolCiudadanoEnum rol,
         DatosPersona persona,
         EventoVehiculoInfo? vehiculo = null,
         Ciudadano? ciudadano = null,
-        IEnumerable<int>? tipoEventoIds = null)
+        IEnumerable<int>? tipoEventoIds = null,
+        AtencionPrehospitalaria? atencion = null)
     {
         AsegurarActivo();
         ArgumentNullException.ThrowIfNull(persona);
@@ -316,6 +318,7 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
 
         var tipos = TiposDelEvento(tipoEventoIds, "de la persona");
         var participacion = EventoCiudadanoInfo.Crear(rol, persona, vehiculo, ciudadano);
+        if (atencion is not null) participacion.RegistrarAtencion(atencion);
         _ciudadanos.Add(participacion);
         foreach (var id in tipos) participacion.AgregarTipo(AgregarTipo(id, ciudadano: participacion));
         return participacion;

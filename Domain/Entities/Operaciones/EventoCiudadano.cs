@@ -37,6 +37,9 @@ public class EventoCiudadanoInfo
     /// </summary>
     public IReadOnlyCollection<EventoTipoEvento> Tipos => _tipos.AsReadOnly();
 
+    /// <summary>Atención prehospitalaria (ambulancia). Solo en personas con rol Paciente; null = no la hubo.</summary>
+    public AtencionPrehospitalaria? Atencion { get; private set; }
+
     // Requerido por EF Core
     private EventoCiudadanoInfo() { }
 
@@ -72,6 +75,15 @@ public class EventoCiudadanoInfo
     }
 
     internal void AgregarTipo(EventoTipoEvento tipo) => _tipos.Add(tipo);
+
+    internal void RegistrarAtencion(AtencionPrehospitalaria atencion)
+    {
+        ArgumentNullException.ThrowIfNull(atencion);
+        if (Rol != RolCiudadanoEnum.Paciente)
+            throw new DomainException("La atención prehospitalaria solo se registra a personas con rol Paciente.");
+
+        Atencion = atencion;
+    }
 
     private static string Descripcion(RolCiudadanoEnum rol) => rol == RolCiudadanoEnum.Conductor ? "conductor" : "pasajero";
 }

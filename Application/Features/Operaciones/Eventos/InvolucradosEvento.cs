@@ -40,7 +40,7 @@ internal static class InvolucradosEvento
             var ciudadano = await CiudadanoHistoricoAsync(historico, persona, evento.FechaHoraReporteUtc, cancellationToken);
             var vehiculo = c.VehiculoClave is { } clave ? vehiculoPorClave[clave] : null;
 
-            ciudadanosCreados.Add(evento.AgregarCiudadano(c.Rol, persona, vehiculo, ciudadano, c.TipoEventoIds));
+            ciudadanosCreados.Add(evento.AgregarCiudadano(c.Rol, persona, vehiculo, ciudadano, c.TipoEventoIds, c.Atencion?.ToDominio()));
         }
 
         return (vehiculosCreados, ciudadanosCreados);

@@ -17,6 +17,7 @@ public interface IReadDbContext
     IQueryable<Provincia> Provincias { get; }
     IQueryable<Municipio> Municipios { get; }
     IQueryable<Nacionalidad> Nacionalidades { get; }
+    IQueryable<Hospital> Hospitales { get; }
     IQueryable<Rango> Rangos { get; }
     IQueryable<Departamento> Departamentos { get; }
     IQueryable<TipoVehiculo> TiposVehiculo { get; }

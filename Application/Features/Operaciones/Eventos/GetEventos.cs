@@ -1,6 +1,8 @@
 using Application.Common;
 using Application.Common.Models;
 using Application.Contracts;
+using Application.Contracts.Authentication;
+using Domain.Entities.Operaciones;
 using Application.Exceptions;
 using Domain.Enums;
 using Domain.ValueObjects;
@@ -215,6 +217,26 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
                 .Where(n => nacionalidadIds.Contains(n.Id))
                 .ToDictionaryAsync(n => n.Id, n => n.Nombre, cancellationToken);
 
+        // Datos clínicos: la app (su unidad participa) o el front desk con permiso prehospitalario
+        var verAtencion = !EventoAcceso.EsWeb(currentUser) || currentUser.Permisos.Contains(Permisos.PrehospitalariaVer);
+        var atenciones = verAtencion
+            ? evento.Ciudadanos.Select(c => c.Atencion).OfType<AtencionPrehospitalaria>().ToList()
+            : [];
+        var hospitalIds = atenciones.Select(a => a.HospitalId).OfType<int>().Distinct().ToList();
+        var hospitales = hospitalIds.Count == 0
+            ? new Dictionary<int, string>()
+            : await db.Hospitales
+                .Where(h => hospitalIds.Contains(h.Id))
+                .ToDictionaryAsync(h => h.Id, h => h.Nombre, cancellationToken);
+        var personalIds = atenciones
+            .SelectMany(a => new[] { a.MedicoAgenteId, a.ReguladorAgenteId })
+            .OfType<int>().Distinct().ToList();
+        var personal = personalIds.Count == 0
+            ? new Dictionary<int, string>()
+            : await db.Agentes
+                .Where(a => personalIds.Contains(a.Id))
+                .ToDictionaryAsync(a => a.Id, a => a.Nombre + " " + a.Apellido, cancellationToken);
+
         return new EventoDetalleViewModel(
             evento.Id,
             evento.RequestId,
@@ -269,7 +291,10 @@ public class GetEventoQueryHandler(IReadDbContext db, ICurrentUserService curren
                     c.Persona.NacionalidadId is { } n ? nacionalidades.GetValueOrDefault(n) : null,
                     c.EventoVehiculoId,
                     c.Tipos.Select(t => t.TipoEventoId).Order().ToList(),
-                    c.Persona.Edad))
+                    c.Persona.Edad,
+                    verAtencion && c.Atencion is { } atencion
+                        ? AtencionPrehospitalariaViewModel.Desde(atencion, hospitales, personal)
+                        : null))
                 .ToList(),
             evento.Evidencias
                 .OrderBy(e => e.Id)

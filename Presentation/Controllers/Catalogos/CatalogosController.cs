@@ -64,6 +64,11 @@ public class CatalogosController(IMediator mediator) : GenericController(mediato
     public Task<IActionResult> Nacionalidades(CancellationToken cancellationToken)
         => Listar(new GetCatalogoQuery(CatalogoEnum.Nacionalidades), cancellationToken);
 
+    /// <summary>Centros de salud activos (destino del traslado de una atención prehospitalaria).</summary>
+    [HttpGet("hospitales")]
+    public Task<IActionResult> Hospitales(CancellationToken cancellationToken)
+        => Listar(new GetCatalogoQuery(CatalogoEnum.Hospitales), cancellationToken);
+
     private async Task<IActionResult> Listar(GetCatalogoQuery query, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(query, cancellationToken));
 }
