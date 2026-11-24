@@ -60,6 +60,12 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     private readonly List<EventoEvidencia> _evidencias = new();
     private readonly List<EventoTipoEvento> _tipos = new();
 
+    /// <summary>
+    /// Personas con atención prehospitalaria que <see cref="ReemplazarDatos"/> conservó y que aún no se
+    /// reenviaron en el mismo reemplazo (no se persiste: solo vive durante la operación).
+    /// </summary>
+    private readonly List<EventoCiudadanoInfo> _conservadas = new();
+
     public IReadOnlyCollection<EventoUnidadInfo> Unidades => _unidades.AsReadOnly();
     public IReadOnlyCollection<EventoVehiculoInfo> Vehiculos => _vehiculos.AsReadOnly();
     public IReadOnlyCollection<EventoCiudadanoInfo> Ciudadanos => _ciudadanos.AsReadOnly();
@@ -194,6 +200,9 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     /// <see cref="AgregarVehiculo"/> y <see cref="AgregarCiudadano"/>. Las evidencias se conservan,
     /// sin la persona o el vehículo que tenían. <paramref name="requestId"/> es la clave con que la
     /// app reintenta el envío: queda como la del evento para reconocer el reenvío.
+    /// Excepción: las personas con atención prehospitalaria no se quitan (la ambulancia de apoyo pudo
+    /// registrarla y la app de la unidad principal no la conoce). Si se reenvían, <see cref="AgregarCiudadano"/>
+    /// actualiza sus datos y conserva la atención; si no, quedan como estaban, sin vehículo ni tipos.
     /// </summary>
     public void ReemplazarDatos(
         Guid requestId,
@@ -213,9 +222,20 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
         Comentario = Normalizar(comentario, ComentarioMaxLength, "comentario");
         RequestId = requestId;
 
-        foreach (var evidencia in _evidencias) evidencia.Desvincular();
+        var conservadas = _ciudadanos.Where(c => c.Atencion is not null).ToList();
+        foreach (var evidencia in _evidencias)
+        {
+            if (evidencia.EventoCiudadanoId is { } ciudadanoId && conservadas.Any(c => c.Id == ciudadanoId))
+                evidencia.DesvincularVehiculo();
+            else
+                evidencia.Desvincular();
+        }
+
         _tipos.Clear();
-        _ciudadanos.Clear();
+        _ciudadanos.RemoveAll(c => c.Atencion is null);
+        foreach (var persona in conservadas) persona.Desvincular();
+        _conservadas.Clear();
+        _conservadas.AddRange(conservadas);
         _vehiculos.Clear();
         AgregarTiposGenerales(tipoEventoIds);
     }
@@ -288,7 +308,9 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     /// de este evento (máximo un conductor por vehículo); un peatón, en ninguno.
     /// <paramref name="ciudadano"/> vincula el maestro cuando la persona ya existe;
     /// <paramref name="tipoEventoIds"/> son los tipos atendidos a esta persona, de entre los del evento;
-    /// <paramref name="atencion"/>, la atención prehospitalaria (solo con rol Paciente).
+    /// <paramref name="atencion"/>, la atención prehospitalaria. Si la persona es una de las que
+    /// <see cref="ReemplazarDatos"/> conservó por tener atención, se actualiza esa misma persona: sin
+    /// <paramref name="atencion"/> conserva la que tenía.
     /// </summary>
     public EventoCiudadanoInfo AgregarCiudadano(
         RolCiudadanoEnum rol,
@@ -300,11 +322,14 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
     {
         AsegurarActivo();
         ArgumentNullException.ThrowIfNull(persona);
-        if (_ciudadanos.Count >= MaxCiudadanos)
+
+        var conservada = _conservadas.FirstOrDefault(c => atencion?.RequestId is { } clave && c.Atencion?.RequestId == clave)
+            ?? _conservadas.FirstOrDefault(c => c.EsLaMismaPersona(persona));
+        if (conservada is null && _ciudadanos.Count >= MaxCiudadanos)
             throw new DomainException($"No se pueden registrar más de {MaxCiudadanos} personas en un evento.");
 
         if (persona.Identificacion is { } identificacion
-            && _ciudadanos.Any(c => c.Persona.Identificacion == identificacion))
+            && _ciudadanos.Any(c => c != conservada && c.Persona.Identificacion == identificacion))
             throw new DomainException($"La persona '{identificacion}' ya está registrada en el evento.");
 
         if (vehiculo is not null)
@@ -312,16 +337,63 @@ public class Evento : BaseEntityMetadata, IAuditableMetadata
             if (!_vehiculos.Contains(vehiculo))
                 throw new DomainException("El vehículo de la persona no está registrado en este evento.");
             if (rol == RolCiudadanoEnum.Conductor
-                && _ciudadanos.Any(c => c.Rol == RolCiudadanoEnum.Conductor && ReferenceEquals(c.Vehiculo, vehiculo)))
+                && _ciudadanos.Any(c => c != conservada && c.Rol == RolCiudadanoEnum.Conductor && ReferenceEquals(c.Vehiculo, vehiculo)))
                 throw new DomainException($"El vehículo {vehiculo.Datos.Placa ?? "sin placa"} ya tiene un conductor.");
         }
 
         var tipos = TiposDelEvento(tipoEventoIds, "de la persona");
-        var participacion = EventoCiudadanoInfo.Crear(rol, persona, vehiculo, ciudadano);
+        EventoCiudadanoInfo participacion;
+        if (conservada is not null)
+        {
+            _conservadas.Remove(conservada);
+            conservada.Actualizar(rol, persona, vehiculo, ciudadano);
+            participacion = conservada;
+        }
+        else
+        {
+            participacion = EventoCiudadanoInfo.Crear(rol, persona, vehiculo, ciudadano);
+            _ciudadanos.Add(participacion);
+        }
+
         if (atencion is not null) participacion.RegistrarAtencion(atencion);
-        _ciudadanos.Add(participacion);
         foreach (var id in tipos) participacion.AgregarTipo(AgregarTipo(id, ciudadano: participacion));
         return participacion;
+    }
+
+    /// <summary>
+    /// La ambulancia registra (o actualiza) la atención prehospitalaria de una persona del evento sin
+    /// tocar el resto: es lo que puede hacer una unidad de apoyo, que no completa el evento. La persona
+    /// se busca por la clave de la atención y luego por identificación o nombre; si no está, se agrega
+    /// sin vehículo con <paramref name="rolNuevo"/>. Se admite en eventos completados (la ambulancia
+    /// suele terminar el registro al entregar al paciente, después del cierre de la unidad principal).
+    /// </summary>
+    public EventoCiudadanoInfo RegistrarAtencion(
+        DatosPersona persona,
+        AtencionPrehospitalaria atencion,
+        Ciudadano? ciudadano = null,
+        RolCiudadanoEnum rolNuevo = RolCiudadanoEnum.Paciente)
+    {
+        AsegurarActivo();
+        ArgumentNullException.ThrowIfNull(persona);
+        ArgumentNullException.ThrowIfNull(atencion);
+
+        var existente = _ciudadanos.FirstOrDefault(c => atencion.RequestId is { } clave && c.Atencion?.RequestId == clave)
+            ?? _ciudadanos.FirstOrDefault(c => c.EsLaMismaPersona(persona));
+        if (existente is null)
+            return AgregarCiudadano(rolNuevo, persona, ciudadano: ciudadano, atencion: atencion);
+
+        // La ambulancia solo completa la identidad de quien estaba registrado como desconocido (p. ej. un
+        // paciente que llegó inconsciente); los datos que registró la unidad principal no se pisan.
+        if (existente.Persona.EsDesconocida && !persona.EsDesconocida)
+        {
+            if (persona.Identificacion is { } identificacion
+                && _ciudadanos.Any(c => c != existente && c.Persona.Identificacion == identificacion))
+                throw new DomainException($"La persona '{identificacion}' ya está registrada en el evento.");
+            existente.Actualizar(existente.Rol, persona, existente.Vehiculo, ciudadano);
+        }
+
+        existente.RegistrarAtencion(atencion);
+        return existente;
     }
 
     /// <summary>

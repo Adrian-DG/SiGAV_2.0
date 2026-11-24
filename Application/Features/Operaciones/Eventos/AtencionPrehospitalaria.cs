@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Application.Features.Operaciones.Eventos;
 
 // Atención prehospitalaria (ambulancia) de un paciente del evento. Viaja dentro de
-// CiudadanoEventoRequest (rol Paciente), así reutiliza el registro del evento: idempotencia por
+// CiudadanoEventoRequest (cualquier rol), así reutiliza el registro del evento: idempotencia por
 // requestId, cola offline de la app y reemplazo al completar un evento asignado.
 
 /// <summary>Una toma de signos vitales. Todos los valores son opcionales; Glasgow: los tres o ninguno.</summary>
@@ -29,7 +29,8 @@ public record SignosVitalesRequest(
 /// <summary>
 /// Con <see cref="FueTrasladado"/>: <see cref="HospitalId"/> obligatorio; sin traslado:
 /// <see cref="MotivoNoTraslado"/> obligatorio. <see cref="NombreEventoEspecial"/> solo con tipo Evento especial.
-/// Médico y regulador: agentes activos del área PreHospitalaria.
+/// Médico y regulador: agentes activos del área PreHospitalaria. <see cref="RequestId"/>: clave que genera la
+/// app para la atención; un reenvío con la misma clave actualiza la atención en vez de duplicar a la persona.
 /// </summary>
 public record AtencionPrehospitalariaRequest(
     DespachoPrehospitalarioEnum DespachadoPor,
@@ -47,7 +48,8 @@ public record AtencionPrehospitalariaRequest(
     string? InsumosUtilizados = null,
     int? MedicoAgenteId = null,
     int? ReguladorAgenteId = null,
-    IReadOnlyList<SignosVitalesRequest>? SignosVitales = null)
+    IReadOnlyList<SignosVitalesRequest>? SignosVitales = null,
+    Guid? RequestId = null)
 {
     public AtencionPrehospitalaria ToDominio() => AtencionPrehospitalaria.Registrar(
         DespachadoPor,
@@ -77,7 +79,8 @@ public record AtencionPrehospitalariaRequest(
             s.LlenadoCapilar,
             s.GlasgowOcular,
             s.GlasgowVerbal,
-            s.GlasgowMotor)));
+            s.GlasgowMotor)),
+        RequestId);
 }
 
 /// <summary>
@@ -88,6 +91,7 @@ public class AtencionPrehospitalariaRequestValidator : AbstractValidator<Atencio
 {
     public AtencionPrehospitalariaRequestValidator(IReadDbContext db, TimeProvider timeProvider)
     {
+        RuleFor(x => x.RequestId).NotEqual(Guid.Empty).WithMessage("La clave de la atención (requestId) no es válida.");
         RuleFor(x => x.DespachadoPor).IsInEnum().WithMessage("Indique quién despachó la ambulancia.");
         RuleFor(x => x.TipoAtencion).IsInEnum().WithMessage("Indique el tipo de atención.");
         RuleFor(x => x.Causa).IsInEnum().WithMessage("Indique si la causa es traumática o clínica.");

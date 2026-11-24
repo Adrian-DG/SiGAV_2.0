@@ -93,6 +93,13 @@ public class EventoEvidencia
     /// Quita la asociación con la persona o el vehículo (que dejan de existir al reemplazarse los
     /// involucrados del evento). La evidencia sigue siendo del evento.
     /// </summary>
+    /// <summary>Se reemplazaron los vehículos del evento; la persona se conserva.</summary>
+    internal void DesvincularVehiculo()
+    {
+        Vehiculo = null;
+        EventoVehiculoId = null;
+    }
+
     internal void Desvincular()
     {
         Ciudadano = null;

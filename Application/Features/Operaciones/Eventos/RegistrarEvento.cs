@@ -35,7 +35,7 @@ public record VehiculoEventoRequest(
 /// <summary>
 /// <see cref="VehiculoClave"/>: <see cref="VehiculoEventoRequest.Clave"/> del vehículo en que iba (null = sin vehículo).
 /// <see cref="TipoEventoIds"/>: tipos atendidos a esta persona, de entre los del evento.
-/// <see cref="Atencion"/>: atención prehospitalaria (ambulancia); solo con rol Paciente.
+/// <see cref="Atencion"/>: atención prehospitalaria (ambulancia) de esta persona; null = no la hubo.
 /// </summary>
 public record CiudadanoEventoRequest(
     RolCiudadanoEnum Rol,
@@ -161,10 +161,7 @@ public class RegistrarEventoCommandValidator : AbstractValidator<RegistrarEvento
                 .InclusiveBetween(0, DatosPersona.EdadMaxima)
                 .WithMessage($"La edad debe estar entre 0 y {DatosPersona.EdadMaxima} años.");
 
-            // Atención prehospitalaria: solo a pacientes
-            c.RuleFor(x => x.Atencion)
-                .Null().WithMessage("La atención prehospitalaria solo se registra a personas con rol Paciente.")
-                .When(x => x.Rol != RolCiudadanoEnum.Paciente);
+            // Atención prehospitalaria: cualquier rol (el conductor o peatón herido también es paciente)
             c.RuleFor(x => x.Atencion!)
                 .SetValidator(new AtencionPrehospitalariaRequestValidator(db, timeProvider))
                 .When(x => x.Atencion is not null);

@@ -113,7 +113,7 @@ internal static class InvolucradosEvento
     /// y se actualiza si existe. Sin identificación no hay a quién guardar; uno desactivado no se toca
     /// ni se vincula.
     /// </summary>
-    private static async Task<Ciudadano?> CiudadanoHistoricoAsync(
+    internal static async Task<Ciudadano?> CiudadanoHistoricoAsync(
         IHistoricoRepository historico, DatosPersona persona, DateTime fechaEventoUtc, CancellationToken cancellationToken)
     {
         if (persona.Identificacion is not { } identificacion) return null;

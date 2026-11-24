@@ -88,6 +88,17 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
     public async Task<IActionResult> Actualizar([FromRoute] int id, [FromBody] RegistrarEventoCommand datos, CancellationToken cancellationToken)
         => Ok(await Mediator.Send(new ActualizarEventoCommand(id, datos), cancellationToken));
 
+    /// <summary>
+    /// App: la ambulancia registra la atención prehospitalaria de sus pacientes en un evento en que
+    /// participa (también como apoyo, y aunque el evento ya esté completado). Solo agrega o actualiza a
+    /// esos pacientes; si la unidad era un apoyo solicitado, confirma su llegada. Idempotente por el
+    /// requestId de cada atención. Devuelve el Id de cada paciente en el evento, en el orden enviado.
+    /// </summary>
+    [Authorize(Policy = SesionPolicies.Movil)]
+    [HttpPut("{id:int}/atenciones")]
+    public async Task<IActionResult> RegistrarAtenciones([FromRoute] int id, [FromBody] RegistrarAtencionesRequest request, CancellationToken cancellationToken)
+        => Ok(await Mediator.Send(new RegistrarAtencionesCommand(id, request.Pacientes), cancellationToken));
+
     /// <summary>La unidad llegó al lugar (Pendiente → En curso). Sin fecha se usa la hora actual.</summary>
     [HttpPatch("{id:int}/iniciar")]
     public async Task<IActionResult> Iniciar([FromRoute] int id, [FromBody] IniciarRequest? request, CancellationToken cancellationToken)
@@ -176,6 +187,8 @@ public class EventosController(IMediator mediator) : GenericController(mediator)
         int? VehiculoId);
 
     public record IniciarRequest(DateTime? FechaHoraLlegadaUtc);
+
+    public record RegistrarAtencionesRequest(IReadOnlyList<AtencionPacienteRequest> Pacientes);
 
     public record CompletarRequest(int TipoCierreId, DateTime? FechaHoraCompletadoUtc);
 

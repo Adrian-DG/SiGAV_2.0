@@ -37,7 +37,10 @@ public class EventoCiudadanoInfo
     /// </summary>
     public IReadOnlyCollection<EventoTipoEvento> Tipos => _tipos.AsReadOnly();
 
-    /// <summary>Atención prehospitalaria (ambulancia). Solo en personas con rol Paciente; null = no la hubo.</summary>
+    /// <summary>
+    /// Atención prehospitalaria (ambulancia); null = no la hubo. Puede tenerla cualquier rol: el conductor
+    /// o el peatón herido en un accidente es justo a quien atiende la unidad alfa.
+    /// </summary>
     public AtencionPrehospitalaria? Atencion { get; private set; }
 
     // Requerido por EF Core
@@ -56,33 +59,66 @@ public class EventoCiudadanoInfo
         EventoVehiculoInfo? vehiculo,
         Ciudadano? ciudadano)
     {
+        var participacion = new EventoCiudadanoInfo();
+        participacion.AsignarDatos(rol, persona, vehiculo, ciudadano);
+        return participacion;
+    }
+
+    /// <summary>
+    /// La unidad principal reenvió a esta persona al completar el evento (<see cref="Evento.ReemplazarDatos"/>):
+    /// se actualizan sus datos y se conserva su atención prehospitalaria.
+    /// </summary>
+    internal void Actualizar(RolCiudadanoEnum rol, DatosPersona persona, EventoVehiculoInfo? vehiculo, Ciudadano? ciudadano)
+        => AsignarDatos(rol, persona, vehiculo, ciudadano);
+
+    /// <summary>Se reemplazaron los vehículos y tipos del evento: la persona queda sin ellos hasta que se reenvíe.</summary>
+    internal void Desvincular()
+    {
+        Vehiculo = null;
+        EventoVehiculoId = null;
+        _tipos.Clear();
+    }
+
+    /// <summary>
+    /// ¿Es la misma persona? Por identificación si ambas la tienen; si no, por nombre y apellido
+    /// (sin distinguir mayúsculas). Una persona desconocida no coincide con nadie.
+    /// </summary>
+    internal bool EsLaMismaPersona(DatosPersona otra)
+    {
+        if (Persona.Identificacion is { } identificacion && otra.Identificacion is { } otraIdentificacion)
+            return identificacion == otraIdentificacion;
+
+        return Persona.Nombre is { } nombre && Persona.Apellido is { } apellido
+            && string.Equals(nombre, otra.Nombre, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(apellido, otra.Apellido, StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal void AgregarTipo(EventoTipoEvento tipo) => _tipos.Add(tipo);
+
+    /// <summary>Registra la atención o reemplaza la que tenía (p. ej. la ambulancia la completa al entregar al paciente).</summary>
+    internal void RegistrarAtencion(AtencionPrehospitalaria atencion)
+    {
+        ArgumentNullException.ThrowIfNull(atencion);
+        Atencion = atencion;
+    }
+
+    private void AsignarDatos(RolCiudadanoEnum rol, DatosPersona persona, EventoVehiculoInfo? vehiculo, Ciudadano? ciudadano)
+    {
         if (!Enum.IsDefined(rol)) throw new DomainException("El rol del ciudadano no es válido.");
         if (vehiculo is null && RequiereVehiculo(rol))
             throw new DomainException($"El {Descripcion(rol)} debe estar asociado a un vehículo del evento.");
         if (vehiculo is not null && !AdmiteVehiculo(rol))
             throw new DomainException("Un peatón no puede estar asociado a un vehículo.");
 
-        return new EventoCiudadanoInfo
-        {
-            Rol = rol,
-            // Copia propia: cada participación debe tener su instancia (el mismo DatosPersona
-            // podría reutilizarse para varias personas y la persistencia los asocia por referencia)
-            Persona = persona with { },
-            Vehiculo = vehiculo,
-            Ciudadano = ciudadano,
-            CiudadanoId = ciudadano is { Id: > 0 } ? ciudadano.Id : null
-        };
-    }
-
-    internal void AgregarTipo(EventoTipoEvento tipo) => _tipos.Add(tipo);
-
-    internal void RegistrarAtencion(AtencionPrehospitalaria atencion)
-    {
-        ArgumentNullException.ThrowIfNull(atencion);
-        if (Rol != RolCiudadanoEnum.Paciente)
-            throw new DomainException("La atención prehospitalaria solo se registra a personas con rol Paciente.");
-
-        Atencion = atencion;
+        Rol = rol;
+        // Copia propia: cada participación debe tener su instancia (el mismo DatosPersona
+        // podría reutilizarse para varias personas y la persistencia los asocia por referencia)
+        Persona = persona with { };
+        Vehiculo = vehiculo;
+        EventoVehiculoId = vehiculo is { Id: > 0 } ? vehiculo.Id : null;
+        // Si cambia el ciudadano, la navegación cargada deja de corresponder
+        Ciudadano = ciudadano;
+        CiudadanoId = ciudadano is { Id: > 0 } ? ciudadano.Id : null;
     }
 
     private static string Descripcion(RolCiudadanoEnum rol) => rol == RolCiudadanoEnum.Conductor ? "conductor" : "pasajero";

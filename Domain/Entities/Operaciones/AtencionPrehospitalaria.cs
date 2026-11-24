@@ -7,7 +7,7 @@ namespace Domain.Entities.Operaciones;
 /// <summary>
 /// Atención prehospitalaria (ambulancia) a un paciente del evento: AsistenciaPreHospitalaria en
 /// SiGAV 1.0, que era un registro aparte sin vínculo con el evento. Aquí pertenece a la persona del
-/// evento con rol Paciente (sus datos personales son los de <see cref="EventoCiudadanoInfo.Persona"/>)
+/// evento que atendió la ambulancia, con cualquier rol (sus datos personales son los de <see cref="EventoCiudadanoInfo.Persona"/>)
 /// y solo se modifica a través del agregado <see cref="Evento"/>.
 /// </summary>
 public class AtencionPrehospitalaria
@@ -15,6 +15,12 @@ public class AtencionPrehospitalaria
     public const int TextoCortoMaxLength = 150;
     public const int TextoLargoMaxLength = 2000;
     public const int MaxTomasSignosVitales = 20;
+
+    /// <summary>
+    /// Clave con que la app identifica esta atención (la genera sin conexión). Un reenvío con la misma
+    /// clave actualiza la atención en lugar de crear otra persona, aunque el paciente sea desconocido.
+    /// </summary>
+    public Guid? RequestId { get; private set; }
 
     public DespachoPrehospitalarioEnum DespachadoPor { get; private set; }
     public TipoAtencionPrehospitalariaEnum TipoAtencion { get; private set; }
@@ -72,8 +78,10 @@ public class AtencionPrehospitalaria
         string? insumosUtilizados = null,
         int? medicoAgenteId = null,
         int? reguladorAgenteId = null,
-        IEnumerable<TomaSignosVitales>? signosVitales = null)
+        IEnumerable<TomaSignosVitales>? signosVitales = null,
+        Guid? requestId = null)
     {
+        if (requestId == Guid.Empty) throw new DomainException("La clave de la atención (requestId) no es válida.");
         if (!Enum.IsDefined(despachadoPor)) throw new DomainException("Quién despachó la ambulancia no es válido.");
         if (!Enum.IsDefined(tipoAtencion)) throw new DomainException("El tipo de atención no es válido.");
         if (!Enum.IsDefined(causa)) throw new DomainException("La causa de la atención no es válida.");
@@ -82,6 +90,7 @@ public class AtencionPrehospitalaria
 
         var atencion = new AtencionPrehospitalaria
         {
+            RequestId = requestId,
             DespachadoPor = despachadoPor,
             TipoAtencion = tipoAtencion,
             Causa = causa,
